@@ -48,6 +48,17 @@ services:
     ports:
       - "6379:6379"
 
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+    depends_on:
+      - app
+
   mailhog:
     image: mailhog/mailhog:v1.0.1
     ports:
