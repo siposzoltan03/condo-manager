@@ -323,7 +323,6 @@ export function UserList() {
       {showModal && (
         <UserFormModal
           user={editingUser}
-          currentUserRole={currentUser?.role ?? ""}
           onClose={handleModalClose}
           onSuccess={handleModalSuccess}
         />
