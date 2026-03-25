@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Mail, Lock, Loader2 } from "lucide-react";
 import Link from "next/link";
@@ -11,6 +11,7 @@ export function LoginForm() {
   const t = useTranslations("auth");
   const tCommon = useTranslations("common");
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,7 +33,8 @@ export function LoginForm() {
       if (result?.error) {
         setError(t("invalidCredentials"));
       } else {
-        router.push("/dashboard");
+        const callbackUrl = searchParams.get("callbackUrl") ?? "/";
+        router.push(callbackUrl);
         router.refresh();
       }
     } catch {

@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 
 export function SecurityTab() {
   const t = useTranslations("common");
+  const tSettings = useTranslations("settings");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -18,12 +19,12 @@ export function SecurityTab() {
     setSuccess("");
 
     if (newPassword.length < 8) {
-      setError("New password must be at least 8 characters");
+      setError(tSettings("passwordTooShort"));
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError("Passwords do not match");
+      setError(tSettings("passwordMismatch"));
       return;
     }
 
@@ -41,7 +42,7 @@ export function SecurityTab() {
         throw new Error(data.error || "Failed to change password");
       }
 
-      setSuccess("Password changed successfully");
+      setSuccess(tSettings("passwordChanged"));
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
@@ -55,16 +56,16 @@ export function SecurityTab() {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-slate-900">Change Password</h3>
+        <h3 className="text-lg font-semibold text-slate-900">{tSettings("changePassword")}</h3>
         <p className="mt-1 text-sm text-slate-500">
-          Update your password. You will need to enter your current password for verification.
+          {tSettings("changePasswordDesc")}
         </p>
       </div>
 
       {/* Current Password */}
       <div>
         <label className="block text-sm font-medium text-slate-700 mb-1.5">
-          Current Password
+          {tSettings("currentPassword")}
         </label>
         <input
           type="password"
@@ -79,7 +80,7 @@ export function SecurityTab() {
       {/* New Password */}
       <div>
         <label className="block text-sm font-medium text-slate-700 mb-1.5">
-          New Password
+          {tSettings("newPassword")}
         </label>
         <input
           type="password"
@@ -95,7 +96,7 @@ export function SecurityTab() {
       {/* Confirm Password */}
       <div>
         <label className="block text-sm font-medium text-slate-700 mb-1.5">
-          Confirm New Password
+          {tSettings("confirmPassword")}
         </label>
         <input
           type="password"
@@ -126,7 +127,7 @@ export function SecurityTab() {
           disabled={saving || !currentPassword || !newPassword || !confirmPassword}
           className="rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {saving ? t("loading") : "Change Password"}
+          {saving ? t("loading") : tSettings("changePassword")}
         </button>
       </div>
     </form>

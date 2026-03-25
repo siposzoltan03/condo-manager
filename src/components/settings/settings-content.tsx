@@ -18,14 +18,15 @@ interface ProfileData {
 
 type Tab = "profile" | "notifications" | "security";
 
-const TABS: { key: Tab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-  { key: "profile", label: "Profile", icon: User },
-  { key: "notifications", label: "Notifications", icon: Bell },
-  { key: "security", label: "Security", icon: Shield },
+const TAB_CONFIGS: { key: Tab; labelKey: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { key: "profile", labelKey: "profile", icon: User },
+  { key: "notifications", labelKey: "notifications", icon: Bell },
+  { key: "security", labelKey: "security", icon: Shield },
 ];
 
 export function SettingsContent() {
   const t = useTranslations("common");
+  const tSettings = useTranslations("settings");
   const [activeTab, setActiveTab] = useState<Tab>("profile");
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -69,16 +70,16 @@ export function SettingsContent() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
+        <h1 className="text-2xl font-bold text-slate-900">{tSettings("title")}</h1>
         <p className="mt-1 text-sm text-slate-500">
-          Manage your account settings and preferences.
+          {tSettings("subtitle")}
         </p>
       </div>
 
       <div className="flex flex-col gap-8 lg:flex-row">
         {/* Tab navigation (left side on desktop, top on mobile) */}
         <nav className="flex lg:flex-col gap-1 lg:w-56 lg:shrink-0">
-          {TABS.map((tab) => {
+          {TAB_CONFIGS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.key;
             return (
@@ -92,7 +93,7 @@ export function SettingsContent() {
                 }`}
               >
                 <Icon className="h-5 w-5 shrink-0" />
-                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="hidden sm:inline">{tSettings(tab.labelKey)}</span>
               </button>
             );
           })}

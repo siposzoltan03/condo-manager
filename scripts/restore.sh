@@ -3,10 +3,12 @@ set -euo pipefail
 
 # Configuration
 BACKUP_DIR="${BACKUP_DIR:-./backups}"
-DB_CONTAINER="${DB_CONTAINER:-condo-manager-db-1}"
-APP_CONTAINER="${APP_CONTAINER:-condo-manager-app-1}"
 DB_USER="${POSTGRES_USER:-condo}"
 DB_NAME="${POSTGRES_DB:-condo_manager}"
+
+# Resolve container IDs dynamically; fall back to default names if compose is unavailable
+DB_CONTAINER="${DB_CONTAINER:-$(docker compose ps -q db 2>/dev/null || echo "condo-manager-db-1")}"
+APP_CONTAINER="${APP_CONTAINER:-$(docker compose ps -q app 2>/dev/null || echo "condo-manager-app-1")}"
 
 # Usage check
 if [ $# -lt 1 ]; then

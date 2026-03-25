@@ -77,7 +77,11 @@ export async function PATCH(request: NextRequest) {
 
     // Update notification preferences if provided
     if (notificationPreferences !== undefined) {
-      if (typeof notificationPreferences !== "object") {
+      if (
+        typeof notificationPreferences !== "object" ||
+        notificationPreferences === null ||
+        Array.isArray(notificationPreferences)
+      ) {
         return NextResponse.json(
           { error: "Invalid notification preferences format" },
           { status: 400 }

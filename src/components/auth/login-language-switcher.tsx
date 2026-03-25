@@ -4,6 +4,8 @@ import { useLocale } from "next-intl";
 import { usePathname, useRouter } from "next/navigation";
 import { Globe } from "lucide-react";
 
+const SUPPORTED_LOCALES = ["en", "hu"];
+
 export function LoginLanguageSwitcher() {
   const locale = useLocale();
   const pathname = usePathname();
@@ -11,7 +13,11 @@ export function LoginLanguageSwitcher() {
 
   function switchLocale(newLocale: string) {
     const segments = pathname.split("/");
-    segments[1] = newLocale;
+    if (segments.length > 1 && SUPPORTED_LOCALES.includes(segments[1])) {
+      segments[1] = newLocale;
+    } else {
+      segments.splice(1, 0, newLocale);
+    }
     router.push(segments.join("/"));
   }
 

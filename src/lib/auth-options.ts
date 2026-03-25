@@ -5,7 +5,7 @@ import Credentials from "next-auth/providers/credentials";
  * Auth options shared between the full auth config and the middleware.
  * This file must NOT import bcryptjs or prisma directly, as it may be
  * loaded in the Edge Runtime (middleware). Heavy imports are deferred
- * to the authorize callback via dynamic import in auth.config.ts.
+ * to the authorize callback via dynamic import.
  */
 export const authOptions = {
   providers: [

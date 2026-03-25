@@ -1,7 +1,7 @@
 "use client";
 
 import { signOut } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { useAuth } from "@/hooks/use-auth";
 import { LogOut } from "lucide-react";
 import { NotificationBell } from "./notification-bell";
@@ -25,6 +25,7 @@ const roleLabels: Record<string, string> = {
 
 export function TopBar() {
   const t = useTranslations("common");
+  const locale = useLocale();
   const { user } = useAuth();
 
   const role = user?.role ?? "";
@@ -63,7 +64,7 @@ export function TopBar() {
           </div>
           <button
             type="button"
-            onClick={() => signOut({ callbackUrl: "/login" })}
+            onClick={() => signOut({ callbackUrl: `/${locale}/login` })}
             className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
             title={t("logout")}
           >

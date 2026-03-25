@@ -10,6 +10,8 @@ const locales = [
   { code: "en", label: "English" },
 ] as const;
 
+const SUPPORTED_LOCALE_CODES = locales.map((l) => l.code) as string[];
+
 export function LanguageSwitcher() {
   const locale = useLocale();
   const pathname = usePathname();
@@ -28,9 +30,14 @@ export function LanguageSwitcher() {
   }, []);
 
   function switchLocale(newLocale: string) {
-    // Replace the current locale segment in the pathname
+    // Replace the current locale segment in the pathname, guarding against
+    // missing or unrecognised locale at segments[1].
     const segments = pathname.split("/");
-    segments[1] = newLocale;
+    if (segments.length > 1 && SUPPORTED_LOCALE_CODES.includes(segments[1])) {
+      segments[1] = newLocale;
+    } else {
+      segments.splice(1, 0, newLocale);
+    }
     router.push(segments.join("/"));
     setOpen(false);
   }

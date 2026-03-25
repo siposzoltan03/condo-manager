@@ -1,13 +1,31 @@
 import { Job } from "bullmq";
 import { PrismaClient } from "@prisma/client";
 import { sendEmail } from "./processors/email";
+import { sendPush, PushSubscription } from "./processors/push";
 
 const prisma = new PrismaClient();
+
+/**
+ * Maps notification type values (as stored in the DB / job data) to the
+ * corresponding key in a user's notificationPreferences object.
+ * Example prefs shape: { announcements: "email", messages: "push", ... }
+ */
+const TYPE_TO_PREF_KEY: Record<string, string> = {
+  ANNOUNCEMENT_NEW: "announcements",
+  ANNOUNCEMENT_UPDATED: "announcements",
+  MESSAGE_NEW: "messages",
+  MAINTENANCE_CREATED: "maintenance",
+  MAINTENANCE_UPDATED: "maintenance",
+  PAYMENT_DUE: "payments",
+  PAYMENT_RECEIVED: "payments",
+  VOTING_STARTED: "voting",
+  VOTING_ENDED: "voting",
+};
 
 export async function processNotificationJob(job: Job): Promise<void> {
   switch (job.name) {
     case "send-notification": {
-      const { userId, title, body } = job.data as {
+      const { userId, type, title, body } = job.data as {
         notificationId: string;
         userId: string;
         type: string;
@@ -31,7 +49,8 @@ export async function processNotificationJob(job: Job): Promise<void> {
         string,
         string
       >;
-      const channel: string = prefs.channel ?? "email";
+      const prefKey = TYPE_TO_PREF_KEY[type] ?? type;
+      const channel: string = prefs[prefKey] ?? "email";
 
       if (channel === "email" || channel === "both") {
         const htmlBody = `<p>${body}</p>`;
@@ -51,10 +70,15 @@ export async function processNotificationJob(job: Job): Promise<void> {
       break;
     }
 
-    case "send-push":
-      // Push notifications handled separately via push processor
-      console.log("Push notification job received:", job.data);
+    case "send-push": {
+      const { subscription, title, body } = job.data as {
+        subscription: PushSubscription;
+        title: string;
+        body: string;
+      };
+      await sendPush(subscription, title, body);
       break;
+    }
 
     default:
       console.warn(`Unknown job type: ${job.name}`);
