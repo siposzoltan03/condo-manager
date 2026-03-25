@@ -39,8 +39,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# prisma
-/prisma/migrations/
+# prisma - keep migrations tracked in git
 
 # uploads
 /uploads
