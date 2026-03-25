@@ -27,10 +27,19 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Build reset URL
+      // Build reset URL — include locale prefix so the link lands on the
+      // correct localised page. Derive locale from the Accept-Language header
+      // and fall back to "hu" (the app default).
+      const acceptLanguage = request.headers.get("accept-language") ?? "";
+      const supportedLocales = ["hu", "en"];
+      const preferredLocale = acceptLanguage
+        .split(",")
+        .map((part) => part.split(";")[0].trim().slice(0, 2).toLowerCase())
+        .find((lang) => supportedLocales.includes(lang));
+      const locale = preferredLocale ?? "hu";
       const baseUrl =
         process.env.NEXTAUTH_URL ?? process.env.BASE_URL ?? "http://localhost:3000";
-      const resetUrl = `${baseUrl}/reset-password?token=${token}`;
+      const resetUrl = `${baseUrl}/${locale}/reset-password?token=${token}`;
 
       await sendEmail(
         user.email,

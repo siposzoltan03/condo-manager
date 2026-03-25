@@ -35,6 +35,7 @@ const DELIVERY_OPTIONS: { value: DeliveryMethod; label: string }[] = [
 
 export function NotificationsTab({ preferences, onUpdate }: NotificationsTabProps) {
   const t = useTranslations("common");
+  const tSettings = useTranslations("settings");
   const [prefs, setPrefs] = useState<NotificationPreferences>({ ...preferences });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -110,18 +111,32 @@ export function NotificationsTab({ preferences, onUpdate }: NotificationsTabProp
                   <td className="px-6 py-4 font-medium text-slate-900">
                     {event.label}
                   </td>
-                  {DELIVERY_OPTIONS.map((opt) => (
-                    <td key={opt.value} className="px-6 py-4 text-center">
-                      <input
-                        type="radio"
-                        name={`notif-${event.key}`}
-                        value={opt.value}
-                        checked={currentMethod === opt.value}
-                        onChange={() => handleMethodChange(event.key, opt.value)}
-                        className="h-4 w-4 border-slate-300 text-blue-600 focus:ring-blue-500"
-                      />
-                    </td>
-                  ))}
+                  {DELIVERY_OPTIONS.map((opt) => {
+                    const isPush = opt.value === "push";
+                    return (
+                      <td key={opt.value} className="px-6 py-4 text-center">
+                        <span
+                          className={isPush ? "inline-flex flex-col items-center gap-0.5" : undefined}
+                          title={isPush ? tSettings("pushComingSoon") : undefined}
+                        >
+                          <input
+                            type="radio"
+                            name={`notif-${event.key}`}
+                            value={opt.value}
+                            checked={currentMethod === opt.value}
+                            onChange={() => handleMethodChange(event.key, opt.value)}
+                            disabled={isPush}
+                            className="h-4 w-4 border-slate-300 text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-40"
+                          />
+                          {isPush && (
+                            <span className="text-[10px] text-slate-400 leading-tight">
+                              {tSettings("pushComingSoon")}
+                            </span>
+                          )}
+                        </span>
+                      </td>
+                    );
+                  })}
                 </tr>
               );
             })}

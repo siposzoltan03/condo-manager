@@ -48,10 +48,17 @@ export function Sidebar() {
 
   const filteredItems = navItems.filter((item) => hasRole(item.minimumRole));
 
+  /** Locales supported by the application. */
+  const SUPPORTED_LOCALES = new Set(["hu", "en"]);
+
   function isActive(href: string): boolean {
-    // Strip locale prefix for comparison
+    // Strip locale prefix only when the second segment is a known locale.
+    // e.g. /hu/dashboard -> /dashboard, but /other-path stays as-is.
     const pathSegments = pathname.split("/");
-    const pathWithoutLocale = "/" + pathSegments.slice(2).join("/");
+    const pathWithoutLocale =
+      pathSegments.length > 1 && SUPPORTED_LOCALES.has(pathSegments[1])
+        ? "/" + pathSegments.slice(2).join("/")
+        : pathname;
     return pathWithoutLocale === href || pathWithoutLocale.startsWith(href + "/");
   }
 

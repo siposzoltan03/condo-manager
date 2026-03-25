@@ -19,12 +19,12 @@ const ROLE_COLORS: Record<string, string> = {
   TENANT: "bg-slate-100 text-slate-700",
 };
 
-const ROLE_LABELS: Record<string, string> = {
-  SUPER_ADMIN: "Super Admin",
-  ADMIN: "Admin",
-  BOARD_MEMBER: "Board Member",
-  RESIDENT: "Resident",
-  TENANT: "Tenant",
+const ROLE_TO_I18N_KEY: Record<string, string> = {
+  SUPER_ADMIN: "roleSuperAdmin",
+  ADMIN: "roleAdmin",
+  BOARD_MEMBER: "roleBoardMember",
+  RESIDENT: "roleResident",
+  TENANT: "roleTenant",
 };
 
 interface ProfileTabProps {
@@ -34,6 +34,7 @@ interface ProfileTabProps {
 
 export function ProfileTab({ profile, onUpdate }: ProfileTabProps) {
   const t = useTranslations("common");
+  const tSettings = useTranslations("settings");
   const [name, setName] = useState(profile.name);
   const [language, setLanguage] = useState(profile.language);
   const [saving, setSaving] = useState(false);
@@ -72,16 +73,16 @@ export function ProfileTab({ profile, onUpdate }: ProfileTabProps) {
   return (
     <form onSubmit={handleSave} className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-slate-900">Profile Information</h3>
+        <h3 className="text-lg font-semibold text-slate-900">{tSettings("profileInfo")}</h3>
         <p className="mt-1 text-sm text-slate-500">
-          Update your personal details and language preference.
+          {tSettings("profileDesc")}
         </p>
       </div>
 
       {/* Name */}
       <div>
         <label className="block text-sm font-medium text-slate-700 mb-1.5">
-          Name
+          {tSettings("name")}
         </label>
         <input
           type="text"
@@ -104,14 +105,14 @@ export function ProfileTab({ profile, onUpdate }: ProfileTabProps) {
           className="w-full max-w-md rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-500"
         />
         <p className="mt-1 text-xs text-slate-400">
-          Email cannot be changed. Contact an administrator.
+          {tSettings("emailReadonly")}
         </p>
       </div>
 
       {/* Unit (read-only) */}
       <div>
         <label className="block text-sm font-medium text-slate-700 mb-1.5">
-          Unit Number
+          {tSettings("unitNumber")}
         </label>
         <input
           type="text"
@@ -124,21 +125,23 @@ export function ProfileTab({ profile, onUpdate }: ProfileTabProps) {
       {/* Role (read-only badge) */}
       <div>
         <label className="block text-sm font-medium text-slate-700 mb-1.5">
-          Role
+          {tSettings("role")}
         </label>
         <span
           className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${
             ROLE_COLORS[profile.role] ?? "bg-slate-100 text-slate-700"
           }`}
         >
-          {ROLE_LABELS[profile.role] ?? profile.role}
+          {ROLE_TO_I18N_KEY[profile.role]
+            ? tSettings(ROLE_TO_I18N_KEY[profile.role] as Parameters<typeof tSettings>[0])
+            : profile.role}
         </span>
       </div>
 
       {/* Language */}
       <div>
         <label className="block text-sm font-medium text-slate-700 mb-1.5">
-          Language
+          {tSettings("language")}
         </label>
         <select
           value={language}

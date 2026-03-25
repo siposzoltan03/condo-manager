@@ -40,9 +40,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = request.nextUrl;
     const search = searchParams.get("search") ?? undefined;
     const role = searchParams.get("role") ?? undefined;
-    const page = searchParams.get("page")
-      ? parseInt(searchParams.get("page")!, 10)
-      : 1;
+    const rawPage = parseInt(searchParams.get("page") ?? "1", 10);
+    const page = isNaN(rawPage) || rawPage < 1 ? 1 : rawPage;
     const limit = 20;
     const skip = (page - 1) * limit;
 

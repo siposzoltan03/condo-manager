@@ -8,10 +8,17 @@ import { TopBar } from "./topbar";
 /** Pages that render standalone (no sidebar / top bar). */
 const standalonePages = ["/login", "/forgot-password", "/reset-password"];
 
+/** Locales supported by the application. */
+const SUPPORTED_LOCALES = new Set(["hu", "en"]);
+
 function isStandalonePage(pathname: string): boolean {
-  // Strip locale prefix: /hu/login -> /login
+  // Strip locale prefix only when segments[1] is a known locale.
+  // e.g. /hu/login -> /login, but /some-page stays as-is.
   const segments = pathname.split("/");
-  const pathWithoutLocale = "/" + segments.slice(2).join("/");
+  const pathWithoutLocale =
+    segments.length > 1 && SUPPORTED_LOCALES.has(segments[1])
+      ? "/" + segments.slice(2).join("/")
+      : pathname;
   return standalonePages.some(
     (p) => pathWithoutLocale === p || pathWithoutLocale.startsWith(p + "/")
   );

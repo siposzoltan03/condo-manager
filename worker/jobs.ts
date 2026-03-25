@@ -12,14 +12,12 @@ const prisma = new PrismaClient();
  */
 const TYPE_TO_PREF_KEY: Record<string, string> = {
   ANNOUNCEMENT_NEW: "announcements",
-  ANNOUNCEMENT_UPDATED: "announcements",
   MESSAGE_NEW: "messages",
-  MAINTENANCE_CREATED: "maintenance",
-  MAINTENANCE_UPDATED: "maintenance",
-  PAYMENT_DUE: "payments",
-  PAYMENT_RECEIVED: "payments",
-  VOTING_STARTED: "voting",
-  VOTING_ENDED: "voting",
+  MAINTENANCE_STATUS: "maintenance",
+  PAYMENT_REMINDER: "payments",
+  VOTE_OPEN: "voting",
+  VOTE_CLOSING: "voting",
+  COMPLAINT_STATUS: "complaints",
 };
 
 export async function processNotificationJob(job: Job): Promise<void> {

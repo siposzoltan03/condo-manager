@@ -14,12 +14,10 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = request.nextUrl;
-    const page = searchParams.get("page")
-      ? parseInt(searchParams.get("page")!, 10)
-      : 1;
-    const limit = searchParams.get("limit")
-      ? parseInt(searchParams.get("limit")!, 10)
-      : 20;
+    const rawPage = parseInt(searchParams.get("page") ?? "1", 10);
+    const rawLimit = parseInt(searchParams.get("limit") ?? "20", 10);
+    const page = isNaN(rawPage) || rawPage < 1 ? 1 : rawPage;
+    const limit = isNaN(rawLimit) ? 20 : Math.min(Math.max(rawLimit, 1), 100);
 
     const result = await getNotifications(user.id, page, limit);
 

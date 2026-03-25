@@ -33,8 +33,14 @@ export function LoginForm() {
       if (result?.error) {
         setError(t("invalidCredentials"));
       } else {
-        const callbackUrl = searchParams.get("callbackUrl") ?? "/";
-        router.push(callbackUrl);
+        const raw = searchParams.get("callbackUrl") ?? "/";
+        // Validate: must be a relative path starting with "/" and must not
+        // contain a protocol or protocol-relative URL to prevent open redirects.
+        const safeUrl =
+          raw.startsWith("/") && !raw.startsWith("//") && !raw.includes("://")
+            ? raw
+            : "/";
+        router.push(safeUrl);
         router.refresh();
       }
     } catch {
