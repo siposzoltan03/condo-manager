@@ -3,6 +3,8 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
+import { SessionProvider } from "@/components/layout/session-provider";
+import { AppShell } from "@/components/layout/app-shell";
 import "@/app/globals.css";
 
 export const metadata: Metadata = {
@@ -33,9 +35,11 @@ export default async function LocaleLayout({ children, params }: Props) {
   return (
     <html lang={locale}>
       <body>
-        <NextIntlClientProvider messages={messages}>
-          {children}
-        </NextIntlClientProvider>
+        <SessionProvider>
+          <NextIntlClientProvider messages={messages}>
+            <AppShell>{children}</AppShell>
+          </NextIntlClientProvider>
+        </SessionProvider>
       </body>
     </html>
   );

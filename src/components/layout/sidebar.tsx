@@ -1,0 +1,134 @@
+"use client";
+
+import { usePathname } from "next/navigation";
+import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { useAuth } from "@/hooks/use-auth";
+import {
+  LayoutDashboard,
+  Megaphone,
+  MessageSquare,
+  Mail,
+  Wallet,
+  Wrench,
+  Vote,
+  FileText,
+  Users,
+  Settings,
+  X,
+  Menu,
+} from "lucide-react";
+import { useState } from "react";
+
+interface NavItem {
+  key: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  minimumRole: string;
+}
+
+const navItems: NavItem[] = [
+  { key: "dashboard", href: "/dashboard", icon: LayoutDashboard, minimumRole: "TENANT" },
+  { key: "announcements", href: "/announcements", icon: Megaphone, minimumRole: "TENANT" },
+  { key: "forum", href: "/forum", icon: MessageSquare, minimumRole: "TENANT" },
+  { key: "messages", href: "/messages", icon: Mail, minimumRole: "TENANT" },
+  { key: "finance", href: "/finance", icon: Wallet, minimumRole: "TENANT" },
+  { key: "maintenance", href: "/maintenance", icon: Wrench, minimumRole: "TENANT" },
+  { key: "voting", href: "/voting", icon: Vote, minimumRole: "TENANT" },
+  { key: "documents", href: "/documents", icon: FileText, minimumRole: "TENANT" },
+  { key: "users", href: "/users", icon: Users, minimumRole: "ADMIN" },
+  { key: "settings", href: "/settings", icon: Settings, minimumRole: "TENANT" },
+];
+
+export function Sidebar() {
+  const t = useTranslations("nav");
+  const pathname = usePathname();
+  const { hasRole } = useAuth();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const filteredItems = navItems.filter((item) => hasRole(item.minimumRole));
+
+  function isActive(href: string): boolean {
+    // Strip locale prefix for comparison
+    const pathSegments = pathname.split("/");
+    const pathWithoutLocale = "/" + pathSegments.slice(2).join("/");
+    return pathWithoutLocale === href || pathWithoutLocale.startsWith(href + "/");
+  }
+
+  const navContent = (
+    <nav className="flex flex-col gap-1 px-3 py-4">
+      {filteredItems.map((item) => {
+        const Icon = item.icon;
+        const active = isActive(item.href);
+        return (
+          <Link
+            key={item.key}
+            href={item.href}
+            onClick={() => setMobileOpen(false)}
+            className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
+              active
+                ? "bg-blue-600 text-white"
+                : "text-slate-300 hover:bg-slate-700 hover:text-white"
+            }`}
+          >
+            <Icon className="h-5 w-5 shrink-0" />
+            <span>{t(item.key)}</span>
+          </Link>
+        );
+      })}
+    </nav>
+  );
+
+  return (
+    <>
+      {/* Mobile hamburger button */}
+      <button
+        type="button"
+        onClick={() => setMobileOpen(true)}
+        className="fixed top-4 left-4 z-50 rounded-lg bg-slate-800 p-2 text-white shadow-lg lg:hidden"
+        aria-label="Open menu"
+      >
+        <Menu className="h-6 w-6" />
+      </button>
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Mobile sidebar */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-slate-800 transition-transform duration-300 lg:hidden ${
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="flex items-center justify-between px-6 py-5">
+          <span className="text-lg font-bold text-white">Condo Manager</span>
+          <button
+            type="button"
+            onClick={() => setMobileOpen(false)}
+            className="rounded-lg p-1 text-slate-400 hover:text-white"
+            aria-label="Close menu"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        {navContent}
+      </aside>
+
+      {/* Desktop sidebar */}
+      <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-64 lg:flex-col lg:bg-slate-800">
+        <div className="flex items-center gap-3 px-6 py-6">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-white font-bold text-sm">
+            CM
+          </div>
+          <span className="text-lg font-bold text-white">Condo Manager</span>
+        </div>
+        {navContent}
+      </aside>
+    </>
+  );
+}
