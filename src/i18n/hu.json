@@ -1,0 +1,38 @@
+{
+  "common": {
+    "appName": "Társasházkezelő",
+    "login": "Bejelentkezés",
+    "logout": "Kijelentkezés",
+    "email": "E-mail",
+    "password": "Jelszó",
+    "save": "Mentés",
+    "cancel": "Mégse",
+    "delete": "Törlés",
+    "edit": "Szerkesztés",
+    "create": "Létrehozás",
+    "search": "Keresés",
+    "loading": "Betöltés...",
+    "error": "Hiba történt",
+    "success": "Sikeres művelet"
+  },
+  "nav": {
+    "dashboard": "Áttekintés",
+    "announcements": "Hirdetmények",
+    "forum": "Fórum",
+    "messages": "Üzenetek",
+    "finance": "Pénzügyek",
+    "maintenance": "Karbantartás",
+    "voting": "Szavazások",
+    "documents": "Dokumentumok",
+    "settings": "Beállítások",
+    "admin": "Adminisztráció",
+    "users": "Felhasználók"
+  },
+  "auth": {
+    "signIn": "Bejelentkezés",
+    "forgotPassword": "Elfelejtett jelszó",
+    "resetPassword": "Jelszó visszaállítása",
+    "invalidCredentials": "Hibás e-mail cím vagy jelszó",
+    "passwordResetSent": "A jelszó-visszaállító link elküldve az e-mail címére"
+  }
+}

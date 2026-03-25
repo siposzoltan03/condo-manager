@@ -1,0 +1,38 @@
+{
+  "common": {
+    "appName": "Condo Manager",
+    "login": "Log in",
+    "logout": "Log out",
+    "email": "Email",
+    "password": "Password",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "success": "Operation successful"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "announcements": "Announcements",
+    "forum": "Forum",
+    "messages": "Messages",
+    "finance": "Finance",
+    "maintenance": "Maintenance",
+    "voting": "Voting",
+    "documents": "Documents",
+    "settings": "Settings",
+    "admin": "Administration",
+    "users": "Users"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "forgotPassword": "Forgot Password",
+    "resetPassword": "Reset Password",
+    "invalidCredentials": "Invalid email or password",
+    "passwordResetSent": "Password reset link has been sent to your email"
+  }
+}
