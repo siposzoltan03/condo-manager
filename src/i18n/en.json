@@ -98,6 +98,28 @@
     "delivery_push": "Push",
     "delivery_none": "None"
   },
+  "announcements": {
+    "title": "Announcements",
+    "subtitle": "Stay up to date with the latest news and updates from your building management.",
+    "newAnnouncement": "New Announcement",
+    "filterPlaceholder": "Search announcements...",
+    "allAudiences": "All Audiences",
+    "audienceAll": "All Residents",
+    "audienceBoardOnly": "Board Only",
+    "readMore": "Read Full Details",
+    "attachments": "attachments",
+    "views": "views",
+    "noAnnouncements": "No announcements found",
+    "createTitle": "Title",
+    "createBody": "Body",
+    "createAudience": "Target Audience",
+    "save": "Publish Announcement",
+    "backToList": "Back to Announcements",
+    "notFound": "Announcement not found",
+    "pageOf": "Page {page} of {totalPages}",
+    "previous": "Previous",
+    "next": "Next"
+  },
   "auth": {
     "signIn": "Sign In",
     "forgotPassword": "Forgot Password",

@@ -98,6 +98,28 @@
     "delivery_push": "Push",
     "delivery_none": "Nincs"
   },
+  "announcements": {
+    "title": "Hirdetmények",
+    "subtitle": "Maradjon naprakész az épületkezeléssel kapcsolatos legfrissebb hírekkel és frissítésekkel.",
+    "newAnnouncement": "Új hirdetmény",
+    "filterPlaceholder": "Hirdetmények keresése...",
+    "allAudiences": "Minden célcsoport",
+    "audienceAll": "Minden lakó",
+    "audienceBoardOnly": "Csak igazgatóság",
+    "readMore": "Teljes részletek",
+    "attachments": "melléklet",
+    "views": "megtekintés",
+    "noAnnouncements": "Nem található hirdetmény",
+    "createTitle": "Cím",
+    "createBody": "Tartalom",
+    "createAudience": "Célközönség",
+    "save": "Hirdetmény közzététele",
+    "backToList": "Vissza a hirdetményekhez",
+    "notFound": "Hirdetmény nem található",
+    "pageOf": "{page}. oldal / {totalPages}",
+    "previous": "Előző",
+    "next": "Következő"
+  },
   "auth": {
     "signIn": "Bejelentkezés",
     "forgotPassword": "Elfelejtett jelszó",
