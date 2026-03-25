@@ -26,24 +26,28 @@ function isPublicPage(pathname: string): boolean {
 export default auth((req) => {
   const { pathname } = req.nextUrl;
 
-  // Skip auth check for API auth routes
-  if (pathname.startsWith("/api/auth")) {
+  // Skip middleware for all API routes
+  if (pathname.startsWith("/api")) {
     return NextResponse.next();
   }
 
   const isAuthenticated = !!req.auth;
   const isPublic = isPublicPage(pathname);
 
+  // Extract locale from the current pathname (e.g. /hu/dashboard -> hu)
+  const localeMatch = pathname.match(new RegExp(`^/(${routing.locales.join("|")})(\/|$)`));
+  const locale = localeMatch ? localeMatch[1] : routing.defaultLocale;
+
   // Redirect unauthenticated users to login
   if (!isAuthenticated && !isPublic) {
-    const loginUrl = new URL("/login", req.url);
+    const loginUrl = new URL(`/${locale}/login`, req.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
   // Redirect authenticated users away from login page
   if (isAuthenticated && isPublic) {
-    return NextResponse.redirect(new URL("/", req.url));
+    return NextResponse.redirect(new URL(`/${locale}`, req.url));
   }
 
   // Apply next-intl middleware
@@ -51,5 +55,5 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/((?!api/auth|_next|_vercel|.*\\..*).*)"],
+  matcher: ["/((?!api|_next|_vercel|.*\\..*).*)"],
 };

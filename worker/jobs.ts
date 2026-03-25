@@ -1,5 +1,6 @@
 import { Job } from "bullmq";
 import { PrismaClient } from "@prisma/client";
+import { escapeHtml } from "../src/lib/escape-html";
 import { sendEmail } from "./processors/email";
 import { sendPush, PushSubscription } from "./processors/push";
 
@@ -51,7 +52,7 @@ export async function processNotificationJob(job: Job): Promise<void> {
       const channel: string = prefs[prefKey] ?? "email";
 
       if (channel === "email" || channel === "both") {
-        const htmlBody = `<p>${body}</p>`;
+        const htmlBody = `<p>${escapeHtml(body)}</p>`;
         await sendEmail(user.email, title, htmlBody);
       }
 

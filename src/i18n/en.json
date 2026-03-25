@@ -46,7 +46,16 @@
     "primaryContact": "Primary Contact",
     "allRoles": "All Roles",
     "searchPlaceholder": "Search by name or email...",
-    "noUsers": "No users found"
+    "noUsers": "No users found",
+    "totalCount": "{count, plural, one {# user} other {# users}} total",
+    "pageOf": "Page {page} of {totalPages}",
+    "previous": "Previous",
+    "next": "Next",
+    "roleSuperAdmin": "Super Admin",
+    "roleAdmin": "Admin",
+    "roleBoardMember": "Board Member",
+    "roleResident": "Resident",
+    "roleTenant": "Tenant"
   },
   "settings": {
     "title": "Settings",
@@ -84,13 +93,23 @@
     "confirmPassword": "Confirm New Password",
     "passwordChanged": "Password changed successfully",
     "passwordMismatch": "Passwords do not match",
-    "passwordTooShort": "New password must be at least 8 characters"
+    "passwordTooShort": "New password must be at least 8 characters",
+    "delivery_email": "Email",
+    "delivery_push": "Push",
+    "delivery_none": "None"
   },
   "auth": {
     "signIn": "Sign In",
     "forgotPassword": "Forgot Password",
     "resetPassword": "Reset Password",
     "invalidCredentials": "Invalid email or password",
-    "passwordResetSent": "Password reset link has been sent to your email"
+    "passwordResetSent": "Password reset link has been sent to your email",
+    "passwordTooShort": "Password must be at least 8 characters",
+    "passwordMismatch": "Passwords do not match",
+    "resetSuccess": "Your password has been reset successfully. You can now sign in.",
+    "resetPasswordDesc": "Choose a new password for your account.",
+    "invalidToken": "Invalid or missing reset token. Please request a new reset link.",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm Password"
   }
 }

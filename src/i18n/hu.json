@@ -46,7 +46,16 @@
     "primaryContact": "Elsődleges kapcsolattartó",
     "allRoles": "Minden szerep",
     "searchPlaceholder": "Keresés név vagy e-mail alapján...",
-    "noUsers": "Nem található felhasználó"
+    "noUsers": "Nem található felhasználó",
+    "totalCount": "{count, plural, one {# felhasználó} other {# felhasználó}} összesen",
+    "pageOf": "{page}. oldal / {totalPages}",
+    "previous": "Előző",
+    "next": "Következő",
+    "roleSuperAdmin": "Főadminisztrátor",
+    "roleAdmin": "Adminisztrátor",
+    "roleBoardMember": "Igazgatósági tag",
+    "roleResident": "Lakástulajdonos",
+    "roleTenant": "Bérlő"
   },
   "settings": {
     "title": "Beállítások",
@@ -84,13 +93,23 @@
     "confirmPassword": "Új jelszó megerősítése",
     "passwordChanged": "A jelszó sikeresen módosítva",
     "passwordMismatch": "A jelszavak nem egyeznek",
-    "passwordTooShort": "Az új jelszónak legalább 8 karakter hosszúnak kell lennie"
+    "passwordTooShort": "Az új jelszónak legalább 8 karakter hosszúnak kell lennie",
+    "delivery_email": "E-mail",
+    "delivery_push": "Push",
+    "delivery_none": "Nincs"
   },
   "auth": {
     "signIn": "Bejelentkezés",
     "forgotPassword": "Elfelejtett jelszó",
     "resetPassword": "Jelszó visszaállítása",
     "invalidCredentials": "Hibás e-mail cím vagy jelszó",
-    "passwordResetSent": "A jelszó-visszaállító link elküldve az e-mail címére"
+    "passwordResetSent": "A jelszó-visszaállító link elküldve az e-mail címére",
+    "passwordTooShort": "A jelszónak legalább 8 karakter hosszúnak kell lennie",
+    "passwordMismatch": "A jelszavak nem egyeznek",
+    "resetSuccess": "A jelszó sikeresen visszaállítva. Most már bejelentkezhet.",
+    "resetPasswordDesc": "Válasszon új jelszót a fiókjához.",
+    "invalidToken": "Érvénytelen vagy hiányzó visszaállító token. Kérjen új visszaállító linket.",
+    "newPassword": "Új jelszó",
+    "confirmPassword": "Jelszó megerősítése"
   }
 }

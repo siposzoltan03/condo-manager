@@ -9,6 +9,8 @@ export const notificationsQueue = new Queue("notifications", {
       type: "exponential",
       delay: 1000,
     },
+    removeOnComplete: { count: 1000 },
+    removeOnFail: { count: 5000 },
   },
 });
 
@@ -20,5 +22,7 @@ export const scheduledQueue = new Queue("scheduled", {
       type: "exponential",
       delay: 1000,
     },
+    removeOnComplete: { count: 1000 },
+    removeOnFail: { count: 5000 },
   },
 });

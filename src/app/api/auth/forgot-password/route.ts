@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "crypto";
 import { prisma } from "@/lib/prisma";
+import { escapeHtml } from "@/lib/escape-html";
 import { sendEmail } from "../../../../../worker/processors/email";
 
 export async function POST(request: NextRequest) {
@@ -46,7 +47,7 @@ export async function POST(request: NextRequest) {
         "Password Reset — Condo Manager",
         `
         <h2>Password Reset</h2>
-        <p>Hello ${user.name},</p>
+        <p>Hello ${escapeHtml(user.name)},</p>
         <p>You requested a password reset for your Condo Manager account.</p>
         <p><a href="${resetUrl}" style="display:inline-block;padding:12px 24px;background-color:#002045;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;">Reset Password</a></p>
         <p>This link expires in 1 hour. If you did not request this, ignore this email.</p>

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Search, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { UserFormModal } from "./user-form";
+import { useAuth } from "@/hooks/use-auth";
 
 interface UserUnit {
   number: string;
@@ -36,18 +37,20 @@ const ROLE_COLORS: Record<string, string> = {
   TENANT: "bg-slate-100 text-slate-700",
 };
 
-const ROLE_LABELS: Record<string, string> = {
-  SUPER_ADMIN: "Super Admin",
-  ADMIN: "Admin",
-  BOARD_MEMBER: "Board Member",
-  RESIDENT: "Resident",
-  TENANT: "Tenant",
+const ROLE_KEYS: Record<string, string> = {
+  SUPER_ADMIN: "roleSuperAdmin",
+  ADMIN: "roleAdmin",
+  BOARD_MEMBER: "roleBoardMember",
+  RESIDENT: "roleResident",
+  TENANT: "roleTenant",
 };
 
 const ALL_ROLES = ["SUPER_ADMIN", "ADMIN", "BOARD_MEMBER", "RESIDENT", "TENANT"];
 
 export function UserList() {
   const t = useTranslations("common");
+  const tUsers = useTranslations("users");
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<UserData[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -78,7 +81,7 @@ export function UserList() {
       setTotal(data.total);
       setTotalPages(data.totalPages);
     } catch {
-      setError("Failed to load users");
+      setError(t("error"));
     } finally {
       setLoading(false);
     }
@@ -123,7 +126,7 @@ export function UserList() {
       if (!res.ok) throw new Error("Failed to update user");
       fetchUsers();
     } catch {
-      setError("Failed to update user status");
+      setError(t("error"));
     }
   }
 
@@ -142,9 +145,9 @@ export function UserList() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">User Management</h1>
+          <h1 className="text-2xl font-bold text-slate-900">{tUsers("title")}</h1>
           <p className="mt-1 text-sm text-slate-500">
-            {total} user{total !== 1 ? "s" : ""} total
+            {tUsers("totalCount", { count: total })}
           </p>
         </div>
         <button
@@ -152,7 +155,7 @@ export function UserList() {
           className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 transition-colors"
         >
           <Plus className="h-4 w-4" />
-          Create User
+          {tUsers("createUser")}
         </button>
       </div>
 
@@ -162,7 +165,7 @@ export function UserList() {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Search by name or email..."
+            placeholder={tUsers("searchPlaceholder")}
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             className="w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -173,10 +176,10 @@ export function UserList() {
           onChange={(e) => handleRoleFilterChange(e.target.value)}
           className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
         >
-          <option value="">All Roles</option>
+          <option value="">{tUsers("allRoles")}</option>
           {ALL_ROLES.map((role) => (
             <option key={role} value={role}>
-              {ROLE_LABELS[role]}
+              {tUsers(ROLE_KEYS[role])}
             </option>
           ))}
         </select>
@@ -196,22 +199,22 @@ export function UserList() {
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50">
                 <th className="px-6 py-3.5 text-left font-semibold text-slate-700">
-                  Name
+                  {tUsers("name")}
                 </th>
                 <th className="px-6 py-3.5 text-left font-semibold text-slate-700">
-                  Email
+                  {tUsers("email")}
                 </th>
                 <th className="px-6 py-3.5 text-left font-semibold text-slate-700">
-                  Unit
+                  {tUsers("unit")}
                 </th>
                 <th className="px-6 py-3.5 text-left font-semibold text-slate-700">
-                  Role
+                  {tUsers("role")}
                 </th>
                 <th className="px-6 py-3.5 text-left font-semibold text-slate-700">
-                  Status
+                  {tUsers("status")}
                 </th>
                 <th className="px-6 py-3.5 text-right font-semibold text-slate-700">
-                  Actions
+                  {tUsers("actions")}
                 </th>
               </tr>
             </thead>
@@ -225,7 +228,7 @@ export function UserList() {
               ) : users.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
-                    No users found
+                    {tUsers("noUsers")}
                   </td>
                 </tr>
               ) : (
@@ -247,7 +250,7 @@ export function UserList() {
                           ROLE_COLORS[user.role] ?? "bg-slate-100 text-slate-700"
                         }`}
                       >
-                        {ROLE_LABELS[user.role] ?? user.role}
+                        {ROLE_KEYS[user.role] ? tUsers(ROLE_KEYS[user.role]) : user.role}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -258,7 +261,7 @@ export function UserList() {
                             : "bg-amber-100 text-amber-800"
                         }`}
                       >
-                        {user.isActive ? "Active" : "Inactive"}
+                        {user.isActive ? tUsers("active") : tUsers("inactive")}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
@@ -277,7 +280,7 @@ export function UserList() {
                               : "text-emerald-600 hover:bg-emerald-50"
                           }`}
                         >
-                          {user.isActive ? "Deactivate" : "Activate"}
+                          {user.isActive ? tUsers("deactivate") : tUsers("activate")}
                         </button>
                       </div>
                     </td>
@@ -292,7 +295,7 @@ export function UserList() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between border-t border-slate-200 bg-white px-6 py-3">
             <p className="text-sm text-slate-600">
-              Page {page} of {totalPages}
+              {tUsers("pageOf", { page, totalPages })}
             </p>
             <div className="flex items-center gap-2">
               <button
@@ -301,14 +304,14 @@ export function UserList() {
                 className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronLeft className="h-3.5 w-3.5" />
-                Previous
+                {tUsers("previous")}
               </button>
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
                 className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                Next
+                {tUsers("next")}
                 <ChevronRight className="h-3.5 w-3.5" />
               </button>
             </div>
@@ -320,6 +323,7 @@ export function UserList() {
       {showModal && (
         <UserFormModal
           user={editingUser}
+          currentUserRole={currentUser?.role ?? ""}
           onClose={handleModalClose}
           onSuccess={handleModalSuccess}
         />

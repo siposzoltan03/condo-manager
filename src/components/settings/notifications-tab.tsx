@@ -17,21 +17,17 @@ interface NotificationsTabProps {
   onUpdate: () => void;
 }
 
-const EVENT_TYPES = [
-  { key: "announcements", label: "Announcements" },
-  { key: "messages", label: "Messages" },
-  { key: "maintenance", label: "Maintenance" },
-  { key: "payments", label: "Payments" },
-  { key: "voting", label: "Voting" },
+const EVENT_TYPE_KEYS = [
+  "announcements",
+  "messages",
+  "maintenance",
+  "payments",
+  "voting",
 ] as const;
 
 type DeliveryMethod = "email" | "push" | "none";
 
-const DELIVERY_OPTIONS: { value: DeliveryMethod; label: string }[] = [
-  { value: "email", label: "Email" },
-  { value: "push", label: "Push" },
-  { value: "none", label: "None" },
-];
+const DELIVERY_METHODS: DeliveryMethod[] = ["email", "push", "none"];
 
 export function NotificationsTab({ preferences, onUpdate }: NotificationsTabProps) {
   const t = useTranslations("common");
@@ -78,9 +74,9 @@ export function NotificationsTab({ preferences, onUpdate }: NotificationsTabProp
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-slate-900">Notification Preferences</h3>
+        <h3 className="text-lg font-semibold text-slate-900">{tSettings("notifTitle")}</h3>
         <p className="mt-1 text-sm text-slate-500">
-          Choose how you want to be notified for each type of event.
+          {tSettings("notifDesc")}
         </p>
       </div>
 
@@ -90,41 +86,41 @@ export function NotificationsTab({ preferences, onUpdate }: NotificationsTabProp
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50">
               <th className="px-6 py-3.5 text-left font-semibold text-slate-700">
-                Event Type
+                {tSettings("eventType")}
               </th>
-              {DELIVERY_OPTIONS.map((opt) => (
+              {DELIVERY_METHODS.map((method) => (
                 <th
-                  key={opt.value}
+                  key={method}
                   className="px-6 py-3.5 text-center font-semibold text-slate-700"
                 >
-                  {opt.label}
+                  {tSettings(`delivery_${method}`)}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {EVENT_TYPES.map((event) => {
+            {EVENT_TYPE_KEYS.map((eventKey) => {
               const currentMethod =
-                (prefs[event.key as keyof NotificationPreferences] as string) || "email";
+                (prefs[eventKey as keyof NotificationPreferences] as string) || "email";
               return (
-                <tr key={event.key} className="hover:bg-slate-50 transition-colors">
+                <tr key={eventKey} className="hover:bg-slate-50 transition-colors">
                   <td className="px-6 py-4 font-medium text-slate-900">
-                    {event.label}
+                    {tSettings(eventKey)}
                   </td>
-                  {DELIVERY_OPTIONS.map((opt) => {
-                    const isPush = opt.value === "push";
+                  {DELIVERY_METHODS.map((method) => {
+                    const isPush = method === "push";
                     return (
-                      <td key={opt.value} className="px-6 py-4 text-center">
+                      <td key={method} className="px-6 py-4 text-center">
                         <span
                           className={isPush ? "inline-flex flex-col items-center gap-0.5" : undefined}
                           title={isPush ? tSettings("pushComingSoon") : undefined}
                         >
                           <input
                             type="radio"
-                            name={`notif-${event.key}`}
-                            value={opt.value}
-                            checked={currentMethod === opt.value}
-                            onChange={() => handleMethodChange(event.key, opt.value)}
+                            name={`notif-${eventKey}`}
+                            value={method}
+                            checked={currentMethod === method}
+                            onChange={() => handleMethodChange(eventKey, method)}
                             disabled={isPush}
                             className="h-4 w-4 border-slate-300 text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-40"
                           />
@@ -162,9 +158,9 @@ export function NotificationsTab({ preferences, onUpdate }: NotificationsTabProp
           />
         </button>
         <div>
-          <p className="text-sm font-medium text-slate-900">Daily Digest</p>
+          <p className="text-sm font-medium text-slate-900">{tSettings("dailyDigest")}</p>
           <p className="text-xs text-slate-500">
-            Receive a single daily summary email instead of individual notifications.
+            {tSettings("dailyDigestDesc")}
           </p>
         </div>
       </div>

@@ -4,7 +4,7 @@ import { requireRole, hasMinimumRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import { Role } from "@prisma/client";
+import { Prisma, Role } from "@prisma/client";
 
 const userSelect = {
   id: true,
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
     const limit = 20;
     const skip = (page - 1) * limit;
 
-    const where: Record<string, unknown> = {};
+    const where: Prisma.UserWhereInput = {};
 
     if (search) {
       where.OR = [

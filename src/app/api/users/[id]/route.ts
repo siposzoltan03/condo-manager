@@ -3,7 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { requireRole, hasMinimumRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
-import { Role } from "@prisma/client";
+import { Prisma, Role } from "@prisma/client";
 
 const userSelect = {
   id: true,
@@ -105,7 +105,7 @@ export async function PATCH(
     }
 
     // Build update data — only include fields that were provided
-    const updateData: Record<string, unknown> = {};
+    const updateData: Prisma.UserUpdateInput = {};
     if (role !== undefined) updateData.role = role;
     if (unitId !== undefined) updateData.unitId = unitId;
     if (isPrimaryContact !== undefined)

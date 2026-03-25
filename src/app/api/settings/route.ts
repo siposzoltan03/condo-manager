@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 export async function GET() {
@@ -51,7 +52,7 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json();
     const { name, language, notificationPreferences, currentPassword, newPassword } = body;
 
-    const updateData: Record<string, unknown> = {};
+    const updateData: Prisma.UserUpdateInput = {};
 
     // Update name if provided
     if (name !== undefined) {

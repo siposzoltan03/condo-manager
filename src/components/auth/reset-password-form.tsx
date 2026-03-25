@@ -23,12 +23,12 @@ export function ResetPasswordForm() {
     setError("");
 
     if (password.length < 8) {
-      setError("Password must be at least 8 characters");
+      setError(t("passwordTooShort"));
       return;
     }
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError(t("passwordMismatch"));
       return;
     }
 
@@ -71,7 +71,7 @@ export function ResetPasswordForm() {
                 {t("resetPassword")}
               </h1>
               <p className="mt-3 text-sm" style={{ color: "#43474e" }}>
-                Your password has been reset successfully. You can now sign in.
+                {t("resetSuccess")}
               </p>
               <Link
                 href="/login"
@@ -90,13 +90,12 @@ export function ResetPasswordForm() {
                 {t("resetPassword")}
               </h1>
               <p className="mt-2 text-sm" style={{ color: "#43474e" }}>
-                Choose a new password for your account.
+                {t("resetPasswordDesc")}
               </p>
 
               {!token && (
                 <div className="mt-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
-                  Invalid or missing reset token. Please request a new reset
-                  link.
+                  {t("invalidToken")}
                 </div>
               )}
 
@@ -113,7 +112,7 @@ export function ResetPasswordForm() {
                     className="block text-xs font-semibold uppercase tracking-wider"
                     style={{ color: "#43474e" }}
                   >
-                    New {tCommon("password")}
+                    {t("newPassword")}
                   </label>
                   <div className="relative mt-2">
                     <input
@@ -140,7 +139,7 @@ export function ResetPasswordForm() {
                     className="block text-xs font-semibold uppercase tracking-wider"
                     style={{ color: "#43474e" }}
                   >
-                    Confirm {tCommon("password")}
+                    {t("confirmPassword")}
                   </label>
                   <div className="relative mt-2">
                     <input

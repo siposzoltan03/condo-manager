@@ -44,7 +44,7 @@ export async function getAuditLogs(params: GetAuditLogsParams) {
   const limit = params.limit ?? 20;
   const skip = (page - 1) * limit;
 
-  const where: Record<string, unknown> = {};
+  const where: Prisma.AuditLogWhereInput = {};
 
   if (params.entityType) {
     where.entityType = params.entityType;
