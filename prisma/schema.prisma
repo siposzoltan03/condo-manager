@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  BOARD_MEMBER
+  RESIDENT
+  TENANT
+}
+
+model Unit {
+  id             String   @id @default(cuid())
+  number         String   @unique
+  floor          Int
+  ownershipShare Decimal  @db.Decimal(5, 4)
+  size           Decimal  @db.Decimal(8, 2)
+  users          User[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model User {
+  id                      String               @id @default(cuid())
+  email                   String               @unique
+  passwordHash            String
+  name                    String
+  role                    Role                  @default(RESIDENT)
+  unit                    Unit                  @relation(fields: [unitId], references: [id])
+  unitId                  String
+  isPrimaryContact        Boolean              @default(false)
+  language                String               @default("hu")
+  notificationPreferences Json                 @default("{}")
+  isActive                Boolean              @default(true)
+  createdAt               DateTime             @default(now())
+  updatedAt               DateTime             @updatedAt
+  auditLogs               AuditLog[]
+  notifications           Notification[]
+  passwordResetTokens     PasswordResetToken[]
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  entityType String
+  entityId   String
+  action     String
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  oldValue   Json?
+  newValue   Json?
+  reason     String?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Notification {
+  id         String   @id @default(cuid())
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  type       String
+  title      String
+  body       String
+  isRead     Boolean  @default(false)
+  entityType String?
+  entityId   String?
+  createdAt  DateTime @default(now())
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  user      User      @relation(fields: [userId], references: [id])
+  userId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+}

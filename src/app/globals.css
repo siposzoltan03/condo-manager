@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+/* @theme — Tailwind v4 extension point: customise design tokens here
+   (colours, fonts, spacing, etc.) instead of tailwind.config.ts, which
+   is not read by Tailwind v4. */
+@theme {
+}
