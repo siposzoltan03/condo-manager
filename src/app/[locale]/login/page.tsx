@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { LoginForm } from "@/components/auth/login-form";
 import { LoginLanguageSwitcher } from "@/components/auth/login-language-switcher";
 
@@ -158,7 +159,9 @@ export default function LoginPage() {
                 account.
               </p>
             </div>
-            <LoginForm />
+            <Suspense>
+              <LoginForm />
+            </Suspense>
           </div>
           <p
             className="mt-6 text-center text-sm"

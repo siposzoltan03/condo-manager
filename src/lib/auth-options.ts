@@ -15,7 +15,7 @@ export const authOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
@@ -26,6 +26,17 @@ export const authOptions = {
         // Dynamic imports to avoid bundling Node.js APIs in Edge Runtime
         const { prisma } = await import("./prisma");
         const bcrypt = await import("bcryptjs");
+        const rateLimitMod = await import("./rate-limit");
+
+        // Rate limit: 5 attempts per 15 minutes per email
+        const rl = await rateLimitMod.rateLimit({
+          key: `auth:login:${email.toLowerCase()}`,
+          limit: 5,
+          windowSeconds: 15 * 60,
+        });
+        if (!rl.success) {
+          return null;
+        }
 
         const user = await prisma.user.findUnique({
           where: { email },
@@ -62,6 +73,8 @@ export const authOptions = {
   ],
   session: {
     strategy: "jwt" as const,
+    maxAge: 8 * 60 * 60, // 8 hours
+    updateAge: 60 * 60, // 1 hour sliding window
   },
   pages: {
     signIn: "/login",

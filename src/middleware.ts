@@ -26,8 +26,14 @@ function isPublicPage(pathname: string): boolean {
 export default auth((req) => {
   const { pathname } = req.nextUrl;
 
-  // Skip middleware for all API routes
+  // API routes: allow auth endpoints, require auth for everything else
   if (pathname.startsWith("/api")) {
+    if (pathname.startsWith("/api/auth")) {
+      return NextResponse.next();
+    }
+    if (!req.auth) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     return NextResponse.next();
   }
 
@@ -55,5 +61,5 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/((?!api|_next|_vercel|.*\\..*).*)"],
+  matcher: ["/((?!_next|_vercel|.*\\..*).*)"],
 };

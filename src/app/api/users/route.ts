@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
           { status: 400 }
         );
       }
-      where.role = role;
+      where.role = role as Role;
     }
 
     const [users, total] = await Promise.all([

@@ -107,7 +107,7 @@ export async function PATCH(
     // Build update data — only include fields that were provided
     const updateData: Prisma.UserUpdateInput = {};
     if (role !== undefined) updateData.role = role;
-    if (unitId !== undefined) updateData.unitId = unitId;
+    if (unitId !== undefined) updateData.unit = { connect: { id: unitId } };
     if (isPrimaryContact !== undefined)
       updateData.isPrimaryContact = isPrimaryContact;
     if (isActive !== undefined) updateData.isActive = isActive;

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createHash } from "crypto";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,6 +18,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Rate limit: 5 attempts per token per 15 minutes
+    const rl = await rateLimit({
+      key: `auth:reset:${token}`,
+      limit: 5,
+      windowSeconds: 15 * 60,
+    });
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: "Too many attempts. Please try again later." },
+        { status: 429 }
+      );
+    }
+
     if (password.length < 8) {
       return NextResponse.json(
         { error: "Password must be at least 8 characters" },
@@ -23,9 +38,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Hash the submitted token before lookup (C3)
+    const hashedToken = createHash("sha256").update(token).digest("hex");
+
     // Find valid token
     const resetToken = await prisma.passwordResetToken.findUnique({
-      where: { token },
+      where: { token: hashedToken },
       include: { user: true },
     });
 

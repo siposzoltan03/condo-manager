@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { randomBytes } from "crypto";
+import { randomBytes, createHash } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { escapeHtml } from "@/lib/escape-html";
+import { rateLimit } from "@/lib/rate-limit";
 import { sendEmail } from "../../../../../worker/processors/email";
 
 export async function POST(request: NextRequest) {
@@ -13,16 +14,34 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true });
     }
 
+    // Rate limit: 3 requests per email per hour
+    const rl = await rateLimit({
+      key: `auth:forgot:${email.toLowerCase()}`,
+      limit: 3,
+      windowSeconds: 60 * 60,
+    });
+    if (!rl.success) {
+      // Still return success to prevent enumeration
+      return NextResponse.json({ success: true });
+    }
+
     const user = await prisma.user.findUnique({ where: { email } });
 
     if (user && user.isActive) {
-      // Generate token
-      const token = randomBytes(32).toString("hex");
+      // Invalidate existing unused tokens for this user (H3)
+      await prisma.passwordResetToken.updateMany({
+        where: { userId: user.id, usedAt: null },
+        data: { usedAt: new Date() },
+      });
+
+      // Generate token — store hashed, send raw (C3)
+      const rawToken = randomBytes(32).toString("hex");
+      const hashedToken = createHash("sha256").update(rawToken).digest("hex");
       const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
       await prisma.passwordResetToken.create({
         data: {
-          token,
+          token: hashedToken,
           userId: user.id,
           expiresAt,
         },
@@ -40,7 +59,7 @@ export async function POST(request: NextRequest) {
       const locale = preferredLocale ?? "hu";
       const baseUrl =
         process.env.NEXTAUTH_URL ?? process.env.BASE_URL ?? "http://localhost:3000";
-      const resetUrl = `${baseUrl}/${locale}/reset-password?token=${token}`;
+      const resetUrl = `${baseUrl}/${locale}/reset-password?token=${rawToken}`;
 
       await sendEmail(
         user.email,
