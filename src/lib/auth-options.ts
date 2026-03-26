@@ -87,11 +87,14 @@ export const authOptions = {
         token.unitId = user.unitId;
         token.unitNumber = user.unitNumber;
       }
+      // If token is missing custom fields (stale JWT from before a code change),
+      // skip the DB lookup to stay Edge-compatible. The user will be
+      // redirected to login if their session is truly invalid.
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id as string;
+        session.user.id = (token.id as string) || (token.sub ?? "");
         session.user.role = token.role as string;
         session.user.unitId = token.unitId as string;
         session.user.unitNumber = token.unitNumber as string;

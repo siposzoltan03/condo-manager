@@ -15,6 +15,33 @@ enum Role {
   TENANT
 }
 
+enum TargetAudience {
+  ALL
+  SPECIFIC_UNITS
+  BOARD_ONLY
+}
+
+enum ConversationType {
+  DIRECT
+  GROUP
+}
+
+enum ComplaintCategory {
+  NOISE
+  DAMAGE
+  SAFETY
+  PARKING
+  OTHER
+}
+
+enum ComplaintStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  IN_PROGRESS
+  RESOLVED
+  REJECTED
+}
+
 model Unit {
   id             String   @id @default(cuid())
   number         String   @unique
@@ -43,6 +70,14 @@ model User {
   auditLogs               AuditLog[]
   notifications           Notification[]
   passwordResetTokens     PasswordResetToken[]
+  announcements           Announcement[]              @relation("AnnouncementAuthor")
+  announcementReads       AnnouncementRead[]
+  forumTopics             ForumTopic[]                @relation("ForumTopicAuthor")
+  forumReplies            ForumReply[]                @relation("ForumReplyAuthor")
+  conversationParticipants ConversationParticipant[]
+  sentMessages            Message[]                   @relation("MessageSender")
+  complaints              Complaint[]                 @relation("ComplaintAuthor")
+  complaintNotes          ComplaintNote[]             @relation("ComplaintNoteAuthor")
 }
 
 model AuditLog {
@@ -86,4 +121,143 @@ model PasswordResetToken {
   expiresAt DateTime
   usedAt    DateTime?
   createdAt DateTime  @default(now())
+}
+
+// ─── Communication Module ────────────────────────────────────────────────────
+
+model Announcement {
+  id             String           @id @default(cuid())
+  title          String
+  body           String           @db.Text
+  author         User             @relation("AnnouncementAuthor", fields: [authorId], references: [id])
+  authorId       String
+  targetAudience TargetAudience
+  attachments    Json             @default("[]")
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  reads          AnnouncementRead[]
+
+  @@index([createdAt])
+  @@index([authorId])
+}
+
+model AnnouncementRead {
+  id             String       @id @default(cuid())
+  user           User         @relation(fields: [userId], references: [id])
+  userId         String
+  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  announcementId String
+  readAt         DateTime     @default(now())
+
+  @@unique([userId, announcementId])
+}
+
+model ForumCategory {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  description String?
+  sortOrder   Int          @default(0)
+  createdAt   DateTime     @default(now())
+  topics      ForumTopic[]
+}
+
+model ForumTopic {
+  id             String        @id @default(cuid())
+  title          String
+  body           String        @db.Text
+  category       ForumCategory @relation(fields: [categoryId], references: [id])
+  categoryId     String
+  author         User          @relation("ForumTopicAuthor", fields: [authorId], references: [id])
+  authorId       String
+  isPinned       Boolean       @default(false)
+  isLocked       Boolean       @default(false)
+  lastActivityAt DateTime      @default(now())
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  replies        ForumReply[]
+
+  @@index([categoryId, lastActivityAt])
+  @@index([authorId])
+}
+
+model ForumReply {
+  id            String       @id @default(cuid())
+  body          String       @db.Text
+  topic         ForumTopic   @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  topicId       String
+  author        User         @relation("ForumReplyAuthor", fields: [authorId], references: [id])
+  authorId      String
+  parentReply   ForumReply?  @relation("ReplyThread", fields: [parentReplyId], references: [id])
+  parentReplyId String?
+  childReplies  ForumReply[] @relation("ReplyThread")
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([topicId, createdAt])
+}
+
+model Conversation {
+  id           String                    @id @default(cuid())
+  type         ConversationType
+  name         String?
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @updatedAt
+  participants ConversationParticipant[]
+  messages     Message[]
+}
+
+model ConversationParticipant {
+  id             String       @id @default(cuid())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversationId String
+  user           User         @relation(fields: [userId], references: [id])
+  userId         String
+  lastReadAt     DateTime     @default(now())
+  joinedAt       DateTime     @default(now())
+
+  @@unique([conversationId, userId])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversationId String
+  sender         User         @relation("MessageSender", fields: [senderId], references: [id])
+  senderId       String
+  body           String       @db.Text
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId, createdAt])
+}
+
+model Complaint {
+  id             String           @id @default(cuid())
+  author         User             @relation("ComplaintAuthor", fields: [authorId], references: [id])
+  authorId       String
+  category       ComplaintCategory
+  description    String           @db.Text
+  photos         Json             @default("[]")
+  isPrivate      Boolean          @default(false)
+  trackingNumber String           @unique
+  status         ComplaintStatus  @default(SUBMITTED)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  notes          ComplaintNote[]
+
+  @@index([status])
+  @@index([authorId])
+  @@index([createdAt])
+}
+
+model ComplaintNote {
+  id          String    @id @default(cuid())
+  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  complaintId String
+  author      User      @relation("ComplaintNoteAuthor", fields: [authorId], references: [id])
+  authorId    String
+  body        String    @db.Text
+  isInternal  Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  @@index([complaintId, createdAt])
 }

@@ -6,6 +6,23 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("Seeding database...");
 
+  // Cleanup in correct order to respect foreign keys
+  await prisma.complaintNote.deleteMany();
+  await prisma.complaint.deleteMany();
+  await prisma.message.deleteMany();
+  await prisma.conversationParticipant.deleteMany();
+  await prisma.conversation.deleteMany();
+  await prisma.forumReply.deleteMany();
+  await prisma.forumTopic.deleteMany();
+  await prisma.forumCategory.deleteMany();
+  await prisma.announcementRead.deleteMany();
+  await prisma.announcement.deleteMany();
+  await prisma.passwordResetToken.deleteMany();
+  await prisma.notification.deleteMany();
+  await prisma.auditLog.deleteMany();
+  await prisma.user.deleteMany();
+  await prisma.unit.deleteMany();
+
   const passwordHash = await bcrypt.hash("password123", 12);
 
   // Create 5 units
@@ -132,9 +149,20 @@ async function main() {
     ],
   });
 
+  // Create forum categories
+  await prisma.forumCategory.createMany({
+    data: [
+      { name: "General", description: "General discussion about the condo community", sortOrder: 0 },
+      { name: "Noise Complaints", description: "Discuss and report noise-related issues", sortOrder: 1 },
+      { name: "Suggestions", description: "Ideas and suggestions for improving the community", sortOrder: 2 },
+      { name: "Maintenance Tips", description: "Share and discuss maintenance tips and tricks", sortOrder: 3 },
+    ],
+  });
+
   console.log("Seeding complete.");
   console.log("  - 5 units created");
   console.log("  - 8 users created (password: password123)");
+  console.log("  - 4 forum categories created");
 }
 
 main()
