@@ -1,4 +1,4 @@
-import { PrismaClient, Role } from "@prisma/client";
+import { PrismaClient, Role, AccountType } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -7,6 +7,10 @@ async function main() {
   console.log("Seeding database...");
 
   // Cleanup in correct order to respect foreign keys
+  await prisma.budget.deleteMany();
+  await prisma.ledgerEntry.deleteMany();
+  await prisma.monthlyCharge.deleteMany();
+  await prisma.account.deleteMany();
   await prisma.complaintNote.deleteMany();
   await prisma.complaint.deleteMany();
   await prisma.message.deleteMany();
@@ -149,6 +153,25 @@ async function main() {
     ],
   });
 
+  // Create chart of accounts
+  const accounts = await Promise.all([
+    // EXPENSE accounts
+    prisma.account.create({ data: { name: "Maintenance", type: AccountType.EXPENSE } }),
+    prisma.account.create({ data: { name: "Utilities", type: AccountType.EXPENSE } }),
+    prisma.account.create({ data: { name: "Insurance", type: AccountType.EXPENSE } }),
+    prisma.account.create({ data: { name: "Reserve Fund Contribution", type: AccountType.EXPENSE } }),
+    prisma.account.create({ data: { name: "Management Fees", type: AccountType.EXPENSE } }),
+    prisma.account.create({ data: { name: "Security", type: AccountType.EXPENSE } }),
+    // INCOME accounts
+    prisma.account.create({ data: { name: "Common Charges", type: AccountType.INCOME } }),
+    prisma.account.create({ data: { name: "Other Income", type: AccountType.INCOME } }),
+    // ASSET accounts
+    prisma.account.create({ data: { name: "Current Fund", type: AccountType.ASSET } }),
+    prisma.account.create({ data: { name: "Reserve Fund", type: AccountType.ASSET } }),
+    // LIABILITY accounts
+    prisma.account.create({ data: { name: "Accounts Payable", type: AccountType.LIABILITY } }),
+  ]);
+
   // Create forum categories
   await prisma.forumCategory.createMany({
     data: [
@@ -162,6 +185,7 @@ async function main() {
   console.log("Seeding complete.");
   console.log("  - 5 units created");
   console.log("  - 8 users created (password: password123)");
+  console.log("  - 11 chart of accounts created");
   console.log("  - 4 forum categories created");
 }
 

@@ -42,6 +42,19 @@ enum ComplaintStatus {
   REJECTED
 }
 
+enum AccountType {
+  ASSET
+  LIABILITY
+  INCOME
+  EXPENSE
+}
+
+enum ChargeStatus {
+  PAID
+  UNPAID
+  OVERDUE
+}
+
 model Unit {
   id             String   @id @default(cuid())
   number         String   @unique
@@ -49,6 +62,7 @@ model Unit {
   ownershipShare Decimal  @db.Decimal(5, 4)
   size           Decimal  @db.Decimal(8, 2)
   users          User[]
+  monthlyCharges MonthlyCharge[]
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
@@ -78,6 +92,7 @@ model User {
   sentMessages            Message[]                   @relation("MessageSender")
   complaints              Complaint[]                 @relation("ComplaintAuthor")
   complaintNotes          ComplaintNote[]             @relation("ComplaintNoteAuthor")
+  ledgerEntries           LedgerEntry[]               @relation("LedgerEntryCreator")
 }
 
 model AuditLog {
@@ -260,4 +275,60 @@ model ComplaintNote {
   createdAt   DateTime  @default(now())
 
   @@index([complaintId, createdAt])
+}
+
+// ─── Finance Module ─────────────────────────────────────────────────────────
+
+model Account {
+  id            String      @id @default(cuid())
+  name          String
+  type          AccountType
+  parentId      String?
+  parent        Account?    @relation("AccountChildren", fields: [parentId], references: [id])
+  children      Account[]   @relation("AccountChildren")
+  createdAt     DateTime    @default(now())
+  debitEntries  LedgerEntry[] @relation("DebitAccount")
+  creditEntries LedgerEntry[] @relation("CreditAccount")
+  budgets       Budget[]
+  @@index([type])
+}
+
+model LedgerEntry {
+  id              String   @id @default(cuid())
+  date            DateTime
+  debitAccountId  String
+  debitAccount    Account  @relation("DebitAccount", fields: [debitAccountId], references: [id])
+  creditAccountId String
+  creditAccount   Account  @relation("CreditAccount", fields: [creditAccountId], references: [id])
+  amount          Decimal  @db.Decimal(12, 2)
+  description     String
+  receiptUrl      String?
+  createdById     String
+  createdBy       User     @relation("LedgerEntryCreator", fields: [createdById], references: [id])
+  createdAt       DateTime @default(now())
+  @@index([date])
+  @@index([debitAccountId])
+  @@index([creditAccountId])
+}
+
+model MonthlyCharge {
+  id        String       @id @default(cuid())
+  unitId    String
+  unit      Unit         @relation(fields: [unitId], references: [id])
+  month     String       // "YYYY-MM"
+  amount    Decimal      @db.Decimal(10, 2)
+  status    ChargeStatus @default(UNPAID)
+  paidAt    DateTime?
+  createdAt DateTime     @default(now())
+  @@unique([unitId, month])
+  @@index([status])
+}
+
+model Budget {
+  id            String  @id @default(cuid())
+  year          Int
+  accountId     String
+  account       Account @relation(fields: [accountId], references: [id])
+  plannedAmount Decimal @db.Decimal(12, 2)
+  @@unique([year, accountId])
 }
