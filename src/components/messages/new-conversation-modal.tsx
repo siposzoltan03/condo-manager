@@ -7,8 +7,7 @@ import { X, Search } from "lucide-react";
 interface UserResult {
   id: string;
   name: string;
-  email: string;
-  unit?: { number: string };
+  unitNumber: string | null;
 }
 
 interface NewConversationModalProps {
@@ -41,7 +40,7 @@ export function NewConversationModal({
     setLoading(true);
     try {
       const res = await fetch(
-        `/api/users?search=${encodeURIComponent(search)}&limit=10`
+        `/api/messages/users?search=${encodeURIComponent(search)}&limit=10`
       );
       if (!res.ok) return;
       const data = await res.json();
@@ -190,8 +189,7 @@ export function NewConversationModal({
                         {user.name}
                       </p>
                       <p className="text-xs text-slate-500">
-                        {user.email}
-                        {user.unit ? ` - Unit ${user.unit.number}` : ""}
+                        {user.unitNumber ? `Unit ${user.unitNumber}` : ""}
                       </p>
                     </div>
                     <span className="text-xs text-blue-600 font-medium">
@@ -229,7 +227,7 @@ export function NewConversationModal({
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
           >
-            {t("cancel") || "Cancel"}
+            {t("cancel")}
           </button>
           <button
             onClick={handleCreate}

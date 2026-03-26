@@ -185,7 +185,8 @@
     "addParticipant": "Add",
     "remove": "Remove",
     "directMessage": "Direct Message",
-    "groupMessage": "Group Message"
+    "groupMessage": "Group Message",
+    "cancel": "Cancel"
   },
   "complaints": {
     "title": "Complaints & Requests",

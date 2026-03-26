@@ -142,42 +142,66 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate tracking number: CMP-YYYY-NNN
-    const currentYear = new Date().getFullYear();
-    const prefix = `CMP-${currentYear}-`;
+    // Retry loop to handle unique constraint race conditions (P2002)
+    const MAX_RETRIES = 5;
+    let complaint;
 
-    const lastComplaint = await prisma.complaint.findFirst({
-      where: {
-        trackingNumber: { startsWith: prefix },
-      },
-      orderBy: { trackingNumber: "desc" },
-      select: { trackingNumber: true },
-    });
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      const currentYear = new Date().getFullYear();
+      const prefix = `CMP-${currentYear}-`;
 
-    let nextNumber = 1;
-    if (lastComplaint) {
-      const lastNum = parseInt(lastComplaint.trackingNumber.split("-")[2], 10);
-      if (!isNaN(lastNum)) {
-        nextNumber = lastNum + 1;
+      const lastComplaint = await prisma.complaint.findFirst({
+        where: {
+          trackingNumber: { startsWith: prefix },
+        },
+        orderBy: { trackingNumber: "desc" },
+        select: { trackingNumber: true },
+      });
+
+      let nextNumber = 1;
+      if (lastComplaint) {
+        const lastNum = parseInt(lastComplaint.trackingNumber.split("-")[2], 10);
+        if (!isNaN(lastNum)) {
+          nextNumber = lastNum + 1;
+        }
+      }
+
+      const trackingNumber = `${prefix}${String(nextNumber).padStart(3, "0")}`;
+
+      try {
+        complaint = await prisma.complaint.create({
+          data: {
+            trackingNumber,
+            category: category as ComplaintCategory,
+            description,
+            photos: Array.isArray(photos) ? photos : [],
+            isPrivate: isPrivate ?? false,
+            author: { connect: { id: user.id } },
+          },
+          include: {
+            author: {
+              select: { id: true, name: true },
+            },
+          },
+        });
+        break; // Success — exit retry loop
+      } catch (err: unknown) {
+        const isPrismaUniqueError =
+          err instanceof Prisma.PrismaClientKnownRequestError &&
+          err.code === "P2002";
+        if (isPrismaUniqueError && attempt < MAX_RETRIES - 1) {
+          continue; // Retry with a fresh sequence number
+        }
+        throw err; // Non-retryable or exhausted retries
       }
     }
 
-    const trackingNumber = `${prefix}${String(nextNumber).padStart(3, "0")}`;
-
-    const complaint = await prisma.complaint.create({
-      data: {
-        trackingNumber,
-        category: category as ComplaintCategory,
-        description,
-        photos: Array.isArray(photos) ? photos : [],
-        isPrivate: isPrivate ?? false,
-        author: { connect: { id: user.id } },
-      },
-      include: {
-        author: {
-          select: { id: true, name: true },
-        },
-      },
-    });
+    if (!complaint) {
+      return NextResponse.json(
+        { error: "Failed to generate unique tracking number" },
+        { status: 500 }
+      );
+    }
 
     await createAuditLog({
       entityType: "Complaint",
@@ -185,7 +209,7 @@ export async function POST(request: NextRequest) {
       action: "CREATE",
       userId: user.id,
       newValue: {
-        trackingNumber,
+        trackingNumber: complaint.trackingNumber,
         category,
         description,
         isPrivate: isPrivate ?? false,

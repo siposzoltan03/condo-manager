@@ -1,8 +1,9 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Paperclip, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { formatTimeAgo } from "@/lib/format-time";
 
 interface AnnouncementCardProps {
   id: string;
@@ -34,21 +35,6 @@ function getInitials(name: string): string {
     .slice(0, 2);
 }
 
-function formatTimeAgo(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMins / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffMins < 1) return "just now";
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) return `${diffDays}d ago`;
-  return date.toLocaleDateString();
-}
-
 export function AnnouncementCard({
   id,
   title,
@@ -62,6 +48,7 @@ export function AnnouncementCard({
   createdAt,
 }: AnnouncementCardProps) {
   const t = useTranslations("announcements");
+  const locale = useLocale();
 
   const audienceLabel =
     targetAudience === "BOARD_ONLY" ? t("audienceBoardOnly") : t("audienceAll");
@@ -91,7 +78,7 @@ export function AnnouncementCard({
                 </span>
               </div>
               <span className="text-xs uppercase tracking-wider text-slate-400">
-                {formatTimeAgo(createdAt)}
+                {formatTimeAgo(createdAt, locale)}
               </span>
             </div>
           </div>

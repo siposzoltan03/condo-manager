@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { ArrowLeft, Paperclip, Download } from "lucide-react";
+import DOMPurify from "dompurify";
 import Link from "next/link";
 
 interface Attachment {
@@ -172,7 +173,7 @@ export function AnnouncementDetail({ announcementId }: AnnouncementDetailProps) 
         {/* Body - rendered as HTML */}
         <div
           className="prose prose-slate mt-6 max-w-none"
-          dangerouslySetInnerHTML={{ __html: announcement.body }}
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(announcement.body) }}
         />
 
         {/* Attachments */}

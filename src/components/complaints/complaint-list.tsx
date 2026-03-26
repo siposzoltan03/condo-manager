@@ -93,7 +93,7 @@ export function ComplaintList() {
   }
 
   function handleCardClick(id: string) {
-    router.push(`complaints/${id}`);
+    router.push(`/complaints/${id}`);
   }
 
   return (

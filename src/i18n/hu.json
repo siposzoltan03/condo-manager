@@ -185,7 +185,8 @@
     "addParticipant": "Hozzáadás",
     "remove": "Eltávolítás",
     "directMessage": "Közvetlen üzenet",
-    "groupMessage": "Csoportos üzenet"
+    "groupMessage": "Csoportos üzenet",
+    "cancel": "Mégse"
   },
   "complaints": {
     "title": "Panaszok & Kérelmek",

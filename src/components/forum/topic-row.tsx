@@ -1,8 +1,9 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Lock, MessageCircle } from "lucide-react";
 import Link from "next/link";
+import { formatTimeAgo } from "@/lib/format-time";
 
 interface TopicRowProps {
   id: string;
@@ -23,21 +24,6 @@ function getInitials(name: string): string {
     .slice(0, 2);
 }
 
-function formatTimeAgo(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMins / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffMins < 1) return "just now";
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) return `${diffDays}d ago`;
-  return date.toLocaleDateString();
-}
-
 export function TopicRow({
   id,
   title,
@@ -48,6 +34,7 @@ export function TopicRow({
   lastActivityAt,
 }: TopicRowProps) {
   const t = useTranslations("forum");
+  const locale = useLocale();
 
   return (
     <Link href={`/forum/${id}`} className="block">
@@ -76,7 +63,7 @@ export function TopicRow({
 
         {/* Last activity */}
         <div className="shrink-0 text-right text-sm text-slate-400">
-          {formatTimeAgo(lastActivityAt)}
+          {formatTimeAgo(lastActivityAt, locale)}
         </div>
       </div>
     </Link>

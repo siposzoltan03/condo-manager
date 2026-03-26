@@ -24,7 +24,7 @@ interface ComplaintData {
   photos: unknown;
   status: string;
   isPrivate: boolean;
-  author: { id: true; name: string };
+  author: { id: string; name: string };
   authorId: string;
   notes: NoteData[];
   createdAt: string;

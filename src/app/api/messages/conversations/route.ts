@@ -90,24 +90,37 @@ export async function GET(request: NextRequest) {
         return nameMatch || convNameMatch;
       });
 
-    // Add unread counts with a separate query for efficiency
+    // Build a map of conversationId -> lastReadAt for efficient unread counting
     const conversationIds = result.map((c) => c.id);
-    const unreadCounts = await Promise.all(
-      result.map(async (conv) => {
-        const count = await prisma.message.count({
-          where: {
-            conversationId: conv.id,
-            createdAt: { gt: conv.lastReadAt },
-            senderId: { not: user.id },
-          },
-        });
-        return { id: conv.id, unreadCount: count };
-      })
+    const lastReadMap = new Map(
+      result.map((c) => [c.id, c.lastReadAt])
     );
 
-    const unreadMap = new Map(
-      unreadCounts.map((u) => [u.id, u.unreadCount])
-    );
+    // Single query: fetch all unread messages across all conversations
+    const unreadMessages = conversationIds.length > 0
+      ? await prisma.message.findMany({
+          where: {
+            conversationId: { in: conversationIds },
+            senderId: { not: user.id },
+          },
+          select: {
+            conversationId: true,
+            createdAt: true,
+          },
+        })
+      : [];
+
+    // Aggregate unread counts in memory using per-conversation lastReadAt
+    const unreadMap = new Map<string, number>();
+    for (const msg of unreadMessages) {
+      const lastReadAt = lastReadMap.get(msg.conversationId) ?? new Date(0);
+      if (msg.createdAt > lastReadAt) {
+        unreadMap.set(
+          msg.conversationId,
+          (unreadMap.get(msg.conversationId) ?? 0) + 1
+        );
+      }
+    }
 
     const conversations_out = result.map(
       ({ lastReadAt, ...conv }) => ({

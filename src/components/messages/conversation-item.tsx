@@ -1,6 +1,7 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
+import { formatConversationTime } from "@/lib/format-time";
 
 interface ConversationItemProps {
   id: string;
@@ -28,24 +29,6 @@ function getInitials(name: string): string {
     .slice(0, 2);
 }
 
-function formatTime(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 0) {
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  }
-  if (diffDays === 1) {
-    return "Yesterday";
-  }
-  if (diffDays < 7) {
-    return date.toLocaleDateString([], { weekday: "short" });
-  }
-  return date.toLocaleDateString([], { month: "short", day: "numeric" });
-}
-
 export function ConversationItem({
   name,
   type,
@@ -57,6 +40,7 @@ export function ConversationItem({
   onClick,
 }: ConversationItemProps) {
   const t = useTranslations("messages");
+  const locale = useLocale();
 
   const displayName =
     type === "GROUP"
@@ -95,7 +79,7 @@ export function ConversationItem({
           </span>
           {lastMessage && (
             <span className="text-xs text-slate-400 flex-shrink-0 ml-2">
-              {formatTime(lastMessage.createdAt)}
+              {formatConversationTime(lastMessage.createdAt, locale)}
             </span>
           )}
         </div>

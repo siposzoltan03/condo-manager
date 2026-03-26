@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { MessageBubble } from "./message-bubble";
 import { MessageInput } from "./message-input";
+import { formatDateSeparator } from "@/lib/format-time";
 
 interface MessageData {
   id: string;
@@ -26,21 +27,6 @@ interface MessageThreadProps {
   conversationType: "DIRECT" | "GROUP";
 }
 
-function formatDateSeparator(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 0) return "Today";
-  if (diffDays === 1) return "Yesterday";
-  return date.toLocaleDateString([], {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  });
-}
-
 function isSameDay(d1: string, d2: string): boolean {
   const a = new Date(d1);
   const b = new Date(d2);
@@ -59,6 +45,7 @@ export function MessageThread({
   conversationType,
 }: MessageThreadProps) {
   const t = useTranslations("messages");
+  const locale = useLocale();
   const [messages, setMessages] = useState<MessageData[]>([]);
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -183,7 +170,7 @@ export function MessageThread({
                   {showDateSeparator && (
                     <div className="flex items-center justify-center my-4">
                       <span className="text-xs text-slate-400 bg-white px-3">
-                        {formatDateSeparator(msg.createdAt)}
+                        {formatDateSeparator(msg.createdAt, locale)}
                       </span>
                     </div>
                   )}

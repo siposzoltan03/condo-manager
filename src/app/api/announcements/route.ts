@@ -4,7 +4,7 @@ import { requireRole, hasMinimumRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
 import { notify, NotificationType } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
+import { Prisma, TargetAudience } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
   try {
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
 
     // Filter by audience query param
     if (audience && ["ALL", "BOARD_ONLY", "SPECIFIC_UNITS"].includes(audience)) {
-      where.targetAudience = audience as Prisma.EnumTargetAudienceFilter;
+      where.targetAudience = audience as TargetAudience;
     }
 
     // Search in title or body
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
         where,
         include: {
           author: {
-            select: { name: true },
+            select: { name: true, role: true },
           },
           reads: {
             where: { userId: user.id },

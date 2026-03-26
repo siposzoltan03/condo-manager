@@ -13,7 +13,7 @@ interface AnnouncementItem {
   title: string;
   body: string;
   targetAudience: string;
-  author: { name: string };
+  author: { name: string; role: string };
   isRead: boolean;
   readCount: number;
   attachmentCount: number;
@@ -144,7 +144,7 @@ export function AnnouncementList() {
               body={ann.body}
               targetAudience={ann.targetAudience}
               authorName={ann.author.name}
-              authorRole="BOARD_MEMBER"
+              authorRole={ann.author.role}
               isRead={ann.isRead}
               attachmentCount={ann.attachmentCount}
               readCount={ann.readCount}
