@@ -1,7 +1,9 @@
 "use client";
 
+import { useLocale } from "next-intl";
 import { Pin, MessageCircle } from "lucide-react";
 import Link from "next/link";
+import { formatTimeAgo } from "@/lib/format-time";
 
 interface PinnedTopicCardProps {
   id: string;
@@ -12,21 +14,6 @@ interface PinnedTopicCardProps {
   lastActivityAt: string;
 }
 
-function formatTimeAgo(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMins / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffMins < 1) return "just now";
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) return `${diffDays}d ago`;
-  return date.toLocaleDateString();
-}
-
 export function PinnedTopicCard({
   id,
   title,
@@ -35,6 +22,8 @@ export function PinnedTopicCard({
   replyCount,
   lastActivityAt,
 }: PinnedTopicCardProps) {
+  const locale = useLocale();
+
   return (
     <Link href={`/forum/${id}`} className="block">
       <div className="rounded-2xl bg-gradient-to-br from-[#002045] to-[#1a365d] p-5 text-white transition-shadow hover:shadow-lg">
@@ -54,7 +43,7 @@ export function PinnedTopicCard({
               <MessageCircle className="h-3.5 w-3.5" />
               {replyCount}
             </span>
-            <span>{formatTimeAgo(lastActivityAt)}</span>
+            <span>{formatTimeAgo(lastActivityAt, locale)}</span>
           </div>
         </div>
       </div>

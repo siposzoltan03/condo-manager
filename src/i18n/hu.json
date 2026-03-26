@@ -186,7 +186,12 @@
     "remove": "Eltávolítás",
     "directMessage": "Közvetlen üzenet",
     "groupMessage": "Csoportos üzenet",
-    "cancel": "Mégse"
+    "cancel": "Mégse",
+    "searchingUsers": "Keresés...",
+    "unitLabel": "{number}. lakás",
+    "createFailed": "Nem sikerült a beszélgetés létrehozása",
+    "noMessagesYet": "Még nincsenek üzenetek",
+    "loadingMessages": "Üzenetek betöltése..."
   },
   "complaints": {
     "title": "Panaszok & Kérelmek",

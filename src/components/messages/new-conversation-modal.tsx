@@ -94,14 +94,14 @@ export function NewConversationModal({
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || "Failed to create conversation");
+        setError(data.error || t("createFailed"));
         return;
       }
 
       const conversation = await res.json();
       onCreated(conversation.id);
     } catch {
-      setError("Failed to create conversation");
+      setError(t("createFailed"));
     } finally {
       setCreating(false);
     }
@@ -171,7 +171,7 @@ export function NewConversationModal({
             <div className="max-h-40 overflow-y-auto border border-slate-200 rounded-lg divide-y">
               {loading ? (
                 <div className="p-3 text-sm text-slate-400 text-center">
-                  Loading...
+                  {t("searchingUsers")}
                 </div>
               ) : users.length === 0 ? (
                 <div className="p-3 text-sm text-slate-400 text-center">
@@ -189,7 +189,7 @@ export function NewConversationModal({
                         {user.name}
                       </p>
                       <p className="text-xs text-slate-500">
-                        {user.unitNumber ? `Unit ${user.unitNumber}` : ""}
+                        {user.unitNumber ? t("unitLabel", { number: user.unitNumber }) : ""}
                       </p>
                     </div>
                     <span className="text-xs text-blue-600 font-medium">

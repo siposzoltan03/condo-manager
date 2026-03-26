@@ -96,12 +96,19 @@ export async function GET(request: NextRequest) {
       result.map((c) => [c.id, c.lastReadAt])
     );
 
-    // Single query: fetch all unread messages across all conversations
+    // Calculate the earliest lastReadAt to narrow down the message query
+    const minLastReadAt = result.reduce(
+      (min, c) => (c.lastReadAt < min ? c.lastReadAt : min),
+      result[0]?.lastReadAt ?? new Date(0)
+    );
+
+    // Single query: fetch only messages newer than the earliest lastReadAt
     const unreadMessages = conversationIds.length > 0
       ? await prisma.message.findMany({
           where: {
             conversationId: { in: conversationIds },
             senderId: { not: user.id },
+            createdAt: { gt: minLastReadAt },
           },
           select: {
             conversationId: true,

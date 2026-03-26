@@ -20,14 +20,10 @@ export async function GET(request: NextRequest) {
     const limit = isNaN(rawLimit) || rawLimit < 1 ? 20 : Math.min(rawLimit, 50);
     const skip = (page - 1) * limit;
 
-    if (!categoryId) {
-      return NextResponse.json(
-        { error: "categoryId is required" },
-        { status: 400 }
-      );
+    const where: Prisma.ForumTopicWhereInput = {};
+    if (categoryId) {
+      where.categoryId = categoryId;
     }
-
-    const where: Prisma.ForumTopicWhereInput = { categoryId };
 
     if (search) {
       where.OR = [

@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale } from "next-intl";
+
 interface MessageBubbleProps {
   body: string;
   senderName: string;
@@ -9,9 +11,9 @@ interface MessageBubbleProps {
   showSender: boolean;
 }
 
-function formatMessageTime(dateString: string): string {
+function formatMessageTime(dateString: string, locale: string): string {
   const date = new Date(dateString);
-  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return date.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
 }
 
 export function MessageBubble({
@@ -22,6 +24,7 @@ export function MessageBubble({
   createdAt,
   showSender,
 }: MessageBubbleProps) {
+  const locale = useLocale();
   const isOwn = senderId === currentUserId;
 
   return (
@@ -48,7 +51,7 @@ export function MessageBubble({
             isOwn ? "text-right mr-1" : "ml-3"
           }`}
         >
-          {formatMessageTime(createdAt)}
+          {formatMessageTime(createdAt, locale)}
         </p>
       </div>
     </div>

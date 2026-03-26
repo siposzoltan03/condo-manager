@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { ArrowLeft, Paperclip, Download } from "lucide-react";
 import DOMPurify from "dompurify";
 import Link from "next/link";
@@ -51,6 +51,7 @@ interface AnnouncementDetailProps {
 export function AnnouncementDetail({ announcementId }: AnnouncementDetailProps) {
   const t = useTranslations("announcements");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
   const [announcement, setAnnouncement] = useState<AnnouncementData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -142,7 +143,7 @@ export function AnnouncementDetail({ announcementId }: AnnouncementDetailProps) 
               </span>
             </div>
             <span className="text-xs text-slate-400">
-              {new Date(announcement.createdAt).toLocaleDateString(undefined, {
+              {new Date(announcement.createdAt).toLocaleDateString(locale, {
                 year: "numeric",
                 month: "long",
                 day: "numeric",

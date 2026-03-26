@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 
 interface StatusChange {
   status: string;
@@ -22,6 +22,7 @@ interface StatusTimelineProps {
 
 export function StatusTimeline({ changes }: StatusTimelineProps) {
   const t = useTranslations("complaints");
+  const locale = useLocale();
 
   if (changes.length === 0) return null;
 
@@ -31,7 +32,7 @@ export function StatusTimeline({ changes }: StatusTimelineProps) {
       <ul className="space-y-4">
         {changes.map((change, i) => {
           const dotColor = STATUS_DOT_COLORS[change.status] ?? "bg-slate-400";
-          const date = new Date(change.date).toLocaleString();
+          const date = new Date(change.date).toLocaleString(locale);
 
           return (
             <li key={i} className="relative flex gap-3 pl-0">

@@ -24,17 +24,6 @@ const STATUS_COLORS: Record<string, string> = {
   REJECTED: "bg-red-100 text-red-800",
 };
 
-const CATEGORY_ICONS: Record<string, string> = {
-  NOISE: "volume-2",
-  MAINTENANCE: "wrench",
-  SAFETY: "shield",
-  CLEANLINESS: "sparkles",
-  PARKING: "car",
-  COMMON_AREA: "building",
-  NEIGHBOR_DISPUTE: "users",
-  OTHER: "circle-help",
-};
-
 interface ComplaintCardProps {
   complaint: ComplaintCardData;
   onClick: (id: string) => void;

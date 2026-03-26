@@ -31,9 +31,13 @@ export async function GET(request: NextRequest) {
       where.targetAudience = { in: ["ALL", "SPECIFIC_UNITS"] };
     }
 
-    // Filter by audience query param
+    // Filter by audience query param (respect role restrictions)
     if (audience && ["ALL", "BOARD_ONLY", "SPECIFIC_UNITS"].includes(audience)) {
-      where.targetAudience = audience as TargetAudience;
+      if (audience === "BOARD_ONLY" && !isBoardPlus) {
+        // Non-board users cannot filter by BOARD_ONLY — keep restricted set
+      } else {
+        where.targetAudience = audience as TargetAudience;
+      }
     }
 
     // Search in title or body

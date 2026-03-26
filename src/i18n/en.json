@@ -186,7 +186,12 @@
     "remove": "Remove",
     "directMessage": "Direct Message",
     "groupMessage": "Group Message",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "searchingUsers": "Searching...",
+    "unitLabel": "Unit {number}",
+    "createFailed": "Failed to create conversation",
+    "noMessagesYet": "No messages yet",
+    "loadingMessages": "Loading messages..."
   },
   "complaints": {
     "title": "Complaints & Requests",

@@ -148,7 +148,7 @@ export function MessageThread({
       <div ref={containerRef} className="flex-1 overflow-y-auto p-4">
         {loading ? (
           <div className="flex items-center justify-center h-full">
-            <p className="text-sm text-slate-400">{t("selectConversationDesc")}</p>
+            <p className="text-sm text-slate-400">{t("loadingMessages")}</p>
           </div>
         ) : messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">

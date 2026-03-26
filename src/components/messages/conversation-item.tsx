@@ -90,7 +90,7 @@ export function ConversationItem({
             </p>
           ) : (
             <p className="text-sm text-slate-400 italic truncate">
-              No messages yet
+              {t("noMessagesYet")}
             </p>
           )}
           {unreadCount > 0 && (

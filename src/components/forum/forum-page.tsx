@@ -56,51 +56,12 @@ export function ForumPage() {
 
   // Fetch topics
   const fetchTopics = useCallback(async () => {
-    if (!activeCategoryId) {
-      // When "All Categories" is selected, we can't use the API directly since it requires categoryId.
-      // Fetch from all categories
-      if (categories.length === 0) return;
-      setLoading(true);
-      try {
-        const allTopics: TopicItem[] = [];
-        // Fetch first page from each category for "all" view
-        const promises = categories.map(async (cat) => {
-          const res = await fetch(
-            `/api/forum/topics?categoryId=${cat.id}&page=1&limit=50`
-          );
-          if (!res.ok) return [];
-          const data = await res.json();
-          return data.topics as TopicItem[];
-        });
-        const results = await Promise.all(promises);
-        for (const topics of results) {
-          allTopics.push(...topics);
-        }
-
-        // Sort: pinned first, then by lastActivityAt
-        allTopics.sort((a, b) => {
-          if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
-          if (sort === "top") {
-            return b.replyCount - a.replyCount;
-          }
-          return new Date(b.lastActivityAt).getTime() - new Date(a.lastActivityAt).getTime();
-        });
-
-        setTopics(allTopics);
-        setTotalPages(1);
-        setPage(1);
-      } catch {
-        // Silently handle
-      } finally {
-        setLoading(false);
-      }
-      return;
-    }
-
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      params.set("categoryId", activeCategoryId);
+      if (activeCategoryId) {
+        params.set("categoryId", activeCategoryId);
+      }
       params.set("page", page.toString());
       params.set("limit", "20");
 
@@ -125,7 +86,7 @@ export function ForumPage() {
     } finally {
       setLoading(false);
     }
-  }, [activeCategoryId, page, sort, categories]);
+  }, [activeCategoryId, page, sort]);
 
   useEffect(() => {
     fetchTopics();

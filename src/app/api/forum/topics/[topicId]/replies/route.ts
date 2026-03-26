@@ -128,7 +128,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       }
     }
 
-    const [reply] = await Promise.all([
+    const [reply] = await prisma.$transaction([
       prisma.forumReply.create({
         data: {
           body: replyBody,
