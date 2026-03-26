@@ -87,11 +87,28 @@ export const authOptions = {
         token.unitId = user.unitId;
         token.unitNumber = user.unitNumber;
       }
+      // Re-fetch from DB only if token is missing custom fields (e.g. issued before a code change)
+      if (!token.role && !user) {
+        const userId = (token.id as string) || token.sub;
+        if (userId) {
+          const { prisma } = await import("@/lib/prisma");
+          const dbUser = await prisma.user.findUnique({
+            where: { id: userId },
+            include: { unit: { select: { number: true } } },
+          });
+          if (dbUser) {
+            token.id = dbUser.id;
+            token.role = dbUser.role;
+            token.unitId = dbUser.unitId;
+            token.unitNumber = dbUser.unit.number;
+          }
+        }
+      }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id as string;
+        session.user.id = (token.id as string) || token.sub!;
         session.user.role = token.role as string;
         session.user.unitId = token.unitId as string;
         session.user.unitNumber = token.unitNumber as string;

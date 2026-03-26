@@ -46,3 +46,5 @@ next-env.d.ts
 
 # nginx dev certificates
 nginx/certs/
+.claude/worktrees/
+.idea/
