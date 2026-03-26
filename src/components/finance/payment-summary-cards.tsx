@@ -103,7 +103,7 @@ export function PaymentSummaryCards({ summary, loading }: PaymentSummaryCardsPro
                 {formatCurrency(summary.nextDue.amount, locale)}
               </p>
               <p className="mt-1 text-sm text-[#515f74]">{summary.nextDue.month}</p>
-              <button className="mt-3 rounded-full bg-[#002045] px-5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[#003060]">
+              <button disabled aria-disabled="true" className="mt-3 rounded-full bg-[#002045] px-5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[#003060] disabled:opacity-50 disabled:cursor-not-allowed">
                 {t("payNow")}
               </button>
             </>

@@ -2,8 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useLocale } from "next-intl";
-import { useState } from "react";
-import { Filter, Download, FileText, ChevronLeft, ChevronRight } from "lucide-react";
+import { Download, FileText, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Charge {
   id: string;
@@ -78,7 +77,13 @@ export function PaymentHistoryTable({
 }: PaymentHistoryTableProps) {
   const t = useTranslations("finance");
   const locale = useLocale();
-  const [filterOpen, setFilterOpen] = useState(false);
+
+  const escapeCsvField = (field: string): string => {
+    if (field.includes(",") || field.includes('"') || field.includes("\n")) {
+      return `"${field.replace(/"/g, '""')}"`;
+    }
+    return field;
+  };
 
   const handleExportCsv = () => {
     const headers = [t("month"), t("amount"), t("dueDate"), t("paidDate"), t("status")];
@@ -89,7 +94,7 @@ export function PaymentHistoryTable({
       c.paidAt ?? "",
       c.status,
     ]);
-    const csv = [headers, ...rows].map((r) => r.join(",")).join("\n");
+    const csv = [headers, ...rows].map((r) => r.map(escapeCsvField).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -105,14 +110,6 @@ export function PaymentHistoryTable({
       <div className="flex items-center justify-between border-b border-gray-100 px-8 py-6">
         <h2 className="text-lg font-bold text-[#002045]">{t("financialHistory")}</h2>
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setFilterOpen(!filterOpen)}
-            className="flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-[#515f74] hover:bg-gray-50"
-          >
-            <Filter className="h-4 w-4" />
-            {t("filter")}
-          </button>
           <button
             type="button"
             onClick={handleExportCsv}

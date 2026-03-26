@@ -255,7 +255,7 @@
     "paidDate": "Fizetés dátuma",
     "status": "Állapot",
     "actions": "Műveletek",
-    "noCharges": "Nincs terhel",
+    "noCharges": "Nincs terhelés",
     "pageOf": "{page}. oldal / {totalPages}",
     "previous": "Előző",
     "next": "Következő",
@@ -295,7 +295,8 @@
     "fromDate": "Ettől",
     "toDate": "Eddig",
     "allCategories": "Minden kategória",
-    "overBudget": "Túllépés"
+    "overBudget": "Túllépés",
+    "accessRestricted": "Hozzáférés csak igazgatósági tagok és felettesek számára."
   },
   "auth": {
     "signIn": "Bejelentkezés",

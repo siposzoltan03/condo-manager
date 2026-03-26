@@ -295,7 +295,8 @@
     "fromDate": "From",
     "toDate": "To",
     "allCategories": "All Categories",
-    "overBudget": "Over budget"
+    "overBudget": "Over budget",
+    "accessRestricted": "Access restricted to board members and above."
   },
   "auth": {
     "signIn": "Sign In",

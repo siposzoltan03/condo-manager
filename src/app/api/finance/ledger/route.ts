@@ -40,6 +40,11 @@ export async function GET(request: NextRequest) {
         );
       }
 
+      // Normalize 'to' date to end-of-day when it's a date-only string (YYYY-MM-DD)
+      if (to && toParam && /^\d{4}-\d{2}-\d{2}$/.test(toParam)) {
+        to.setHours(23, 59, 59, 999);
+      }
+
       where.date = {
         ...(from ? { gte: from } : {}),
         ...(to ? { lte: to } : {}),

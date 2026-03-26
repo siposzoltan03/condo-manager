@@ -49,7 +49,7 @@ export function BudgetSummaryCards({ summary, loading }: BudgetSummaryCardsProps
       icon: Wallet,
       iconBg: "bg-blue-100",
       iconColor: "text-blue-600",
-      badge: summary && summary.currentFundBalance > 0 ? "+12%" : null,
+      badge: null,
     },
     {
       label: t("reserveFund"),

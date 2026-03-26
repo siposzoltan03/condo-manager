@@ -41,25 +41,6 @@ export async function GET(request: NextRequest) {
     const incomeIds = accounts.filter((a) => a.type === "INCOME").map((a) => a.id);
     const expenseIds = accounts.filter((a) => a.type === "EXPENSE").map((a) => a.id);
 
-    // Calculate fund balances from ASSET accounts
-    // Debit to ASSET = increase, Credit from ASSET = decrease
-    const [assetDebits, assetCredits] = await Promise.all([
-      prisma.ledgerEntry.aggregate({
-        _sum: { amount: true },
-        where: {
-          date: dateFilter,
-          debitAccountId: { in: assetIds },
-        },
-      }),
-      prisma.ledgerEntry.aggregate({
-        _sum: { amount: true },
-        where: {
-          date: dateFilter,
-          creditAccountId: { in: assetIds },
-        },
-      }),
-    ]);
-
     // Calculate income: credit entries to INCOME accounts
     const incomeCredits = await prisma.ledgerEntry.aggregate({
       _sum: { amount: true },

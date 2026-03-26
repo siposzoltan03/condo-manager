@@ -93,11 +93,10 @@ export function BuildingFinanceOverview() {
   useEffect(() => {
     async function fetchAccounts() {
       try {
-        const res = await fetch("/api/finance/budget");
+        const res = await fetch("/api/finance/accounts");
         if (res.ok) {
-          // We get budget items which include account info, but we need
-          // a full accounts list. Use summary endpoint accounts indirectly.
-          // For now, derive from budget items.
+          const data = await res.json();
+          setAccounts(data);
         }
       } catch {
         // ignore
@@ -142,7 +141,7 @@ export function BuildingFinanceOverview() {
   if (!hasRole("BOARD_MEMBER")) {
     return (
       <div className="py-16 text-center text-sm text-[#515f74]">
-        Access restricted to board members and above.
+        {t("accessRestricted")}
       </div>
     );
   }

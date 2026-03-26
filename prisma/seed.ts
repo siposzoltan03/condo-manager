@@ -154,7 +154,7 @@ async function main() {
   });
 
   // Create chart of accounts
-  const accounts = await Promise.all([
+  await Promise.all([
     // EXPENSE accounts
     prisma.account.create({ data: { name: "Maintenance", type: AccountType.EXPENSE } }),
     prisma.account.create({ data: { name: "Utilities", type: AccountType.EXPENSE } }),

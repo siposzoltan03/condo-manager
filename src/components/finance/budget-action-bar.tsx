@@ -30,8 +30,9 @@ export function BudgetActionBar({
     <div className="flex flex-wrap items-center gap-3 rounded-xl bg-white p-4 border border-gray-100">
       {/* Date range */}
       <div className="flex items-center gap-2">
-        <label className="text-xs font-medium text-[#515f74]">{t("fromDate")}</label>
+        <label htmlFor="finance-from-date" className="text-xs font-medium text-[#515f74]">{t("fromDate")}</label>
         <input
+          id="finance-from-date"
           type="date"
           value={fromDate}
           onChange={(e) => onFromDateChange(e.target.value)}
@@ -39,8 +40,9 @@ export function BudgetActionBar({
         />
       </div>
       <div className="flex items-center gap-2">
-        <label className="text-xs font-medium text-[#515f74]">{t("toDate")}</label>
+        <label htmlFor="finance-to-date" className="text-xs font-medium text-[#515f74]">{t("toDate")}</label>
         <input
+          id="finance-to-date"
           type="date"
           value={toDate}
           onChange={(e) => onToDateChange(e.target.value)}

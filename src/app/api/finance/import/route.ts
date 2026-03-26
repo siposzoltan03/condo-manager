@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (!hasMinimumRole(user.role, "ADMIN")) {
+    if (!hasMinimumRole(user.role, "BOARD_MEMBER")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -84,6 +84,14 @@ export async function POST(request: NextRequest) {
           defaultCreditId = fallback.id;
         }
       }
+    }
+
+    // Validate debit and credit accounts are different
+    if (defaultDebitId === defaultCreditId) {
+      return NextResponse.json(
+        { error: "Debit and credit accounts must be different" },
+        { status: 400 }
+      );
     }
 
     // Verify both default accounts exist
