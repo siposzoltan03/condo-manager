@@ -27,7 +27,8 @@
     "documents": "Documents",
     "settings": "Settings",
     "admin": "Administration",
-    "users": "Users"
+    "users": "Users",
+    "buildingFinance": "Building Finance"
   },
   "users": {
     "title": "User Management",

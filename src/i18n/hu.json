@@ -27,7 +27,8 @@
     "documents": "Dokumentumok",
     "settings": "Beállítások",
     "admin": "Adminisztráció",
-    "users": "Felhasználók"
+    "users": "Felhasználók",
+    "buildingFinance": "Épület pénzügyek"
   },
   "users": {
     "title": "Felhasználókezelés",
