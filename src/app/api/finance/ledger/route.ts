@@ -40,6 +40,23 @@ export async function GET(request: NextRequest) {
         );
       }
 
+      if (from && to && from > to) {
+        return NextResponse.json(
+          { error: "'from' date must not be after 'to' date" },
+          { status: 400 }
+        );
+      }
+
+      if (from && to) {
+        const fiveYearsMs = 5 * 365.25 * 24 * 60 * 60 * 1000;
+        if (to.getTime() - from.getTime() > fiveYearsMs) {
+          return NextResponse.json(
+            { error: "Date range must not exceed 5 years" },
+            { status: 400 }
+          );
+        }
+      }
+
       // Normalize 'to' date to end-of-day when it's a date-only string (YYYY-MM-DD)
       if (to && toParam && /^\d{4}-\d{2}-\d{2}$/.test(toParam)) {
         to.setHours(23, 59, 59, 999);
@@ -126,6 +143,36 @@ export async function POST(request: NextRequest) {
         { error: "Amount must be a positive number" },
         { status: 400 }
       );
+    }
+
+    if (amount > 10_000_000) {
+      return NextResponse.json(
+        { error: "Amount must not exceed 10,000,000" },
+        { status: 400 }
+      );
+    }
+
+    // Validate description length
+    if (description.length > 500) {
+      return NextResponse.json(
+        { error: "Description must not exceed 500 characters" },
+        { status: 400 }
+      );
+    }
+
+    // Validate receiptUrl if provided
+    if (receiptUrl != null) {
+      try {
+        const parsed = new URL(receiptUrl);
+        if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+          throw new Error("invalid protocol");
+        }
+      } catch {
+        return NextResponse.json(
+          { error: "receiptUrl must be a valid http or https URL" },
+          { status: 400 }
+        );
+      }
     }
 
     // Validate accounts are different

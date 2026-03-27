@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
     const missing = accountIds.filter((id: string) => !foundIds.has(id));
     if (missing.length > 0) {
       return NextResponse.json(
-        { error: `Accounts not found or not EXPENSE type: ${missing.join(", ")}` },
+        { error: `${missing.length} account(s) not found or not EXPENSE type` },
         { status: 400 }
       );
     }

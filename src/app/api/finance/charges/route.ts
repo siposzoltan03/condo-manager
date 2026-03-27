@@ -113,6 +113,12 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
+      if (charge.amount > 10_000_000) {
+        return NextResponse.json(
+          { error: "Amount must not exceed 10,000,000" },
+          { status: 400 }
+        );
+      }
     }
 
     const result = await prisma.monthlyCharge.createMany({

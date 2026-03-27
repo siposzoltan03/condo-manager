@@ -30,6 +30,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    if (from > to) {
+      return NextResponse.json(
+        { error: "'from' date must not be after 'to' date" },
+        { status: 400 }
+      );
+    }
+
+    const fiveYearsMs = 5 * 365.25 * 24 * 60 * 60 * 1000;
+    if (to.getTime() - from.getTime() > fiveYearsMs) {
+      return NextResponse.json(
+        { error: "Date range must not exceed 5 years" },
+        { status: 400 }
+      );
+    }
+
     const dateFilter = { gte: from, lte: to };
 
     // Get all accounts for reference

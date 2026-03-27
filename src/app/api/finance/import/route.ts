@@ -27,6 +27,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (Buffer.byteLength(csv, "utf8") > 2 * 1024 * 1024) {
+      return NextResponse.json(
+        { error: "CSV payload too large (max 2 MB)" },
+        { status: 413 }
+      );
+    }
+
     const { validRows, errors } = parseCsv(csv);
 
     if (validRows.length === 0) {

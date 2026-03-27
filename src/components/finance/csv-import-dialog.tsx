@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useState, useRef } from "react";
 import { X, Upload } from "lucide-react";
+import { parseCsvLine } from "@/lib/finance/csv-import";
 
 interface CsvImportDialogProps {
   open: boolean;
@@ -29,7 +30,7 @@ export function CsvImportDialog({ open, onClose, onSubmit }: CsvImportDialogProp
       setCsvContent(text);
       // Preview first 5 rows
       const lines = text.split("\n").filter((l) => l.trim());
-      const rows = lines.slice(0, 5).map((l) => l.split(","));
+      const rows = lines.slice(0, 5).map((l) => parseCsvLine(l));
       setPreviewRows(rows);
     };
     reader.readAsText(file);

@@ -10,11 +10,16 @@ export interface CsvParseResult {
   errors: string[];
 }
 
+const MAX_ROWS = 5000;
+const MAX_AMOUNT = 10_000_000;
+const MAX_DESCRIPTION_LENGTH = 500;
+const STRICT_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
 /**
  * Parse a single CSV line with RFC 4180 quote-aware field splitting.
  * Handles quoted fields containing commas, newlines, and escaped quotes ("").
  */
-function parseCsvLine(line: string): string[] {
+export function parseCsvLine(line: string): string[] {
   const fields: string[] = [];
   let i = 0;
   while (i <= line.length) {
@@ -92,17 +97,29 @@ export function parseCsv(csv: string): CsvParseResult {
     return { validRows, errors };
   }
 
+  let dataRowCount = 0;
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
 
+    dataRowCount++;
+    if (dataRowCount > MAX_ROWS) {
+      errors.push(`Row limit exceeded: CSV may not contain more than ${MAX_ROWS} data rows`);
+      break;
+    }
+
     const cols = parseCsvLine(line);
     const rowNum = i + 1;
 
-    // Validate date
+    // Validate date — strict YYYY-MM-DD with year range 2000-2100
     const dateStr = cols[dateIdx] ?? "";
-    if (!dateStr || isNaN(Date.parse(dateStr))) {
-      errors.push(`Row ${rowNum}: invalid or missing date "${dateStr}"`);
+    if (!dateStr || !STRICT_DATE_RE.test(dateStr)) {
+      errors.push(`Row ${rowNum}: invalid or missing date "${dateStr}" (expected YYYY-MM-DD)`);
+      continue;
+    }
+    const dateYear = parseInt(dateStr.slice(0, 4), 10);
+    if (dateYear < 2000 || dateYear > 2100) {
+      errors.push(`Row ${rowNum}: date year must be between 2000 and 2100`);
       continue;
     }
 
@@ -110,6 +127,10 @@ export function parseCsv(csv: string): CsvParseResult {
     const description = cols[descIdx] ?? "";
     if (!description) {
       errors.push(`Row ${rowNum}: missing description`);
+      continue;
+    }
+    if (description.length > MAX_DESCRIPTION_LENGTH) {
+      errors.push(`Row ${rowNum}: description exceeds ${MAX_DESCRIPTION_LENGTH} characters`);
       continue;
     }
 
@@ -124,8 +145,18 @@ export function parseCsv(csv: string): CsvParseResult {
       continue;
     }
 
+    if (debit !== null && debit > MAX_AMOUNT) {
+      errors.push(`Row ${rowNum}: debit amount exceeds maximum allowed value`);
+      continue;
+    }
+
     if (credit !== null && (isNaN(credit) || credit < 0)) {
       errors.push(`Row ${rowNum}: invalid credit amount "${creditStr}"`);
+      continue;
+    }
+
+    if (credit !== null && credit > MAX_AMOUNT) {
+      errors.push(`Row ${rowNum}: credit amount exceeds maximum allowed value`);
       continue;
     }
 
