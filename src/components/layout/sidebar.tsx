@@ -26,6 +26,7 @@ interface NavItem {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   minimumRole: string;
+  subItems?: { key: string; href: string; minimumRole: string }[];
 }
 
 const navItems: NavItem[] = [
@@ -33,7 +34,9 @@ const navItems: NavItem[] = [
   { key: "announcements", href: "/announcements", icon: Megaphone, minimumRole: "TENANT" },
   { key: "forum", href: "/forum", icon: MessageSquare, minimumRole: "TENANT" },
   { key: "messages", href: "/messages", icon: Mail, minimumRole: "TENANT" },
-  { key: "finance", href: "/finance", icon: Wallet, minimumRole: "TENANT" },
+  { key: "finance", href: "/finance", icon: Wallet, minimumRole: "TENANT", subItems: [
+    { key: "buildingFinance", href: "/finance/building", minimumRole: "BOARD_MEMBER" },
+  ] },
   { key: "maintenance", href: "/maintenance", icon: Wrench, minimumRole: "TENANT" },
   { key: "complaints", href: "/complaints", icon: FileWarning, minimumRole: "TENANT" },
   { key: "voting", href: "/voting", icon: Vote, minimumRole: "TENANT" },
@@ -69,20 +72,43 @@ export function Sidebar() {
       {filteredItems.map((item) => {
         const Icon = item.icon;
         const active = isActive(item.href);
+        const visibleSubItems = item.subItems?.filter((sub) => hasRole(sub.minimumRole)) ?? [];
         return (
-          <Link
-            key={item.key}
-            href={item.href}
-            onClick={() => setMobileOpen(false)}
-            className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
-              active
-                ? "bg-blue-600 text-white"
-                : "text-slate-300 hover:bg-slate-700 hover:text-white"
-            }`}
-          >
-            <Icon className="h-5 w-5 shrink-0" />
-            <span>{t(item.key)}</span>
-          </Link>
+          <div key={item.key}>
+            <Link
+              href={item.href}
+              onClick={() => setMobileOpen(false)}
+              className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
+                active
+                  ? "bg-blue-600 text-white"
+                  : "text-slate-300 hover:bg-slate-700 hover:text-white"
+              }`}
+            >
+              <Icon className="h-5 w-5 shrink-0" />
+              <span>{t(item.key)}</span>
+            </Link>
+            {active && visibleSubItems.length > 0 && (
+              <div className="ml-8 mt-1 flex flex-col gap-0.5">
+                {visibleSubItems.map((sub) => {
+                  const subActive = isActive(sub.href);
+                  return (
+                    <Link
+                      key={sub.key}
+                      href={sub.href}
+                      onClick={() => setMobileOpen(false)}
+                      className={`rounded-md px-3 py-2 text-xs font-medium transition-colors ${
+                        subActive
+                          ? "bg-blue-500/30 text-white"
+                          : "text-slate-400 hover:bg-slate-700 hover:text-white"
+                      }`}
+                    >
+                      {t(sub.key)}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         );
       })}
     </nav>
