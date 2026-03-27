@@ -1,4 +1,4 @@
-import { PrismaClient, Role, AccountType } from "@prisma/client";
+import { PrismaClient, Role, AccountType, MaintenanceCategory, Urgency } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -7,6 +7,12 @@ async function main() {
   console.log("Seeding database...");
 
   // Cleanup in correct order to respect foreign keys
+  await prisma.scheduledMaintenance.deleteMany();
+  await prisma.contractorRating.deleteMany();
+  await prisma.ticketAttachment.deleteMany();
+  await prisma.ticketComment.deleteMany();
+  await prisma.maintenanceTicket.deleteMany();
+  await prisma.contractor.deleteMany();
   await prisma.budget.deleteMany();
   await prisma.ledgerEntry.deleteMany();
   await prisma.monthlyCharge.deleteMany();
@@ -182,11 +188,57 @@ async function main() {
     ],
   });
 
+  // Create sample contractors
+  await prisma.contractor.createMany({
+    data: [
+      {
+        name: "Kovács Kft.",
+        specialty: "Plumbing",
+        contactInfo: "+36 30 123 4567, kovacs@plumbing.hu",
+        taxId: "12345678-2-41",
+      },
+      {
+        name: "ElektroFix Bt.",
+        specialty: "Electrical",
+        contactInfo: "+36 20 987 6543, info@elektrofix.hu",
+        taxId: "87654321-1-42",
+      },
+      {
+        name: "MasterBuild Zrt.",
+        specialty: "Structural",
+        contactInfo: "+36 1 555 0100, office@masterbuild.hu",
+        taxId: "11223344-2-43",
+      },
+    ],
+  });
+
+  // Create sample scheduled maintenance
+  await prisma.scheduledMaintenance.createMany({
+    data: [
+      {
+        title: "Elevator annual inspection",
+        description: "Mandatory annual safety inspection of both elevators.",
+        date: new Date("2026-04-15T09:00:00Z"),
+        isRecurring: true,
+        recurrenceRule: "Every 12 months",
+      },
+      {
+        title: "Fire extinguisher check",
+        description: "Inspect and certify all fire extinguishers in common areas.",
+        date: new Date("2026-05-01T10:00:00Z"),
+        isRecurring: true,
+        recurrenceRule: "Every 6 months",
+      },
+    ],
+  });
+
   console.log("Seeding complete.");
   console.log("  - 5 units created");
   console.log("  - 8 users created (password: password123)");
   console.log("  - 11 chart of accounts created");
   console.log("  - 4 forum categories created");
+  console.log("  - 3 contractors created");
+  console.log("  - 2 scheduled maintenance entries created");
 }
 
 main()
