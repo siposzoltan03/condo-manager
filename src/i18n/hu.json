@@ -28,7 +28,9 @@
     "settings": "Beállítások",
     "admin": "Adminisztráció",
     "users": "Felhasználók",
-    "buildingFinance": "Épület pénzügyek"
+    "buildingFinance": "Épület pénzügyek",
+    "maintenanceContractors": "Kivitelezők",
+    "maintenanceScheduled": "Ütemezett"
   },
   "users": {
     "title": "Felhasználókezelés",

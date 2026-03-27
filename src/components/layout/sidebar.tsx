@@ -37,7 +37,10 @@ const navItems: NavItem[] = [
   { key: "finance", href: "/finance", icon: Wallet, minimumRole: "TENANT", subItems: [
     { key: "buildingFinance", href: "/finance/building", minimumRole: "BOARD_MEMBER" },
   ] },
-  { key: "maintenance", href: "/maintenance", icon: Wrench, minimumRole: "TENANT" },
+  { key: "maintenance", href: "/maintenance", icon: Wrench, minimumRole: "TENANT", subItems: [
+    { key: "maintenanceContractors", href: "/maintenance/contractors", minimumRole: "BOARD_MEMBER" },
+    { key: "maintenanceScheduled", href: "/maintenance/scheduled", minimumRole: "BOARD_MEMBER" },
+  ] },
   { key: "complaints", href: "/complaints", icon: FileWarning, minimumRole: "TENANT" },
   { key: "voting", href: "/voting", icon: Vote, minimumRole: "TENANT" },
   { key: "documents", href: "/documents", icon: FileText, minimumRole: "TENANT" },

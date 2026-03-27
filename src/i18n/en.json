@@ -28,7 +28,9 @@
     "settings": "Settings",
     "admin": "Administration",
     "users": "Users",
-    "buildingFinance": "Building Finance"
+    "buildingFinance": "Building Finance",
+    "maintenanceContractors": "Contractors",
+    "maintenanceScheduled": "Scheduled"
   },
   "users": {
     "title": "User Management",
