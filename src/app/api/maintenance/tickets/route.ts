@@ -1,0 +1,197 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth";
+import { hasMinimumRole } from "@/lib/rbac";
+import { createAuditLog } from "@/lib/audit";
+import { prisma } from "@/lib/prisma";
+import {
+  Prisma,
+  MaintenanceCategory,
+  Urgency,
+  TicketStatus,
+} from "@prisma/client";
+
+export async function GET(request: NextRequest) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { searchParams } = request.nextUrl;
+    const search = searchParams.get("search") ?? undefined;
+    const status = searchParams.get("status") ?? undefined;
+    const urgency = searchParams.get("urgency") ?? undefined;
+    const category = searchParams.get("category") ?? undefined;
+    const rawPage = parseInt(searchParams.get("page") ?? "1", 10);
+    const page = isNaN(rawPage) || rawPage < 1 ? 1 : rawPage;
+    const rawLimit = parseInt(searchParams.get("limit") ?? "20", 10);
+    const limit = isNaN(rawLimit) || rawLimit < 1 ? 20 : Math.min(rawLimit, 100);
+    const skip = (page - 1) * limit;
+
+    const isBoardPlus = hasMinimumRole(user.role, "BOARD_MEMBER");
+
+    const where: Prisma.MaintenanceTicketWhereInput = {};
+
+    // Residents see only their own tickets
+    if (!isBoardPlus) {
+      where.reporterId = user.id;
+    }
+
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: "insensitive" } },
+        { trackingNumber: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } },
+      ];
+    }
+
+    if (status) {
+      if (!Object.values(TicketStatus).includes(status as TicketStatus)) {
+        return NextResponse.json({ error: "Invalid status filter" }, { status: 400 });
+      }
+      where.status = status as TicketStatus;
+    }
+
+    if (urgency) {
+      if (!Object.values(Urgency).includes(urgency as Urgency)) {
+        return NextResponse.json({ error: "Invalid urgency filter" }, { status: 400 });
+      }
+      where.urgency = urgency as Urgency;
+    }
+
+    if (category) {
+      if (!Object.values(MaintenanceCategory).includes(category as MaintenanceCategory)) {
+        return NextResponse.json({ error: "Invalid category filter" }, { status: 400 });
+      }
+      where.category = category as MaintenanceCategory;
+    }
+
+    const [tickets, total] = await Promise.all([
+      prisma.maintenanceTicket.findMany({
+        where,
+        include: {
+          reporter: { select: { id: true, name: true } },
+          assignedContractor: { select: { id: true, name: true } },
+          _count: { select: { comments: true, attachments: true } },
+        },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+      prisma.maintenanceTicket.count({ where }),
+    ]);
+
+    return NextResponse.json({
+      tickets,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+    });
+  } catch (error) {
+    console.error("Failed to fetch maintenance tickets:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { title, description, category, urgency, location } = body;
+
+    if (!title || !description || !category || !urgency) {
+      return NextResponse.json(
+        { error: "Missing required fields: title, description, category, urgency" },
+        { status: 400 }
+      );
+    }
+
+    if (!Object.values(MaintenanceCategory).includes(category as MaintenanceCategory)) {
+      return NextResponse.json({ error: "Invalid category" }, { status: 400 });
+    }
+
+    if (!Object.values(Urgency).includes(urgency as Urgency)) {
+      return NextResponse.json({ error: "Invalid urgency" }, { status: 400 });
+    }
+
+    // Generate tracking number with retry on collision
+    const MAX_RETRIES = 5;
+    let ticket;
+
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      const currentYear = new Date().getFullYear();
+      const prefix = `MNT-${currentYear}-`;
+
+      const lastTicket = await prisma.maintenanceTicket.findFirst({
+        where: { trackingNumber: { startsWith: prefix } },
+        orderBy: { trackingNumber: "desc" },
+        select: { trackingNumber: true },
+      });
+
+      let nextNumber = 1;
+      if (lastTicket) {
+        const lastNum = parseInt(lastTicket.trackingNumber.split("-")[2], 10);
+        if (!isNaN(lastNum)) {
+          nextNumber = lastNum + 1;
+        }
+      }
+
+      const trackingNumber = `${prefix}${String(nextNumber).padStart(3, "0")}`;
+
+      try {
+        ticket = await prisma.maintenanceTicket.create({
+          data: {
+            trackingNumber,
+            title,
+            description,
+            category: category as MaintenanceCategory,
+            urgency: urgency as Urgency,
+            location: location ?? null,
+            reporter: { connect: { id: user.id } },
+          },
+          include: {
+            reporter: { select: { id: true, name: true } },
+          },
+        });
+        break;
+      } catch (err: unknown) {
+        const isPrismaUniqueError =
+          err instanceof Prisma.PrismaClientKnownRequestError &&
+          err.code === "P2002";
+        if (isPrismaUniqueError && attempt < MAX_RETRIES - 1) {
+          continue;
+        }
+        throw err;
+      }
+    }
+
+    if (!ticket) {
+      return NextResponse.json(
+        { error: "Failed to generate unique tracking number" },
+        { status: 500 }
+      );
+    }
+
+    await createAuditLog({
+      entityType: "MaintenanceTicket",
+      entityId: ticket.id,
+      action: "CREATE",
+      userId: user.id,
+      newValue: {
+        trackingNumber: ticket.trackingNumber,
+        title,
+        category,
+        urgency,
+      },
+    });
+
+    return NextResponse.json(ticket, { status: 201 });
+  } catch (error) {
+    console.error("Failed to create maintenance ticket:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
