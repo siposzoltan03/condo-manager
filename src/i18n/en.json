@@ -13,7 +13,8 @@
     "search": "Search",
     "loading": "Loading...",
     "error": "An error occurred",
-    "success": "Operation successful"
+    "success": "Operation successful",
+    "selectUnit": "Select a unit"
   },
   "nav": {
     "dashboard": "Dashboard",

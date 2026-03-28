@@ -183,7 +183,7 @@ export function PaymentHistoryTable({
                     <button
                       type="button"
                       className="rounded-lg p-2 text-[#515f74] transition-colors hover:bg-gray-100 hover:text-[#002045]"
-                      title="Receipt"
+                      title={t("receipt")}
                     >
                       <FileText className="h-4 w-4" />
                     </button>

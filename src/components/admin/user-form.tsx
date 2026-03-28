@@ -235,7 +235,7 @@ export function UserFormModal({ user, onClose, onSuccess }: UserFormModalProps) 
                 required
                 className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               >
-                <option value="">Select a unit</option>
+                <option value="">{t("selectUnit")}</option>
                 {units.map((unit) => (
                   <option key={unit.id} value={unit.id}>
                     {unit.number}
