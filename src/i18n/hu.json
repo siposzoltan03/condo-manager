@@ -31,7 +31,8 @@
     "users": "Felhasználók",
     "buildingFinance": "Épület pénzügyek",
     "maintenanceContractors": "Kivitelezők",
-    "maintenanceScheduled": "Ütemezett"
+    "maintenanceScheduled": "Ütemezett",
+    "buildings": "Épületek"
   },
   "users": {
     "title": "Felhasználókezelés",
@@ -514,6 +515,26 @@
     "role_TENANT": "Bérlő",
     "noBuilding": "Nincs kiválasztott épület",
     "switchSuccess": "Épület sikeresen váltva"
+  },
+  "buildings": {
+    "title": "Epuletkezeles",
+    "subtitle": "A rendszerben levo osszes epulet kezelese.",
+    "addBuilding": "Epulet hozzaadasa",
+    "editBuilding": "Epulet szerkesztese",
+    "name": "Nev",
+    "address": "Cim",
+    "city": "Varos",
+    "zipCode": "Iranyitoszam",
+    "units": "Lakasok",
+    "users": "Felhasznalok",
+    "actions": "Muveletek",
+    "noBuildings": "Nem talalhato epulet",
+    "confirmDelete": "Biztosan torolni szeretne ezt az epuletet?",
+    "missingFields": "Kerem, toltse ki az osszes kotelezo mezot",
+    "namePlaceholder": "Epulet neve",
+    "addressPlaceholder": "Utca, hazszam",
+    "cityPlaceholder": "Varos",
+    "zipCodePlaceholder": "Iranyitoszam"
   },
   "auth": {
     "signIn": "Bejelentkezés",

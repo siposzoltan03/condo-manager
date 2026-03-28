@@ -15,6 +15,7 @@ import {
   Vote,
   FileText,
   Users,
+  Building2,
   Settings,
   X,
   Menu,
@@ -46,6 +47,7 @@ const navItems: NavItem[] = [
   { key: "voting", href: "/voting", icon: Vote, minimumRole: "TENANT" },
   { key: "documents", href: "/documents", icon: FileText, minimumRole: "TENANT" },
   { key: "users", href: "/users", icon: Users, minimumRole: "ADMIN" },
+  { key: "buildings", href: "/admin/buildings", icon: Building2, minimumRole: "SUPER_ADMIN" },
   { key: "settings", href: "/settings", icon: Settings, minimumRole: "TENANT" },
 ];
 

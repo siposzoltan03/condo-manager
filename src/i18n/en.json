@@ -31,7 +31,8 @@
     "users": "Users",
     "buildingFinance": "Building Finance",
     "maintenanceContractors": "Contractors",
-    "maintenanceScheduled": "Scheduled"
+    "maintenanceScheduled": "Scheduled",
+    "buildings": "Buildings"
   },
   "users": {
     "title": "User Management",
@@ -514,6 +515,26 @@
     "role_TENANT": "Tenant",
     "noBuilding": "No building selected",
     "switchSuccess": "Switched building successfully"
+  },
+  "buildings": {
+    "title": "Building Management",
+    "subtitle": "Manage all buildings in the system.",
+    "addBuilding": "Add Building",
+    "editBuilding": "Edit Building",
+    "name": "Name",
+    "address": "Address",
+    "city": "City",
+    "zipCode": "ZIP Code",
+    "units": "Units",
+    "users": "Users",
+    "actions": "Actions",
+    "noBuildings": "No buildings found",
+    "confirmDelete": "Are you sure you want to delete this building?",
+    "missingFields": "Please fill in all required fields",
+    "namePlaceholder": "Building name",
+    "addressPlaceholder": "Street address",
+    "cityPlaceholder": "City",
+    "zipCodePlaceholder": "ZIP code"
   },
   "auth": {
     "signIn": "Sign In",
