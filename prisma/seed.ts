@@ -1,6 +1,12 @@
 import { PrismaClient, Role, AccountType } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
+// Production guard: refuse to run seed in production
+if (process.env.NODE_ENV === "production") {
+  console.error("FATAL: Refusing to seed database in production environment.");
+  process.exit(1);
+}
+
 const prisma = new PrismaClient();
 
 async function main() {

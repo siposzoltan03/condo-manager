@@ -3,6 +3,7 @@ import { createHash } from "crypto";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
+import { validatePassword } from "@/lib/password";
 
 export async function POST(request: NextRequest) {
   try {
@@ -31,9 +32,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (password.length < 8) {
+    const passwordCheck = validatePassword(password);
+    if (!passwordCheck.valid) {
       return NextResponse.json(
-        { error: "Password must be at least 8 characters" },
+        { error: passwordCheck.errors.join(". ") },
         { status: 400 }
       );
     }
