@@ -544,6 +544,12 @@
     "cityPlaceholder": "City",
     "zipCodePlaceholder": "ZIP code"
   },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark all as read",
+    "noNotifications": "No notifications",
+    "viewAll": "View all notifications"
+  },
   "auth": {
     "signIn": "Sign In",
     "forgotPassword": "Forgot Password",

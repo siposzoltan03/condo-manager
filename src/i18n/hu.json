@@ -544,6 +544,12 @@
     "cityPlaceholder": "Varos",
     "zipCodePlaceholder": "Iranyitoszam"
   },
+  "notifications": {
+    "title": "Értesítések",
+    "markAllRead": "Összes olvasottnak jelölése",
+    "noNotifications": "Nincsenek értesítések",
+    "viewAll": "Összes értesítés megtekintése"
+  },
   "auth": {
     "signIn": "Bejelentkezés",
     "forgotPassword": "Elfelejtett jelszó",
