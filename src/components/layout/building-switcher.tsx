@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useBuilding } from "@/hooks/use-building";
 import { Building, ChevronDown, Check } from "lucide-react";
@@ -9,6 +10,7 @@ import { Building, ChevronDown, Check } from "lucide-react";
 export function BuildingSwitcher() {
   const t = useTranslations("building");
   const router = useRouter();
+  const { update: updateSession } = useSession();
   const { activeBuildingId, buildings, hasMultipleBuildings } = useBuilding();
   const [open, setOpen] = useState(false);
   const [switching, setSwitching] = useState(false);
@@ -40,6 +42,12 @@ export function BuildingSwitcher() {
         body: JSON.stringify({ buildingId }),
       });
       if (res.ok) {
+        const data = await res.json();
+        // Update the JWT session with new building context
+        await updateSession({
+          activeBuildingId: data.buildingId,
+          activeRole: data.role,
+        });
         setOpen(false);
         router.refresh();
       }
