@@ -5,7 +5,6 @@ import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { SessionProvider } from "@/components/layout/session-provider";
 import { AppShell } from "@/components/layout/app-shell";
-import { ServiceWorkerRegister } from "@/components/layout/service-worker-register";
 import "@/app/globals.css";
 
 export const metadata: Metadata = {
@@ -59,7 +58,6 @@ export default async function LocaleLayout({ children, params }: Props) {
             <AppShell>{children}</AppShell>
           </NextIntlClientProvider>
         </SessionProvider>
-        <ServiceWorkerRegister />
       </body>
     </html>
   );
