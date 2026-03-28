@@ -212,6 +212,7 @@ model User {
   documentVersions        DocumentVersion[]           @relation("DocumentVersionUploader")
   userBuildings           UserBuilding[]
   unitUsers               UnitUser[]
+  pushSubscriptions       PushSubscription[]
 }
 
 model AuditLog {
@@ -717,4 +718,18 @@ model DocumentVersion {
 
   @@unique([documentId, versionNumber])
   @@index([documentId])
+}
+
+// ─── Push Notifications ──────────────────────────────────────────────────────
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  endpoint  String   @unique
+  p256dh    String   // public key
+  auth      String   // auth secret
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
