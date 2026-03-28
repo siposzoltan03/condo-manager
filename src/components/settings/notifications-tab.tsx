@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { subscribeToPush, unsubscribeFromPush, isPushSubscribed } from "@/lib/push-client";
 
 interface NotificationPreferences {
   announcements?: string;
@@ -36,8 +37,48 @@ export function NotificationsTab({ preferences, onUpdate }: NotificationsTabProp
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushLoading, setPushLoading] = useState(false);
 
-  function handleMethodChange(eventKey: string, method: DeliveryMethod) {
+  useEffect(() => {
+    isPushSubscribed().then(setPushEnabled);
+  }, []);
+
+  async function handleEnablePush() {
+    setPushLoading(true);
+    setError("");
+    try {
+      const subscription = await subscribeToPush();
+      if (subscription) {
+        setPushEnabled(true);
+      } else {
+        setError(tSettings("pushPermissionDenied"));
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("error"));
+    } finally {
+      setPushLoading(false);
+    }
+  }
+
+  async function handleDisablePush() {
+    setPushLoading(true);
+    setError("");
+    try {
+      await unsubscribeFromPush();
+      setPushEnabled(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("error"));
+    } finally {
+      setPushLoading(false);
+    }
+  }
+
+  async function handleMethodChange(eventKey: string, method: DeliveryMethod) {
+    if (method === "push" && !pushEnabled) {
+      await handleEnablePush();
+      if (!pushEnabled) return;
+    }
     setPrefs((prev) => ({ ...prev, [eventKey]: method }));
   }
 
@@ -80,6 +121,41 @@ export function NotificationsTab({ preferences, onUpdate }: NotificationsTabProp
         </p>
       </div>
 
+      {/* Push notification status */}
+      <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-6 py-4">
+        <div className="flex-1">
+          <p className="text-sm font-medium text-slate-900">{tSettings("pushNotifications")}</p>
+          <p className="text-xs text-slate-500">
+            {pushEnabled ? tSettings("pushEnabledDesc") : tSettings("pushDisabledDesc")}
+          </p>
+        </div>
+        <span
+          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+            pushEnabled
+              ? "bg-emerald-100 text-emerald-800"
+              : "bg-slate-100 text-slate-600"
+          }`}
+        >
+          {pushEnabled ? tSettings("pushEnabled") : tSettings("pushDisabled")}
+        </span>
+        <button
+          type="button"
+          onClick={pushEnabled ? handleDisablePush : handleEnablePush}
+          disabled={pushLoading}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${
+            pushEnabled
+              ? "bg-slate-100 text-slate-700 hover:bg-slate-200"
+              : "bg-blue-600 text-white hover:bg-blue-700"
+          }`}
+        >
+          {pushLoading
+            ? t("loading")
+            : pushEnabled
+              ? tSettings("pushDisableBtn")
+              : tSettings("pushEnableBtn")}
+        </button>
+      </div>
+
       {/* Notification table */}
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
         <table className="w-full text-sm">
@@ -107,32 +183,18 @@ export function NotificationsTab({ preferences, onUpdate }: NotificationsTabProp
                   <td className="px-6 py-4 font-medium text-slate-900">
                     {tSettings(eventKey)}
                   </td>
-                  {DELIVERY_METHODS.map((method) => {
-                    const isPush = method === "push";
-                    return (
-                      <td key={method} className="px-6 py-4 text-center">
-                        <span
-                          className={isPush ? "inline-flex flex-col items-center gap-0.5" : undefined}
-                          title={isPush ? tSettings("pushComingSoon") : undefined}
-                        >
-                          <input
-                            type="radio"
-                            name={`notif-${eventKey}`}
-                            value={method}
-                            checked={currentMethod === method}
-                            onChange={() => handleMethodChange(eventKey, method)}
-                            disabled={isPush}
-                            className="h-4 w-4 border-slate-300 text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-40"
-                          />
-                          {isPush && (
-                            <span className="text-[10px] text-slate-400 leading-tight">
-                              {tSettings("pushComingSoon")}
-                            </span>
-                          )}
-                        </span>
-                      </td>
-                    );
-                  })}
+                  {DELIVERY_METHODS.map((method) => (
+                    <td key={method} className="px-6 py-4 text-center">
+                      <input
+                        type="radio"
+                        name={`notif-${eventKey}`}
+                        value={method}
+                        checked={currentMethod === method}
+                        onChange={() => handleMethodChange(eventKey, method)}
+                        className="h-4 w-4 border-slate-300 text-blue-600 focus:ring-blue-500"
+                      />
+                    </td>
+                  ))}
                 </tr>
               );
             })}
