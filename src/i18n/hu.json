@@ -548,7 +548,8 @@
     "title": "Értesítések",
     "markAllRead": "Összes olvasottnak jelölése",
     "noNotifications": "Nincsenek értesítések",
-    "viewAll": "Összes értesítés megtekintése"
+    "viewAll": "Összes értesítés megtekintése",
+    "loadMore": "Több betöltése"
   },
   "auth": {
     "signIn": "Bejelentkezés",

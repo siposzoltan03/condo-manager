@@ -548,7 +548,8 @@
     "title": "Notifications",
     "markAllRead": "Mark all as read",
     "noNotifications": "No notifications",
-    "viewAll": "View all notifications"
+    "viewAll": "View all notifications",
+    "loadMore": "Load more"
   },
   "auth": {
     "signIn": "Sign In",
