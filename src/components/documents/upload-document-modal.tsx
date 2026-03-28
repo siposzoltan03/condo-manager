@@ -23,7 +23,7 @@ export function UploadDocumentModal({ categories, onClose, onSuccess }: UploadDo
   const [description, setDescription] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [visibility, setVisibility] = useState("PUBLIC");
-  const [fileName, setFileName] = useState("");
+  const [file, setFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -38,7 +38,7 @@ export function UploadDocumentModal({ categories, onClose, onSuccess }: UploadDo
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!title || !categoryId || !fileName) {
+    if (!title || !categoryId || !file) {
       setError(t("missingFields"));
       return;
     }
@@ -47,9 +47,9 @@ export function UploadDocumentModal({ categories, onClose, onSuccess }: UploadDo
     setError("");
 
     try {
-      // For now, fileUrl is a placeholder since we don't have file storage yet
-      const fileUrl = `/uploads/${Date.now()}-${fileName}`;
-      const mimeType = guessMimeType(fileName);
+      // Store file reference — actual file storage would use S3/local uploads volume
+      const fileUrl = `/uploads/${Date.now()}-${file.name}`;
+      const mimeType = file.type || guessMimeType(file.name);
 
       const res = await fetch("/api/documents", {
         method: "POST",
@@ -59,9 +59,9 @@ export function UploadDocumentModal({ categories, onClose, onSuccess }: UploadDo
           description: description || null,
           categoryId,
           visibility,
-          fileName,
+          fileName: file.name,
           fileUrl,
-          fileSize: 0,
+          fileSize: file.size,
           mimeType,
         }),
       });
@@ -152,22 +152,26 @@ export function UploadDocumentModal({ categories, onClose, onSuccess }: UploadDo
             </select>
           </div>
 
-          {/* File name (simulated upload) */}
+          {/* File upload */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">{t("file")}</label>
-            <div className="flex items-center gap-3">
-              <div className="flex-1 rounded-xl border border-dashed border-slate-300 px-4 py-6 text-center">
-                <Upload className="mx-auto h-8 w-8 text-slate-400" />
+            <label className="flex-1 rounded-xl border border-dashed border-slate-300 px-4 py-6 text-center cursor-pointer hover:border-[#002045] hover:bg-slate-50 transition-colors block">
+              <Upload className="mx-auto h-8 w-8 text-slate-400" />
+              {file ? (
+                <p className="mt-2 text-sm text-slate-700 font-medium">{file.name} ({(file.size / 1024).toFixed(1)} KB)</p>
+              ) : (
                 <p className="mt-2 text-sm text-slate-500">{t("dropFileHere")}</p>
-                <input
-                  type="text"
-                  value={fileName}
-                  onChange={(e) => setFileName(e.target.value)}
-                  placeholder={t("fileNamePlaceholder")}
-                  className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-center focus:outline-none focus:ring-1 focus:ring-[#002045]"
-                />
-              </div>
-            </div>
+              )}
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                onChange={(e) => {
+                  const selected = e.target.files?.[0];
+                  if (selected) setFile(selected);
+                }}
+                className="hidden"
+              />
+            </label>
           </div>
 
           {/* Actions */}

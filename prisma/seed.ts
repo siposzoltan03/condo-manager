@@ -7,6 +7,9 @@ async function main() {
   console.log("Seeding database...");
 
   // Cleanup in correct order to respect foreign keys
+  await prisma.documentVersion.deleteMany();
+  await prisma.document.deleteMany();
+  await prisma.documentCategory.deleteMany();
   await prisma.scheduledMaintenance.deleteMany();
   await prisma.contractorRating.deleteMany();
   await prisma.ticketAttachment.deleteMany();
@@ -185,6 +188,28 @@ async function main() {
       { name: "Noise Complaints", description: "Discuss and report noise-related issues", sortOrder: 1 },
       { name: "Suggestions", description: "Ideas and suggestions for improving the community", sortOrder: 2 },
       { name: "Maintenance Tips", description: "Share and discuss maintenance tips and tricks", sortOrder: 3 },
+    ],
+  });
+
+  // Create document categories
+  const rulesCategory = await prisma.documentCategory.create({
+    data: { name: "Rules & Regulations", sortOrder: 0 },
+  });
+  const contractsCategory = await prisma.documentCategory.create({
+    data: { name: "Contracts", sortOrder: 1 },
+  });
+  await prisma.documentCategory.createMany({
+    data: [
+      { name: "Vendor Agreements", parentId: contractsCategory.id, sortOrder: 0 },
+      { name: "Staff Contracts", parentId: contractsCategory.id, sortOrder: 1 },
+    ],
+  });
+  await prisma.documentCategory.createMany({
+    data: [
+      { name: "Meeting Minutes", sortOrder: 2 },
+      { name: "Financial Reports", sortOrder: 3 },
+      { name: "Insurance", sortOrder: 4 },
+      { name: "Other", sortOrder: 5 },
     ],
   });
 
