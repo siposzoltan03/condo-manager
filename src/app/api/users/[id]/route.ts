@@ -3,7 +3,7 @@ import { requireBuildingContext } from "@/lib/auth";
 import { requireRole, hasMinimumRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
-import { Role, BuildingRole, UnitRelationship } from "@prisma/client";
+import { BuildingRole, UnitRelationship } from "@prisma/client";
 
 export async function PATCH(
   request: NextRequest,
@@ -31,7 +31,7 @@ export async function PATCH(
 
     const existingUser = await prisma.user.findUnique({
       where: { id },
-      select: { id: true, isActive: true, isPrimaryContact: true },
+      select: { id: true, isActive: true },
     });
 
     if (!existingUser) {
@@ -42,7 +42,7 @@ export async function PATCH(
     const { role, unitId, isPrimaryContact, isActive, relationship } = body;
 
     // Validate role if provided
-    if (role !== undefined && !Object.values(Role).includes(role as Role)) {
+    if (role !== undefined && !Object.values(BuildingRole).includes(role as BuildingRole)) {
       return NextResponse.json({ error: "Invalid role" }, { status: 400 });
     }
 
@@ -173,7 +173,7 @@ export async function PATCH(
     });
     const updatedUser = await prisma.user.findUnique({
       where: { id },
-      select: { id: true, email: true, name: true, isPrimaryContact: true, language: true, isActive: true, createdAt: true, updatedAt: true },
+      select: { id: true, email: true, name: true, language: true, isActive: true, createdAt: true, updatedAt: true },
     });
     const unitUser = await prisma.unitUser.findFirst({
       where: { userId: id, unit: { buildingId } },
@@ -187,7 +187,7 @@ export async function PATCH(
       role: updatedMembership?.role,
       unitId: unitUser?.unit.id ?? null,
       unit: unitUser ? { number: unitUser.unit.number } : null,
-      isPrimaryContact: updatedUser!.isPrimaryContact,
+      isPrimaryContact: unitUser?.isPrimaryContact ?? false,
       language: updatedUser!.language,
       isActive: updatedUser!.isActive,
       createdAt: updatedUser!.createdAt,

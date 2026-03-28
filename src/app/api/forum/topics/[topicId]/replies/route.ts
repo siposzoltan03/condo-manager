@@ -36,7 +36,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         where: { topicId },
         include: {
           author: {
-            select: { name: true, role: true },
+            select: { name: true },
           },
         },
         orderBy: { createdAt: "asc" },
@@ -134,7 +134,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         },
         include: {
           author: {
-            select: { name: true, role: true },
+            select: { name: true },
           },
         },
       }),

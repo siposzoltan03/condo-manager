@@ -4,7 +4,7 @@ import { requireRole, hasMinimumRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import { Prisma, Role, BuildingRole, UnitRelationship } from "@prisma/client";
+import { Prisma, BuildingRole, UnitRelationship } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
   try {
@@ -37,13 +37,13 @@ export async function GET(request: NextRequest) {
     }
 
     if (roleFilter) {
-      if (!Object.values(Role).includes(roleFilter as Role)) {
+      if (!Object.values(BuildingRole).includes(roleFilter as BuildingRole)) {
         return NextResponse.json(
           { error: "Invalid role filter" },
           { status: 400 }
         );
       }
-      where.role = roleFilter as Role;
+      where.role = roleFilter as BuildingRole;
     }
 
     const [userBuildings, total] = await Promise.all([
@@ -55,7 +55,6 @@ export async function GET(request: NextRequest) {
               id: true,
               email: true,
               name: true,
-              isPrimaryContact: true,
               language: true,
               isActive: true,
               createdAt: true,
@@ -76,10 +75,15 @@ export async function GET(request: NextRequest) {
       where: { userId: { in: userIds }, unit: { buildingId } },
       include: { unit: { select: { id: true, number: true } } },
     });
-    const unitMap = new Map<string, { unitId: string; unitNumber: string }>();
+    const unitMap = new Map<string, { unitId: string; unitNumber: string; isPrimaryContact: boolean; relationship: string }>();
     for (const uu of unitUsers) {
       if (!unitMap.has(uu.userId)) {
-        unitMap.set(uu.userId, { unitId: uu.unit.id, unitNumber: uu.unit.number });
+        unitMap.set(uu.userId, {
+          unitId: uu.unit.id,
+          unitNumber: uu.unit.number,
+          isPrimaryContact: uu.isPrimaryContact,
+          relationship: uu.relationship,
+        });
       }
     }
 
@@ -90,7 +94,8 @@ export async function GET(request: NextRequest) {
       role: ub.role,
       unitId: unitMap.get(ub.userId)?.unitId ?? null,
       unit: unitMap.get(ub.userId) ? { number: unitMap.get(ub.userId)!.unitNumber } : null,
-      isPrimaryContact: ub.user.isPrimaryContact ?? false,
+      isPrimaryContact: unitMap.get(ub.userId)?.isPrimaryContact ?? false,
+      relationship: unitMap.get(ub.userId)?.relationship ?? null,
       language: ub.user.language,
       isActive: ub.user.isActive,
       createdAt: ub.user.createdAt,
@@ -133,7 +138,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!Object.values(Role).includes(role as Role)) {
+    if (!Object.values(BuildingRole).includes(role as BuildingRole)) {
       return NextResponse.json({ error: "Invalid role" }, { status: 400 });
     }
 
@@ -172,9 +177,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // If isPrimaryContact, unset existing primary on that unit
+    // If isPrimaryContact, unset existing primary on that unit via UnitUser
     if (isPrimaryContact) {
-      await prisma.user.updateMany({
+      await prisma.unitUser.updateMany({
         where: { unitId, isPrimaryContact: true },
         data: { isPrimaryContact: false },
       });
@@ -189,9 +194,6 @@ export async function POST(request: NextRequest) {
             email,
             name,
             passwordHash,
-            role: role as Role,
-            unitId,
-            isPrimaryContact: isPrimaryContact ?? false,
           },
         });
       }

@@ -18,7 +18,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         createdBy: { select: { id: true, name: true } },
         rsvps: {
           include: {
-            user: { select: { id: true, name: true, unitId: true } },
+            user: { select: { id: true, name: true } },
           },
         },
         votes: {

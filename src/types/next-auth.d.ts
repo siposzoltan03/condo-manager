@@ -7,10 +7,6 @@ declare module "next-auth" {
     activeBuildingId: string;
     activeRole: string;
     buildings: { id: string; name: string; role: string }[];
-    /** @deprecated Use UnitUser lookup instead. Will be removed in Task 5. */
-    unitId?: string;
-    /** @deprecated Use UnitUser lookup instead. Will be removed in Task 5. */
-    unitNumber?: string;
   }
 
   interface Session {
@@ -20,10 +16,6 @@ declare module "next-auth" {
       activeBuildingId: string;
       activeRole: string;
       buildings: { id: string; name: string; role: string }[];
-      /** @deprecated Use UnitUser lookup instead. Will be removed in Task 5. */
-      unitId?: string;
-      /** @deprecated Use UnitUser lookup instead. Will be removed in Task 5. */
-      unitNumber?: string;
     } & DefaultSession["user"];
   }
 }
@@ -35,9 +27,5 @@ declare module "next-auth/jwt" {
     activeBuildingId: string;
     activeRole: string;
     buildings: { id: string; name: string; role: string }[];
-    /** @deprecated Use UnitUser lookup instead. Will be removed in Task 5. */
-    unitId?: string;
-    /** @deprecated Use UnitUser lookup instead. Will be removed in Task 5. */
-    unitNumber?: string;
   }
 }

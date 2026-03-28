@@ -18,7 +18,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       where: { id },
       include: {
         author: {
-          select: { name: true, role: true },
+          select: { name: true },
         },
         _count: {
           select: { reads: true },
@@ -126,7 +126,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       data: updateData,
       include: {
         author: {
-          select: { name: true, role: true },
+          select: { name: true },
         },
       },
     });

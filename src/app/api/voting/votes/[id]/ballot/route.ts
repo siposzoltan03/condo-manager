@@ -56,12 +56,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
     let unitId = userUnit.unitId;
 
     if (proxyForUnitId) {
-      // Verify proxy assignment
+      // Verify proxy assignment — find grantor via UnitUser
       const now = new Date();
       const proxy = await prisma.proxyAssignment.findFirst({
         where: {
           granteeId: userId,
-          grantor: { unitId: proxyForUnitId },
+          grantor: {
+            unitUsers: { some: { unitId: proxyForUnitId } },
+          },
           validFrom: { lte: now },
           AND: [
             {

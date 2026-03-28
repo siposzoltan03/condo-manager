@@ -82,7 +82,7 @@ export const authOptions = {
           id: user.id,
           email: user.email,
           name: user.name,
-          role: user.role,
+          role: defaultBuilding.role, // activeRole for the default building
           activeBuildingId: defaultBuilding.building.id,
           activeRole: defaultBuilding.role,
           buildings,

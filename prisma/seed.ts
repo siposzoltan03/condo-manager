@@ -1,6 +1,5 @@
 import {
   PrismaClient,
-  Role,
   AccountType,
   BuildingRole,
   UnitRelationship,
@@ -164,7 +163,7 @@ async function main() {
   });
 
   // ─── Users ──────────────────────────────────────────────────────────────────
-  // Keep User.unitId/role/isPrimaryContact for backward compat (Phase 4 removes these)
+  // Roles and unit assignments are now via UserBuilding and UnitUser tables
 
   // Super admin — in BOTH buildings
   const superAdmin = await prisma.user.create({
@@ -172,9 +171,6 @@ async function main() {
       email: "superadmin@condo.local",
       passwordHash,
       name: "Nagy István",
-      role: Role.SUPER_ADMIN,
-      unitId: b1_unit1A.id,
-      isPrimaryContact: true,
       language: "hu",
     },
   });
@@ -185,9 +181,6 @@ async function main() {
       email: "admin@condo.local",
       passwordHash,
       name: "Kovács Mária",
-      role: Role.ADMIN,
-      unitId: b1_unit1B.id,
-      isPrimaryContact: true,
       language: "hu",
     },
   });
@@ -198,9 +191,6 @@ async function main() {
       email: "board@condo.local",
       passwordHash,
       name: "Szabó Péter",
-      role: Role.BOARD_MEMBER,
-      unitId: b1_unit2A.id,
-      isPrimaryContact: true,
       language: "hu",
     },
   });
@@ -211,9 +201,6 @@ async function main() {
       email: "resident1@condo.local",
       passwordHash,
       name: "Tóth Anna",
-      role: Role.RESIDENT,
-      unitId: b1_unit2B.id,
-      isPrimaryContact: true,
       language: "hu",
     },
   });
@@ -223,9 +210,6 @@ async function main() {
       email: "resident2@condo.local",
       passwordHash,
       name: "Horváth László",
-      role: Role.RESIDENT,
-      unitId: b1_unit3A.id,
-      isPrimaryContact: true,
       language: "hu",
     },
   });
@@ -235,9 +219,6 @@ async function main() {
       email: "resident3@condo.local",
       passwordHash,
       name: "Varga Katalin",
-      role: Role.RESIDENT,
-      unitId: b1_unit1A.id,
-      isPrimaryContact: false,
       language: "hu",
     },
   });
@@ -248,9 +229,6 @@ async function main() {
       email: "tenant1@condo.local",
       passwordHash,
       name: "Molnár Gábor",
-      role: Role.TENANT,
-      unitId: b1_unit2A.id,
-      isPrimaryContact: false,
       language: "hu",
     },
   });
@@ -260,9 +238,6 @@ async function main() {
       email: "tenant2@condo.local",
       passwordHash,
       name: "Kiss Éva",
-      role: Role.TENANT,
-      unitId: b1_unit2B.id,
-      isPrimaryContact: false,
       language: "hu",
     },
   });
@@ -273,9 +248,6 @@ async function main() {
       email: "b2resident1@condo.local",
       passwordHash,
       name: "Fekete Zoltán",
-      role: Role.RESIDENT,
-      unitId: b2_unit1A.id,
-      isPrimaryContact: true,
       language: "hu",
     },
   });
@@ -285,9 +257,6 @@ async function main() {
       email: "b2resident2@condo.local",
       passwordHash,
       name: "Balogh Eszter",
-      role: Role.RESIDENT,
-      unitId: b2_unit1B.id,
-      isPrimaryContact: true,
       language: "hu",
     },
   });
@@ -298,9 +267,6 @@ async function main() {
       email: "b2board@condo.local",
       passwordHash,
       name: "Farkas Tamás",
-      role: Role.BOARD_MEMBER,
-      unitId: b2_unit2A.id,
-      isPrimaryContact: true,
       language: "hu",
     },
   });

@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
         where,
         include: {
           author: {
-            select: { name: true, role: true },
+            select: { name: true },
           },
           reads: {
             where: { userId },
