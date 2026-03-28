@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     const existingBallots = await prisma.ballot.findMany({
       where: {
         voteId: { in: voteIds },
-        unitId: user.unitId,
+        unitId: user.unitId!, // TODO: Task 5 — resolve unit from building context
       },
       select: { voteId: true, optionId: true, receiptHash: true },
     });

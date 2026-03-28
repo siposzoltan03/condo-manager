@@ -49,7 +49,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
 
     // Determine the unit casting the ballot
-    let unitId = user.unitId;
+    let unitId = user.unitId!; // TODO: Task 5 — resolve unit from building context
 
     if (proxyForUnitId) {
       // Verify proxy assignment

@@ -40,7 +40,6 @@ export const authOptions = {
 
         const user = await prisma.user.findUnique({
           where: { email },
-          include: { unit: true },
         });
 
         if (!user) {
@@ -60,13 +59,33 @@ export const authOptions = {
           return null;
         }
 
+        // Fetch building memberships for this user
+        const userBuildings = await prisma.userBuilding.findMany({
+          where: { userId: user.id, isActive: true },
+          include: { building: { select: { id: true, name: true } } },
+        });
+
+        if (userBuildings.length === 0) {
+          return null; // User has no building access
+        }
+
+        const buildings = userBuildings.map((ub) => ({
+          id: ub.building.id,
+          name: ub.building.name,
+          role: ub.role,
+        }));
+
+        // Pick first building as default active building
+        const defaultBuilding = userBuildings[0];
+
         return {
           id: user.id,
           email: user.email,
           name: user.name,
           role: user.role,
-          unitId: user.unitId,
-          unitNumber: user.unit.number,
+          activeBuildingId: defaultBuilding.building.id,
+          activeRole: defaultBuilding.role,
+          buildings,
         };
       },
     }),
@@ -84,8 +103,9 @@ export const authOptions = {
       if (user) {
         token.id = user.id!;
         token.role = user.role;
-        token.unitId = user.unitId;
-        token.unitNumber = user.unitNumber;
+        token.activeBuildingId = user.activeBuildingId;
+        token.activeRole = user.activeRole;
+        token.buildings = user.buildings;
       }
       // If token is missing custom fields (stale JWT from before a code change),
       // skip the DB lookup to stay Edge-compatible. The user will be
@@ -96,8 +116,9 @@ export const authOptions = {
       if (session.user) {
         session.user.id = (token.id as string) || (token.sub ?? "");
         session.user.role = token.role as string;
-        session.user.unitId = token.unitId as string;
-        session.user.unitNumber = token.unitNumber as string;
+        session.user.activeBuildingId = token.activeBuildingId as string;
+        session.user.activeRole = token.activeRole as string;
+        session.user.buildings = token.buildings as { id: string; name: string; role: string }[];
       }
       return session;
     },

@@ -33,13 +33,13 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
     // Check if user's unit already voted
     const myBallot = await prisma.ballot.findUnique({
-      where: { voteId_unitId: { voteId: id, unitId: user.unitId } },
+      where: { voteId_unitId: { voteId: id, unitId: user.unitId! } }, // TODO: Task 5
       select: { optionId: true, receiptHash: true },
     });
 
     // Get user's unit ownership share for display
     const unit = await prisma.unit.findUnique({
-      where: { id: user.unitId },
+      where: { id: user.unitId! }, // TODO: Task 5
       select: { ownershipShare: true },
     });
 

@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     if (isBoardPlus && unitIdParam) {
       targetUnitId = unitIdParam;
     } else {
-      targetUnitId = user.unitId;
+      targetUnitId = user.unitId!; // TODO: Task 5 — resolve unit from building context
     }
 
     const where: Prisma.MonthlyChargeWhereInput = {
