@@ -14,7 +14,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { RoleGuard } from "@/components/auth/role-guard";
+import { useLocale } from "next-intl";
 
 interface ScheduledItem {
   id: string;
@@ -29,6 +29,7 @@ interface ScheduledItem {
 export function ScheduledMaintenanceCalendar() {
   const t = useTranslations("maintenance.scheduled");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
   const { hasRole } = useAuth();
   const isBoardPlus = hasRole("BOARD_MEMBER");
 
@@ -96,7 +97,7 @@ export function ScheduledMaintenanceCalendar() {
     setFormError("");
 
     if (!formTitle.trim() || !formDate) {
-      setFormError("Title and date are required");
+      setFormError(t("titleAndDateRequired"));
       return;
     }
 
@@ -219,7 +220,7 @@ export function ScheduledMaintenanceCalendar() {
             )}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <label className="mb-1 block text-sm font-medium text-slate-700">Title</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t("titleLabel")}</label>
                 <input
                   type="text"
                   value={formTitle}
@@ -229,7 +230,7 @@ export function ScheduledMaintenanceCalendar() {
                 />
               </div>
               <div className="sm:col-span-2">
-                <label className="mb-1 block text-sm font-medium text-slate-700">Description</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t("descriptionLabel")}</label>
                 <textarea
                   value={formDescription}
                   onChange={(e) => setFormDescription(e.target.value)}
@@ -265,7 +266,7 @@ export function ScheduledMaintenanceCalendar() {
                     type="text"
                     value={formRecurrenceRule}
                     onChange={(e) => setFormRecurrenceRule(e.target.value)}
-                    placeholder="e.g. Every 3 months"
+                    placeholder={t("recurrenceRulePlaceholder")}
                     className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-[#002045] focus:outline-none focus:ring-1 focus:ring-[#002045]"
                   />
                 </div>
@@ -382,11 +383,16 @@ export function ScheduledMaintenanceCalendar() {
           </div>
 
           <div className="grid grid-cols-7 gap-px">
-            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-              <div key={day} className="p-2 text-center text-xs font-medium text-slate-500">
-                {day}
-              </div>
-            ))}
+            {Array.from({ length: 7 }).map((_, i) => {
+              const dayName = new Intl.DateTimeFormat(locale, { weekday: "short" }).format(
+                new Date(2024, 0, 7 + i) // 2024-01-07 is Sunday; generates Sun–Sat
+              );
+              return (
+                <div key={i} className="p-2 text-center text-xs font-medium text-slate-500">
+                  {dayName}
+                </div>
+              );
+            })}
             {/* Empty cells for days before the 1st */}
             {Array.from({ length: firstDayOfWeek }).map((_, i) => (
               <div key={`empty-${i}`} className="min-h-[80px] bg-slate-50 p-1" />

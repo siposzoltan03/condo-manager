@@ -185,7 +185,7 @@ export function ContractorDetail({ contractorId, onBack }: ContractorDetailProps
         <div className="rounded-lg border border-slate-200 bg-white p-6">
           <h2 className="mb-4 text-lg font-semibold text-[#002045]">{t("ratingHistory")}</h2>
           {contractor.ratings.length === 0 ? (
-            <p className="text-sm text-slate-500">No ratings yet</p>
+            <p className="text-sm text-slate-500">{t("noRatingsYet")}</p>
           ) : (
             <div className="space-y-3">
               {contractor.ratings.map((rating) => (

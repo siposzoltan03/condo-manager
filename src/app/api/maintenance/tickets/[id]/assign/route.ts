@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { hasMinimumRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
+import { notify, NotificationType } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
 
 type RouteContext = {
@@ -32,7 +33,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     const ticket = await prisma.maintenanceTicket.findUnique({
       where: { id },
-      select: { id: true, status: true, trackingNumber: true, assignedContractorId: true },
+      select: { id: true, status: true, trackingNumber: true, assignedContractorId: true, reporterId: true, title: true },
     });
 
     if (!ticket) {
@@ -66,14 +67,44 @@ export async function POST(request: NextRequest, context: RouteContext) {
       },
     });
 
+    const statusChanged = ticket.status === "ACKNOWLEDGED";
+
     await createAuditLog({
       entityType: "MaintenanceTicket",
       entityId: ticket.id,
       action: "UPDATE",
       userId: user.id,
-      oldValue: { assignedContractorId: ticket.assignedContractorId },
-      newValue: { assignedContractorId: contractorId, contractorName: contractor.name },
+      oldValue: {
+        assignedContractorId: ticket.assignedContractorId,
+        ...(statusChanged ? { status: ticket.status } : {}),
+      },
+      newValue: {
+        assignedContractorId: contractorId,
+        contractorName: contractor.name,
+        ...(statusChanged ? { status: "ASSIGNED" } : {}),
+      },
     });
+
+    // If status auto-changed to ASSIGNED, write a separate status audit entry and notify reporter
+    if (statusChanged) {
+      await createAuditLog({
+        entityType: "MaintenanceTicket",
+        entityId: ticket.id,
+        action: "UPDATE",
+        userId: user.id,
+        oldValue: { status: ticket.status },
+        newValue: { status: "ASSIGNED" },
+      });
+
+      await notify({
+        userIds: [ticket.reporterId],
+        type: NotificationType.MAINTENANCE_STATUS,
+        title: `Ticket ${ticket.trackingNumber} assigned`,
+        body: `Your ticket "${ticket.title}" has been assigned to ${contractor.name}.`,
+        entityType: "MaintenanceTicket",
+        entityId: ticket.id,
+      });
+    }
 
     return NextResponse.json(updated);
   } catch (error) {

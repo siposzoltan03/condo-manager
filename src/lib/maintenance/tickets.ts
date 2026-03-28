@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
 
 const MAX_RETRIES = 5;
 
@@ -8,24 +7,30 @@ export async function generateTrackingNumber(): Promise<string> {
   const prefix = `MNT-${currentYear}-`;
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-    const lastTicket = await prisma.maintenanceTicket.findFirst({
+    const count = await prisma.maintenanceTicket.count({
       where: {
         trackingNumber: { startsWith: prefix },
       },
-      orderBy: { trackingNumber: "desc" },
-      select: { trackingNumber: true },
     });
 
-    let nextNumber = 1;
-    if (lastTicket) {
-      const lastNum = parseInt(lastTicket.trackingNumber.split("-")[2], 10);
-      if (!isNaN(lastNum)) {
-        nextNumber = lastNum + 1;
-      }
-    }
+    const nextNumber = count + 1;
+    const trackingNumber = `${prefix}${String(nextNumber).padStart(4, "0")}`;
 
-    const trackingNumber = `${prefix}${String(nextNumber).padStart(3, "0")}`;
-    return trackingNumber;
+    try {
+      // Validate uniqueness by attempting a find; the actual create
+      // happens in the caller. If a collision occurs at create-time the
+      // caller should catch P2002 and call this function again.
+      const existing = await prisma.maintenanceTicket.findUnique({
+        where: { trackingNumber },
+        select: { id: true },
+      });
+      if (!existing) {
+        return trackingNumber;
+      }
+      // Collision — retry with updated count
+    } catch {
+      // Retry on transient errors
+    }
   }
 
   throw new Error("Failed to generate tracking number");

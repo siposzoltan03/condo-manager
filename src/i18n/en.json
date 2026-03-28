@@ -377,6 +377,8 @@
       "editContractor": "Edit Contractor",
       "deleteContractor": "Delete Contractor",
       "confirmDelete": "Are you sure you want to delete this contractor?",
+      "noRatingsYet": "No ratings yet",
+      "completedJobsLabel": "completed jobs",
       "accessRestricted": "Access restricted to admin and board members."
     },
     "scheduled": {
@@ -391,6 +393,10 @@
       "editEntry": "Edit",
       "deleteEntry": "Delete",
       "confirmDelete": "Are you sure you want to delete this entry?",
+      "titleLabel": "Title",
+      "descriptionLabel": "Description",
+      "titleAndDateRequired": "Title and date are required",
+      "recurrenceRulePlaceholder": "e.g. Every 3 months",
       "accessRestricted": "Access restricted to board members and above."
     }
   },

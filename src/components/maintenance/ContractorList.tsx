@@ -237,7 +237,7 @@ export function ContractorList() {
                     </span>
                   </div>
                   <span className="text-xs text-slate-500">
-                    {contractor.totalJobs} {t("completedJobs").toLowerCase()}
+                    {contractor.totalJobs} {t("completedJobsLabel")}
                   </span>
                 </div>
               </div>

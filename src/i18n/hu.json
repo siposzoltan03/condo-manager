@@ -377,6 +377,8 @@
       "editContractor": "Kivitelező szerkesztése",
       "deleteContractor": "Kivitelező törlése",
       "confirmDelete": "Biztosan törölni szeretné ezt a kivitelezőt?",
+      "noRatingsYet": "Még nincsenek értékelések",
+      "completedJobsLabel": "befejezett munka",
       "accessRestricted": "Hozzáférés csak adminisztrátorok és igazgatósági tagok számára."
     },
     "scheduled": {
@@ -391,6 +393,10 @@
       "editEntry": "Szerkesztés",
       "deleteEntry": "Törlés",
       "confirmDelete": "Biztosan törölni szeretné ezt a bejegyzést?",
+      "titleLabel": "Cím",
+      "descriptionLabel": "Leírás",
+      "titleAndDateRequired": "A cím és a dátum megadása kötelező",
+      "recurrenceRulePlaceholder": "pl. 3 havonta",
       "accessRestricted": "Hozzáférés csak igazgatósági tagok és felettesek számára."
     }
   },

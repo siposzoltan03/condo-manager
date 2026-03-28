@@ -9,6 +9,7 @@ import {
   Urgency,
   TicketStatus,
 } from "@prisma/client";
+import { generateTrackingNumber } from "@/lib/maintenance/tickets";
 
 export async function GET(request: NextRequest) {
   try {
@@ -123,24 +124,7 @@ export async function POST(request: NextRequest) {
     let ticket;
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-      const currentYear = new Date().getFullYear();
-      const prefix = `MNT-${currentYear}-`;
-
-      const lastTicket = await prisma.maintenanceTicket.findFirst({
-        where: { trackingNumber: { startsWith: prefix } },
-        orderBy: { trackingNumber: "desc" },
-        select: { trackingNumber: true },
-      });
-
-      let nextNumber = 1;
-      if (lastTicket) {
-        const lastNum = parseInt(lastTicket.trackingNumber.split("-")[2], 10);
-        if (!isNaN(lastNum)) {
-          nextNumber = lastNum + 1;
-        }
-      }
-
-      const trackingNumber = `${prefix}${String(nextNumber).padStart(3, "0")}`;
+      const trackingNumber = await generateTrackingNumber();
 
       try {
         ticket = await prisma.maintenanceTicket.create({
