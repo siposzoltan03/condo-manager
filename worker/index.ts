@@ -1,6 +1,7 @@
 import { Worker } from "bullmq";
 import Redis from "ioredis";
 import { processNotificationJob } from "./jobs";
+import { processVotingJob } from "./processors/voting";
 
 const connection = new Redis(process.env.REDIS_URL ?? "redis://localhost:6379", {
   maxRetriesPerRequest: null,
@@ -26,6 +27,26 @@ notificationWorker.on("failed", (job, err) => {
   console.error(`Job ${job?.id} failed:`, err.message);
 });
 
+const votingWorker = new Worker(
+  "voting",
+  async (job) => {
+    console.log(`Processing voting job ${job.id}: ${job.name}`);
+    await processVotingJob(job);
+  },
+  {
+    connection,
+    concurrency: 5,
+  }
+);
+
+votingWorker.on("completed", (job) => {
+  console.log(`Voting job ${job.id} completed successfully`);
+});
+
+votingWorker.on("failed", (job, err) => {
+  console.error(`Voting job ${job?.id} failed:`, err.message);
+});
+
 const scheduledWorker = new Worker(
   "scheduled",
   async (job) => {
@@ -47,12 +68,13 @@ scheduledWorker.on("failed", (job, err) => {
 });
 
 console.log(
-  "Worker started, listening for jobs on 'notifications' and 'scheduled' queues..."
+  "Worker started, listening for jobs on 'notifications', 'voting', and 'scheduled' queues..."
 );
 
 const shutdown = async () => {
   console.log("Shutting down worker...");
   await notificationWorker.close();
+  await votingWorker.close();
   await scheduledWorker.close();
   await connection.quit();
   process.exit(0);
