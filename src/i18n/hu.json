@@ -31,7 +31,8 @@
     "users": "Felhasználók",
     "buildingFinance": "Épület pénzügyek",
     "maintenanceContractors": "Kivitelezők",
-    "maintenanceScheduled": "Ütemezett"
+    "maintenanceScheduled": "Ütemezett",
+    "buildings": "Épületek"
   },
   "users": {
     "title": "Felhasználókezelés",
@@ -88,7 +89,14 @@
     "maintenance": "Karbantartás",
     "payments": "Fizetések",
     "voting": "Szavazások",
-    "pushComingSoon": "(hamarosan)",
+    "pushNotifications": "Push értesítések",
+    "pushEnabled": "Bekapcsolva",
+    "pushDisabled": "Nincs bekapcsolva",
+    "pushEnabledDesc": "Push értesítéseket fog kapni ezen az eszközön.",
+    "pushDisabledDesc": "Kapcsolja be a push értesítéseket, hogy valós idejű figyelmeztetéseket kapjon ezen az eszközön.",
+    "pushEnableBtn": "Push értesítések bekapcsolása",
+    "pushDisableBtn": "Kikapcsolás",
+    "pushPermissionDenied": "Az értesítési engedély megtagadva. Kérjük, engedélyezze az értesítéseket a böngésző beállításaiban.",
     "dailyDigest": "Napi összefoglaló",
     "dailyDigestDesc": "Egyetlen napi összefoglaló e-mail fogadása az egyedi értesítések helyett.",
     "changePassword": "Jelszó módosítása",
@@ -101,6 +109,7 @@
     "passwordTooShort": "Az új jelszónak legalább 8 karakter hosszúnak kell lennie",
     "delivery_email": "E-mail",
     "delivery_push": "Push",
+    "delivery_both": "Mindkettő",
     "delivery_none": "Nincs"
   },
   "announcements": {
@@ -504,6 +513,43 @@
     "pageOf": "{page}. oldal / {totalPages}",
     "previous": "Előző",
     "next": "Következő"
+  },
+  "building": {
+    "switchBuilding": "Épület váltása",
+    "role_SUPER_ADMIN": "Főadminisztrátor",
+    "role_ADMIN": "Adminisztrátor",
+    "role_BOARD_MEMBER": "Igazgatósági tag",
+    "role_RESIDENT": "Lakástulajdonos",
+    "role_TENANT": "Bérlő",
+    "noBuilding": "Nincs kiválasztott épület",
+    "switchSuccess": "Épület sikeresen váltva"
+  },
+  "buildings": {
+    "title": "Epuletkezeles",
+    "subtitle": "A rendszerben levo osszes epulet kezelese.",
+    "addBuilding": "Epulet hozzaadasa",
+    "editBuilding": "Epulet szerkesztese",
+    "name": "Nev",
+    "address": "Cim",
+    "city": "Varos",
+    "zipCode": "Iranyitoszam",
+    "units": "Lakasok",
+    "users": "Felhasznalok",
+    "actions": "Muveletek",
+    "noBuildings": "Nem talalhato epulet",
+    "confirmDelete": "Biztosan torolni szeretne ezt az epuletet?",
+    "missingFields": "Kerem, toltse ki az osszes kotelezo mezot",
+    "namePlaceholder": "Epulet neve",
+    "addressPlaceholder": "Utca, hazszam",
+    "cityPlaceholder": "Varos",
+    "zipCodePlaceholder": "Iranyitoszam"
+  },
+  "notifications": {
+    "title": "Értesítések",
+    "markAllRead": "Összes olvasottnak jelölése",
+    "noNotifications": "Nincsenek értesítések",
+    "viewAll": "Összes értesítés megtekintése",
+    "loadMore": "Több betöltése"
   },
   "auth": {
     "signIn": "Bejelentkezés",

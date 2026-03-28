@@ -1,6 +1,6 @@
-import { Role } from "@prisma/client";
+import { BuildingRole } from "@prisma/client";
 
-export const ROLE_HIERARCHY: Record<Role, number> = {
+export const ROLE_HIERARCHY: Record<BuildingRole, number> = {
   SUPER_ADMIN: 5,
   ADMIN: 4,
   BOARD_MEMBER: 3,
@@ -9,8 +9,8 @@ export const ROLE_HIERARCHY: Record<Role, number> = {
 };
 
 export function hasMinimumRole(userRole: string, requiredRole: string): boolean {
-  const userLevel = ROLE_HIERARCHY[userRole as Role] ?? 0;
-  const requiredLevel = ROLE_HIERARCHY[requiredRole as Role] ?? 99;
+  const userLevel = ROLE_HIERARCHY[userRole as BuildingRole] ?? 0;
+  const requiredLevel = ROLE_HIERARCHY[requiredRole as BuildingRole] ?? 99;
   return userLevel >= requiredLevel;
 }
 

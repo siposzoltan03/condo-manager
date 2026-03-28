@@ -11,8 +11,8 @@ export function useAuth() {
   const user = session?.user ?? null;
 
   function hasRole(minimumRole: string): boolean {
-    if (!user?.role) return false;
-    return hasMinimumRole(user.role, minimumRole);
+    if (!user?.activeRole) return false;
+    return hasMinimumRole(user.activeRole, minimumRole);
   }
 
   return {
@@ -20,5 +20,8 @@ export function useAuth() {
     isLoading,
     isAuthenticated,
     hasRole,
+    activeBuildingId: user?.activeBuildingId ?? null,
+    activeRole: user?.activeRole ?? null,
+    buildings: user?.buildings ?? [],
   };
 }

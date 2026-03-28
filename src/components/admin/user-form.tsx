@@ -16,6 +16,7 @@ interface UserData {
   role: string;
   unitId: string;
   isPrimaryContact: boolean;
+  relationship?: string;
   isActive: boolean;
 }
 
@@ -33,6 +34,11 @@ const ROLES = [
   { value: "TENANT", label: "Tenant" },
 ];
 
+const RELATIONSHIPS = [
+  { value: "OWNER", label: "Owner" },
+  { value: "TENANT", label: "Tenant" },
+];
+
 export function UserFormModal({ user, onClose, onSuccess }: UserFormModalProps) {
   const t = useTranslations("common");
   const isEdit = !!user;
@@ -43,6 +49,7 @@ export function UserFormModal({ user, onClose, onSuccess }: UserFormModalProps) 
   const [role, setRole] = useState(user?.role ?? "RESIDENT");
   const [unitId, setUnitId] = useState(user?.unitId ?? "");
   const [isPrimaryContact, setIsPrimaryContact] = useState(user?.isPrimaryContact ?? false);
+  const [relationship, setRelationship] = useState(user?.relationship ?? "OWNER");
 
   const [units, setUnits] = useState<UnitOption[]>([]);
   const [loadingUnits, setLoadingUnits] = useState(true);
@@ -86,6 +93,7 @@ export function UserFormModal({ user, onClose, onSuccess }: UserFormModalProps) 
           role,
           unitId,
           isPrimaryContact,
+          relationship,
         };
 
         const res = await fetch(`/api/users/${user.id}`, {
@@ -119,6 +127,7 @@ export function UserFormModal({ user, onClose, onSuccess }: UserFormModalProps) 
             role,
             unitId,
             isPrimaryContact,
+            relationship,
           }),
         });
 
@@ -243,6 +252,24 @@ export function UserFormModal({ user, onClose, onSuccess }: UserFormModalProps) 
                 ))}
               </select>
             )}
+          </div>
+
+          {/* Relationship */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+              Relationship
+            </label>
+            <select
+              value={relationship}
+              onChange={(e) => setRelationship(e.target.value)}
+              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            >
+              {RELATIONSHIPS.map((r) => (
+                <option key={r.value} value={r.value}>
+                  {r.label}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Primary Contact */}

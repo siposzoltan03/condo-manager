@@ -12,3 +12,14 @@ export async function getCurrentUser() {
   if (!session?.user) return null;
   return session.user;
 }
+
+export async function requireBuildingContext() {
+  const user = await getCurrentUser();
+  if (!user) throw new Error("Unauthorized");
+  if (!user.activeBuildingId) throw new Error("No building selected");
+  return {
+    userId: user.id,
+    buildingId: user.activeBuildingId,
+    role: user.activeRole,
+  };
+}

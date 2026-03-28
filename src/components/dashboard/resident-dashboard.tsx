@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@/hooks/use-auth";
+import { useBuilding } from "@/hooks/use-building";
 import {
   Megaphone,
   CreditCard,
@@ -48,6 +49,8 @@ export function ResidentDashboard() {
   const t = useTranslations("dashboard");
   const tCommon = useTranslations("common");
   const { user } = useAuth();
+  const { activeBuildingId, buildings } = useBuilding();
+  const activeBuilding = buildings.find((b) => b.id === activeBuildingId);
 
   const [announcements, setAnnouncements] = useState<AnnouncementPreview[]>([]);
   const [payment, setPayment] = useState<PaymentSummary | null>(null);
@@ -164,6 +167,9 @@ export function ResidentDashboard() {
         <h1 className="text-2xl font-bold text-slate-900">
           {t("welcomeBack", { name: user?.name || "" })}
         </h1>
+        {activeBuilding && (
+          <p className="text-sm font-medium text-blue-600">{activeBuilding.name}</p>
+        )}
         <p className="text-slate-500">{t("overview")}</p>
       </div>
 

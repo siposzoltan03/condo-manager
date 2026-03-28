@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
 import { requireRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
@@ -8,10 +8,7 @@ type RouteContext = { params: Promise<{ id: string }> };
 
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId, role } = await requireBuildingContext();
 
     const { id } = await context.params;
 
@@ -21,7 +18,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         createdBy: { select: { id: true, name: true } },
         rsvps: {
           include: {
-            user: { select: { id: true, name: true, unitId: true } },
+            user: { select: { id: true, name: true } },
           },
         },
         votes: {
@@ -30,7 +27,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       },
     });
 
-    if (!meeting) {
+    if (!meeting || meeting.buildingId !== buildingId) {
       return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
     }
 
@@ -43,13 +40,10 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId, role } = await requireBuildingContext();
 
     try {
-      await requireRole(user.role, "BOARD_MEMBER");
+      await requireRole(role, "BOARD_MEMBER");
     } catch {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -58,7 +52,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     const body = await request.json();
 
     const existing = await prisma.meeting.findUnique({ where: { id } });
-    if (!existing) {
+    if (!existing || existing.buildingId !== buildingId) {
       return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
     }
 
@@ -82,7 +76,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       entityType: "Meeting",
       entityId: id,
       action: "UPDATE",
-      userId: user.id,
+      userId,
       oldValue: { title: existing.title, date: existing.date.toISOString() },
       newValue: data,
     });
@@ -96,13 +90,10 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
 export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId, role } = await requireBuildingContext();
 
     try {
-      await requireRole(user.role, "BOARD_MEMBER");
+      await requireRole(role, "BOARD_MEMBER");
     } catch {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -110,7 +101,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     const { id } = await context.params;
 
     const existing = await prisma.meeting.findUnique({ where: { id } });
-    if (!existing) {
+    if (!existing || existing.buildingId !== buildingId) {
       return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
     }
 
@@ -120,7 +111,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       entityType: "Meeting",
       entityId: id,
       action: "DELETE",
-      userId: user.id,
+      userId,
       oldValue: { title: existing.title },
     });
 

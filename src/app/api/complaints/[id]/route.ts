@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
 import { hasMinimumRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
 import { notify, NotificationType } from "@/lib/notifications";
@@ -12,13 +12,10 @@ type RouteContext = {
 
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId, role } = await requireBuildingContext();
 
     const { id } = await context.params;
-    const isBoardPlus = hasMinimumRole(user.role, "BOARD_MEMBER");
+    const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
 
     const complaint = await prisma.complaint.findUnique({
       where: { id },
@@ -38,12 +35,12 @@ export async function GET(request: NextRequest, context: RouteContext) {
       },
     });
 
-    if (!complaint) {
+    if (!complaint || complaint.buildingId !== buildingId) {
       return NextResponse.json({ error: "Complaint not found" }, { status: 404 });
     }
 
     // Check visibility: private complaints only visible to author + BOARD_MEMBER+
-    if (complaint.isPrivate && complaint.authorId !== user.id && !isBoardPlus) {
+    if (complaint.isPrivate && complaint.authorId !== userId && !isBoardPlus) {
       return NextResponse.json({ error: "Complaint not found" }, { status: 404 });
     }
 
@@ -59,12 +56,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId, role } = await requireBuildingContext();
 
-    if (!hasMinimumRole(user.role, "BOARD_MEMBER")) {
+    if (!hasMinimumRole(role, "BOARD_MEMBER")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -85,10 +79,10 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     const complaint = await prisma.complaint.findUnique({
       where: { id },
-      select: { id: true, status: true, authorId: true, trackingNumber: true },
+      select: { id: true, status: true, authorId: true, trackingNumber: true, buildingId: true },
     });
 
-    if (!complaint) {
+    if (!complaint || complaint.buildingId !== buildingId) {
       return NextResponse.json({ error: "Complaint not found" }, { status: 404 });
     }
 
@@ -108,7 +102,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       entityType: "Complaint",
       entityId: complaint.id,
       action: "UPDATE",
-      userId: user.id,
+      userId,
       oldValue: { status: oldStatus },
       newValue: { status },
     });

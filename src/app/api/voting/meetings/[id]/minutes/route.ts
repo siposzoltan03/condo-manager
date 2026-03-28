@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
 import { requireRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
@@ -8,13 +8,10 @@ type RouteContext = { params: Promise<{ id: string }> };
 
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId, role } = await requireBuildingContext();
 
     try {
-      await requireRole(user.role, "BOARD_MEMBER");
+      await requireRole(role, "BOARD_MEMBER");
     } catch {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -31,7 +28,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
 
     const meeting = await prisma.meeting.findUnique({ where: { id: meetingId } });
-    if (!meeting) {
+    if (!meeting || meeting.buildingId !== buildingId) {
       return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
     }
 
@@ -44,7 +41,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       entityType: "Meeting",
       entityId: meetingId,
       action: "UPDATE",
-      userId: user.id,
+      userId,
       newValue: { minutesUpdated: true },
     });
 

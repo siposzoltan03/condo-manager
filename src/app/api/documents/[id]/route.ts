@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
 import { requireRole, hasMinimumRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
@@ -10,17 +10,14 @@ type RouteContext = {
 
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId, role } = await requireBuildingContext();
 
     const { id } = await context.params;
 
     const document = await prisma.document.findUnique({
       where: { id },
       include: {
-        category: { select: { id: true, name: true } },
+        category: { select: { id: true, name: true, buildingId: true } },
         uploadedBy: { select: { id: true, name: true } },
         versions: {
           orderBy: { versionNumber: "desc" },
@@ -31,7 +28,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       },
     });
 
-    if (!document) {
+    if (!document || document.category.buildingId !== buildingId) {
       return NextResponse.json(
         { error: "Document not found" },
         { status: 404 }
@@ -39,10 +36,10 @@ export async function GET(request: NextRequest, context: RouteContext) {
     }
 
     // Visibility check
-    if (document.visibility === "ADMIN_ONLY" && !hasMinimumRole(user.role, "ADMIN")) {
+    if (document.visibility === "ADMIN_ONLY" && !hasMinimumRole(role, "ADMIN")) {
       return NextResponse.json({ error: "Document not found" }, { status: 404 });
     }
-    if (document.visibility === "BOARD_ONLY" && !hasMinimumRole(user.role, "BOARD_MEMBER")) {
+    if (document.visibility === "BOARD_ONLY" && !hasMinimumRole(role, "BOARD_MEMBER")) {
       return NextResponse.json({ error: "Document not found" }, { status: 404 });
     }
 
@@ -58,21 +55,21 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId, role } = await requireBuildingContext();
 
     try {
-      await requireRole(user.role, "BOARD_MEMBER");
+      await requireRole(role, "BOARD_MEMBER");
     } catch {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const { id } = await context.params;
 
-    const existing = await prisma.document.findUnique({ where: { id } });
-    if (!existing) {
+    const existing = await prisma.document.findUnique({
+      where: { id },
+      include: { category: { select: { buildingId: true } } },
+    });
+    if (!existing || existing.category.buildingId !== buildingId) {
       return NextResponse.json(
         { error: "Document not found" },
         { status: 404 }
@@ -122,7 +119,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       entityType: "Document",
       entityId: id,
       action: "UPDATE",
-      userId: user.id,
+      userId,
       oldValue: {
         title: existing.title,
         description: existing.description,
@@ -144,21 +141,21 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
 export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId, role } = await requireBuildingContext();
 
     try {
-      await requireRole(user.role, "ADMIN");
+      await requireRole(role, "ADMIN");
     } catch {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const { id } = await context.params;
 
-    const existing = await prisma.document.findUnique({ where: { id } });
-    if (!existing) {
+    const existing = await prisma.document.findUnique({
+      where: { id },
+      include: { category: { select: { buildingId: true } } },
+    });
+    if (!existing || existing.category.buildingId !== buildingId) {
       return NextResponse.json(
         { error: "Document not found" },
         { status: 404 }
@@ -172,7 +169,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       entityType: "Document",
       entityId: id,
       action: "DELETE",
-      userId: user.id,
+      userId,
       oldValue: {
         title: existing.title,
         visibility: existing.visibility,

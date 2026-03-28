@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
 import { hasMinimumRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
@@ -7,12 +7,9 @@ import { Prisma } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId, role } = await requireBuildingContext();
 
-    if (!hasMinimumRole(user.role, "BOARD_MEMBER")) {
+    if (!hasMinimumRole(role, "BOARD_MEMBER")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -26,7 +23,20 @@ export async function GET(request: NextRequest) {
     const limit = isNaN(rawLimit) || rawLimit < 1 ? 20 : Math.min(rawLimit, 100);
     const skip = (page - 1) * limit;
 
-    const where: Prisma.LedgerEntryWhereInput = {};
+    // Scope to entries where at least one account belongs to this building
+    const buildingAccountIds = (
+      await prisma.account.findMany({
+        where: { buildingId },
+        select: { id: true },
+      })
+    ).map((a) => a.id);
+
+    const where: Prisma.LedgerEntryWhereInput = {
+      OR: [
+        { debitAccountId: { in: buildingAccountIds } },
+        { creditAccountId: { in: buildingAccountIds } },
+      ],
+    };
 
     // Date filters
     if (fromParam || toParam) {
@@ -70,6 +80,10 @@ export async function GET(request: NextRequest) {
 
     // Account filter — match entries where either debit or credit uses this account
     if (accountId) {
+      // Verify account belongs to this building
+      if (!buildingAccountIds.includes(accountId)) {
+        return NextResponse.json({ entries: [], total: 0, page, totalPages: 0 });
+      }
       where.OR = [
         { debitAccountId: accountId },
         { creditAccountId: accountId },
@@ -108,12 +122,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId, role } = await requireBuildingContext();
 
-    if (!hasMinimumRole(user.role, "BOARD_MEMBER")) {
+    if (!hasMinimumRole(role, "BOARD_MEMBER")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -183,20 +194,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate both accounts exist
+    // Validate both accounts exist and belong to this building
     const [debitAccount, creditAccount] = await Promise.all([
       prisma.account.findUnique({ where: { id: debitAccountId } }),
       prisma.account.findUnique({ where: { id: creditAccountId } }),
     ]);
 
-    if (!debitAccount) {
+    if (!debitAccount || debitAccount.buildingId !== buildingId) {
       return NextResponse.json(
         { error: "Debit account not found" },
         { status: 400 }
       );
     }
 
-    if (!creditAccount) {
+    if (!creditAccount || creditAccount.buildingId !== buildingId) {
       return NextResponse.json(
         { error: "Credit account not found" },
         { status: 400 }
@@ -211,7 +222,7 @@ export async function POST(request: NextRequest) {
         amount: new Prisma.Decimal(amount),
         description,
         receiptUrl: receiptUrl ?? null,
-        createdById: user.id,
+        createdById: userId,
       },
       include: {
         debitAccount: { select: { name: true } },
@@ -224,7 +235,7 @@ export async function POST(request: NextRequest) {
       entityType: "LedgerEntry",
       entityId: entry.id,
       action: "CREATE",
-      userId: user.id,
+      userId,
       newValue: {
         date,
         debitAccountId,

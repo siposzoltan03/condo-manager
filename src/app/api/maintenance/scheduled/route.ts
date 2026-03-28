@@ -1,17 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
 import { hasMinimumRole } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { buildingId } = await requireBuildingContext();
 
     // Scheduled maintenance is visible to all authenticated users
     const items = await prisma.scheduledMaintenance.findMany({
+      where: { buildingId },
       orderBy: { date: "asc" },
     });
 
@@ -24,12 +22,9 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { buildingId, role } = await requireBuildingContext();
 
-    if (!hasMinimumRole(user.role, "BOARD_MEMBER")) {
+    if (!hasMinimumRole(role, "BOARD_MEMBER")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -63,6 +58,7 @@ export async function POST(request: NextRequest) {
         date: parsedDate,
         isRecurring: isRecurring ?? false,
         recurrenceRule: recurrenceRule ?? null,
+        buildingId,
       },
     });
 

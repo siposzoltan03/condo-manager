@@ -31,7 +31,8 @@
     "users": "Users",
     "buildingFinance": "Building Finance",
     "maintenanceContractors": "Contractors",
-    "maintenanceScheduled": "Scheduled"
+    "maintenanceScheduled": "Scheduled",
+    "buildings": "Buildings"
   },
   "users": {
     "title": "User Management",
@@ -88,7 +89,14 @@
     "maintenance": "Maintenance",
     "payments": "Payments",
     "voting": "Voting",
-    "pushComingSoon": "(coming soon)",
+    "pushNotifications": "Push Notifications",
+    "pushEnabled": "Enabled",
+    "pushDisabled": "Not enabled",
+    "pushEnabledDesc": "You will receive push notifications on this device.",
+    "pushDisabledDesc": "Enable push notifications to receive real-time alerts on this device.",
+    "pushEnableBtn": "Enable Push Notifications",
+    "pushDisableBtn": "Disable",
+    "pushPermissionDenied": "Notification permission was denied. Please allow notifications in your browser settings.",
     "dailyDigest": "Daily Digest",
     "dailyDigestDesc": "Receive a single daily summary email instead of individual notifications.",
     "changePassword": "Change Password",
@@ -101,6 +109,7 @@
     "passwordTooShort": "New password must be at least 8 characters",
     "delivery_email": "Email",
     "delivery_push": "Push",
+    "delivery_both": "Both",
     "delivery_none": "None"
   },
   "announcements": {
@@ -504,6 +513,43 @@
     "pageOf": "Page {page} of {totalPages}",
     "previous": "Previous",
     "next": "Next"
+  },
+  "building": {
+    "switchBuilding": "Switch Building",
+    "role_SUPER_ADMIN": "Super Admin",
+    "role_ADMIN": "Admin",
+    "role_BOARD_MEMBER": "Board Member",
+    "role_RESIDENT": "Resident",
+    "role_TENANT": "Tenant",
+    "noBuilding": "No building selected",
+    "switchSuccess": "Switched building successfully"
+  },
+  "buildings": {
+    "title": "Building Management",
+    "subtitle": "Manage all buildings in the system.",
+    "addBuilding": "Add Building",
+    "editBuilding": "Edit Building",
+    "name": "Name",
+    "address": "Address",
+    "city": "City",
+    "zipCode": "ZIP Code",
+    "units": "Units",
+    "users": "Users",
+    "actions": "Actions",
+    "noBuildings": "No buildings found",
+    "confirmDelete": "Are you sure you want to delete this building?",
+    "missingFields": "Please fill in all required fields",
+    "namePlaceholder": "Building name",
+    "addressPlaceholder": "Street address",
+    "cityPlaceholder": "City",
+    "zipCodePlaceholder": "ZIP code"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark all as read",
+    "noNotifications": "No notifications",
+    "viewAll": "View all notifications",
+    "loadMore": "Load more"
   },
   "auth": {
     "signIn": "Sign In",

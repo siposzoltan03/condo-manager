@@ -1,55 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
 import { requireRole, hasMinimumRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
-import { Prisma, Role } from "@prisma/client";
-
-const userSelect = {
-  id: true,
-  email: true,
-  name: true,
-  role: true,
-  unitId: true,
-  isPrimaryContact: true,
-  language: true,
-  isActive: true,
-  createdAt: true,
-  updatedAt: true,
-  unit: {
-    select: {
-      number: true,
-    },
-  },
-};
+import { BuildingRole, UnitRelationship } from "@prisma/client";
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId: currentUserId, buildingId, role: activeRole } = await requireBuildingContext();
 
     try {
-      await requireRole(currentUser.role, "ADMIN");
+      await requireRole(activeRole, "ADMIN");
     } catch {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const { id } = await params;
 
+    // Verify user belongs to this building
+    const existingMembership = await prisma.userBuilding.findFirst({
+      where: { userId: id, buildingId },
+    });
+
+    if (!existingMembership) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
     const existingUser = await prisma.user.findUnique({
       where: { id },
-      select: {
-        id: true,
-        role: true,
-        unitId: true,
-        isPrimaryContact: true,
-        isActive: true,
-      },
+      select: { id: true, isActive: true },
     });
 
     if (!existingUser) {
@@ -57,10 +39,10 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { role, unitId, isPrimaryContact, isActive } = body;
+    const { role, unitId, isPrimaryContact, isActive, relationship } = body;
 
     // Validate role if provided
-    if (role !== undefined && !Object.values(Role).includes(role as Role)) {
+    if (role !== undefined && !Object.values(BuildingRole).includes(role as BuildingRole)) {
       return NextResponse.json({ error: "Invalid role" }, { status: 400 });
     }
 
@@ -70,9 +52,9 @@ export async function PATCH(
 
     if (
       (role !== undefined && isElevatedRole(role)) ||
-      isElevatedRole(existingUser.role)
+      isElevatedRole(existingMembership.role)
     ) {
-      if (!hasMinimumRole(currentUser.role, "SUPER_ADMIN")) {
+      if (!hasMinimumRole(activeRole, "SUPER_ADMIN")) {
         return NextResponse.json(
           {
             error:
@@ -83,79 +65,134 @@ export async function PATCH(
       }
     }
 
-    // Verify unit exists if changing it
+    // Verify unit exists and belongs to this building if changing it
     if (unitId !== undefined) {
       const unit = await prisma.unit.findUnique({ where: { id: unitId } });
-      if (!unit) {
+      if (!unit || unit.buildingId !== buildingId) {
         return NextResponse.json({ error: "Unit not found" }, { status: 404 });
       }
     }
 
-    // If setting isPrimaryContact, unset existing primary on the target unit
-    const targetUnitId = unitId ?? existingUser.unitId;
-    if (isPrimaryContact === true) {
-      await prisma.user.updateMany({
-        where: {
-          unitId: targetUnitId,
-          isPrimaryContact: true,
-          id: { not: id },
-        },
-        data: { isPrimaryContact: false },
+    const oldValue: Record<string, unknown> = {};
+    const newValue: Record<string, unknown> = {};
+
+    // Update UserBuilding role
+    if (role !== undefined) {
+      oldValue.role = existingMembership.role;
+      newValue.role = role;
+      await prisma.userBuilding.update({
+        where: { id: existingMembership.id },
+        data: { role: role as BuildingRole },
       });
     }
 
-    // Build update data — only include fields that were provided
-    const updateData: Prisma.UserUpdateInput = {};
-    if (role !== undefined) updateData.role = role;
-    if (unitId !== undefined) updateData.unit = { connect: { id: unitId } };
-    if (isPrimaryContact !== undefined)
-      updateData.isPrimaryContact = isPrimaryContact;
-    if (isActive !== undefined) updateData.isActive = isActive;
+    // Update unit assignment if provided (also handles isPrimaryContact and relationship on UnitUser)
+    if (unitId !== undefined) {
+      // Remove existing unit links in this building
+      const existingUnitUsers = await prisma.unitUser.findMany({
+        where: { userId: id, unit: { buildingId } },
+        select: { id: true, unitId: true, isPrimaryContact: true, relationship: true },
+      });
+      if (existingUnitUsers.length > 0) {
+        oldValue.unitId = existingUnitUsers[0].unitId;
+        oldValue.isPrimaryContact = existingUnitUsers[0].isPrimaryContact;
+        oldValue.relationship = existingUnitUsers[0].relationship;
+        await prisma.unitUser.deleteMany({
+          where: { id: { in: existingUnitUsers.map((u) => u.id) } },
+        });
+      }
+      newValue.unitId = unitId;
+      const unitRelationship = relationship && Object.values(UnitRelationship).includes(relationship as UnitRelationship)
+        ? (relationship as UnitRelationship)
+        : UnitRelationship.OWNER;
+      await prisma.unitUser.create({
+        data: {
+          userId: id,
+          unitId,
+          relationship: unitRelationship,
+          isPrimaryContact: isPrimaryContact ?? false,
+        },
+      });
+      if (isPrimaryContact !== undefined) newValue.isPrimaryContact = isPrimaryContact;
+      if (relationship !== undefined) newValue.relationship = relationship;
+    } else {
+      // Update isPrimaryContact / relationship on existing UnitUser without changing unit
+      const existingUnitUser = await prisma.unitUser.findFirst({
+        where: { userId: id, unit: { buildingId } },
+      });
+      if (existingUnitUser) {
+        const unitUserUpdate: Record<string, unknown> = {};
+        if (isPrimaryContact !== undefined) {
+          oldValue.isPrimaryContact = existingUnitUser.isPrimaryContact;
+          newValue.isPrimaryContact = isPrimaryContact;
+          unitUserUpdate.isPrimaryContact = isPrimaryContact;
+        }
+        if (relationship !== undefined && Object.values(UnitRelationship).includes(relationship as UnitRelationship)) {
+          oldValue.relationship = existingUnitUser.relationship;
+          newValue.relationship = relationship;
+          unitUserUpdate.relationship = relationship as UnitRelationship;
+        }
+        if (Object.keys(unitUserUpdate).length > 0) {
+          await prisma.unitUser.update({
+            where: { id: existingUnitUser.id },
+            data: unitUserUpdate,
+          });
+        }
+      }
+    }
 
-    if (Object.keys(updateData).length === 0) {
+    // Update User-level fields
+    if (isActive !== undefined) {
+      oldValue.isActive = existingUser.isActive;
+      newValue.isActive = isActive;
+      await prisma.user.update({
+        where: { id },
+        data: { isActive },
+      });
+    }
+
+    if (Object.keys(newValue).length === 0) {
       return NextResponse.json(
         { error: "No fields to update" },
         { status: 400 }
       );
     }
 
-    const updatedUser = await prisma.user.update({
-      where: { id },
-      data: updateData,
-      select: userSelect,
-    });
-
-    // Build old/new value diff for audit log
-    const oldValue: Record<string, unknown> = {};
-    const newValue: Record<string, unknown> = {};
-
-    if (role !== undefined) {
-      oldValue.role = existingUser.role;
-      newValue.role = role;
-    }
-    if (unitId !== undefined) {
-      oldValue.unitId = existingUser.unitId;
-      newValue.unitId = unitId;
-    }
-    if (isPrimaryContact !== undefined) {
-      oldValue.isPrimaryContact = existingUser.isPrimaryContact;
-      newValue.isPrimaryContact = isPrimaryContact;
-    }
-    if (isActive !== undefined) {
-      oldValue.isActive = existingUser.isActive;
-      newValue.isActive = isActive;
-    }
-
     await createAuditLog({
       entityType: "User",
       entityId: id,
       action: "UPDATE",
-      userId: currentUser.id,
+      userId: currentUserId,
       oldValue,
       newValue,
     });
 
-    return NextResponse.json(updatedUser);
+    // Return updated user info
+    const updatedMembership = await prisma.userBuilding.findFirst({
+      where: { userId: id, buildingId },
+    });
+    const updatedUser = await prisma.user.findUnique({
+      where: { id },
+      select: { id: true, email: true, name: true, language: true, isActive: true, createdAt: true, updatedAt: true },
+    });
+    const unitUser = await prisma.unitUser.findFirst({
+      where: { userId: id, unit: { buildingId } },
+      include: { unit: { select: { id: true, number: true } } },
+    });
+
+    return NextResponse.json({
+      id: updatedUser!.id,
+      email: updatedUser!.email,
+      name: updatedUser!.name,
+      role: updatedMembership?.role,
+      unitId: unitUser?.unit.id ?? null,
+      unit: unitUser ? { number: unitUser.unit.number } : null,
+      isPrimaryContact: unitUser?.isPrimaryContact ?? false,
+      language: updatedUser!.language,
+      isActive: updatedUser!.isActive,
+      createdAt: updatedUser!.createdAt,
+      updatedAt: updatedUser!.updatedAt,
+    });
   } catch (error) {
     console.error("Failed to update user:", error);
     return NextResponse.json(
