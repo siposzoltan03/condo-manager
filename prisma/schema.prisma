@@ -99,6 +99,12 @@ enum RsvpStatus {
   PROXY
 }
 
+enum DocumentVisibility {
+  PUBLIC
+  BOARD_ONLY
+  ADMIN_ONLY
+}
+
 model Unit {
   id             String   @id @default(cuid())
   number         String   @unique
@@ -147,6 +153,8 @@ model User {
   ballots                 Ballot[]                    @relation("BallotVoter")
   proxiesGranted          ProxyAssignment[]           @relation("ProxyGrantor")
   proxiesReceived         ProxyAssignment[]           @relation("ProxyGrantee")
+  documents               Document[]                  @relation("DocumentUploader")
+  documentVersions        DocumentVersion[]           @relation("DocumentVersionUploader")
 }
 
 model AuditLog {
@@ -570,4 +578,59 @@ model ProxyAssignment {
   @@index([grantorId])
   @@index([granteeId])
   @@index([voteId])
+}
+
+// ─── Documents Module ──────────────────────────────────────────────────────
+
+model DocumentCategory {
+  id        String             @id @default(cuid())
+  name      String
+  icon      String?
+  parentId  String?
+  parent    DocumentCategory?  @relation("CategoryChildren", fields: [parentId], references: [id])
+  children  DocumentCategory[] @relation("CategoryChildren")
+  sortOrder Int                @default(0)
+  documents Document[]
+  createdAt DateTime           @default(now())
+
+  @@index([parentId])
+  @@index([sortOrder])
+}
+
+model Document {
+  id           String             @id @default(cuid())
+  title        String
+  description  String?
+  category     DocumentCategory   @relation(fields: [categoryId], references: [id])
+  categoryId   String
+  visibility   DocumentVisibility @default(PUBLIC)
+  tags         Json               @default("[]")
+  uploadedBy   User               @relation("DocumentUploader", fields: [uploadedById], references: [id])
+  uploadedById String
+  versions     DocumentVersion[]
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  @@index([categoryId])
+  @@index([visibility])
+  @@index([uploadedById])
+  @@index([createdAt])
+}
+
+model DocumentVersion {
+  id            String   @id @default(cuid())
+  document      Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  documentId    String
+  versionNumber Int
+  fileUrl       String
+  fileName      String
+  fileSize      Int
+  mimeType      String
+  extractedText String?  @db.Text
+  uploadedBy    User     @relation("DocumentVersionUploader", fields: [uploadedById], references: [id])
+  uploadedById  String
+  uploadedAt    DateTime @default(now())
+
+  @@unique([documentId, versionNumber])
+  @@index([documentId])
 }
