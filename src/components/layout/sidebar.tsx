@@ -20,6 +20,7 @@ import {
   Menu,
 } from "lucide-react";
 import { useState } from "react";
+import { BuildingSwitcher } from "@/components/layout/building-switcher";
 
 interface NavItem {
   key: string;
@@ -143,12 +144,14 @@ export function Sidebar() {
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex items-center justify-between px-6 py-5">
-          <span className="text-lg font-bold text-white">Condo Manager</span>
+        <div className="flex items-center justify-between">
+          <div className="flex-1 min-w-0">
+            <BuildingSwitcher />
+          </div>
           <button
             type="button"
             onClick={() => setMobileOpen(false)}
-            className="rounded-lg p-1 text-slate-400 hover:text-white"
+            className="shrink-0 rounded-lg p-1 mr-3 text-slate-400 hover:text-white"
             aria-label="Close menu"
           >
             <X className="h-5 w-5" />
@@ -159,12 +162,7 @@ export function Sidebar() {
 
       {/* Desktop sidebar */}
       <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-64 lg:flex-col lg:bg-slate-800">
-        <div className="flex items-center gap-3 px-6 py-6">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-white font-bold text-sm">
-            CM
-          </div>
-          <span className="text-lg font-bold text-white">Condo Manager</span>
-        </div>
+        <BuildingSwitcher />
         {navContent}
       </aside>
     </>

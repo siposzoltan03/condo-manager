@@ -505,6 +505,16 @@
     "previous": "Előző",
     "next": "Következő"
   },
+  "building": {
+    "switchBuilding": "Épület váltása",
+    "role_SUPER_ADMIN": "Főadminisztrátor",
+    "role_ADMIN": "Adminisztrátor",
+    "role_BOARD_MEMBER": "Igazgatósági tag",
+    "role_RESIDENT": "Lakástulajdonos",
+    "role_TENANT": "Bérlő",
+    "noBuilding": "Nincs kiválasztott épület",
+    "switchSuccess": "Épület sikeresen váltva"
+  },
   "auth": {
     "signIn": "Bejelentkezés",
     "forgotPassword": "Elfelejtett jelszó",

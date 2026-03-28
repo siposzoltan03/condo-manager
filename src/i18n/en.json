@@ -505,6 +505,16 @@
     "previous": "Previous",
     "next": "Next"
   },
+  "building": {
+    "switchBuilding": "Switch Building",
+    "role_SUPER_ADMIN": "Super Admin",
+    "role_ADMIN": "Admin",
+    "role_BOARD_MEMBER": "Board Member",
+    "role_RESIDENT": "Resident",
+    "role_TENANT": "Tenant",
+    "noBuilding": "No building selected",
+    "switchSuccess": "Switched building successfully"
+  },
   "auth": {
     "signIn": "Sign In",
     "forgotPassword": "Forgot Password",
