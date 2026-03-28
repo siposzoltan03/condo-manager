@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
 import { hasMinimumRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
 import { notify, NotificationType } from "@/lib/notifications";
@@ -11,12 +11,9 @@ type RouteContext = {
 
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId, role } = await requireBuildingContext();
 
-    if (!hasMinimumRole(user.role, "BOARD_MEMBER")) {
+    if (!hasMinimumRole(role, "BOARD_MEMBER")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -33,10 +30,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     const ticket = await prisma.maintenanceTicket.findUnique({
       where: { id },
-      select: { id: true, status: true, trackingNumber: true, assignedContractorId: true, reporterId: true, title: true },
+      select: { id: true, status: true, trackingNumber: true, assignedContractorId: true, reporterId: true, title: true, buildingId: true },
     });
 
-    if (!ticket) {
+    if (!ticket || ticket.buildingId !== buildingId) {
       return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }
 
@@ -73,7 +70,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       entityType: "MaintenanceTicket",
       entityId: ticket.id,
       action: "UPDATE",
-      userId: user.id,
+      userId,
       oldValue: {
         assignedContractorId: ticket.assignedContractorId,
         ...(statusChanged ? { status: ticket.status } : {}),
@@ -91,7 +88,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         entityType: "MaintenanceTicket",
         entityId: ticket.id,
         action: "UPDATE",
-        userId: user.id,
+        userId,
         oldValue: { status: ticket.status },
         newValue: { status: "ASSIGNED" },
       });

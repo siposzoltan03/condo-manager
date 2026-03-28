@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
 import { requireRole, hasMinimumRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
@@ -7,10 +7,7 @@ import { Prisma } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId, role } = await requireBuildingContext();
 
     const { searchParams } = request.nextUrl;
     const year = searchParams.get("year") ?? undefined;
@@ -21,18 +18,38 @@ export async function GET(request: NextRequest) {
     const limit = isNaN(rawLimit) || rawLimit < 1 ? 1 : Math.min(rawLimit, 50);
     const skip = (page - 1) * limit;
 
-    const isBoardPlus = hasMinimumRole(user.role, "BOARD_MEMBER");
+    const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
 
-    // Determine which unit to query
-    let targetUnitId: string;
+    // Determine which unit(s) to query
+    let targetUnitIds: string[];
     if (isBoardPlus && unitIdParam) {
-      targetUnitId = unitIdParam;
+      // Verify unit belongs to this building
+      const unit = await prisma.unit.findUnique({ where: { id: unitIdParam }, select: { buildingId: true } });
+      if (!unit || unit.buildingId !== buildingId) {
+        return NextResponse.json({ charges: [], total: 0, page, totalPages: 0 });
+      }
+      targetUnitIds = [unitIdParam];
+    } else if (isBoardPlus) {
+      // Board+ without unitId filter: show all building units
+      const buildingUnits = await prisma.unit.findMany({
+        where: { buildingId },
+        select: { id: true },
+      });
+      targetUnitIds = buildingUnits.map((u) => u.id);
     } else {
-      targetUnitId = user.unitId!; // TODO: Task 5 — resolve unit from building context
+      // Residents: show charges for their units in this building
+      const userUnits = await prisma.unitUser.findMany({
+        where: { userId, unit: { buildingId } },
+        select: { unitId: true },
+      });
+      targetUnitIds = userUnits.map((u) => u.unitId);
+      if (targetUnitIds.length === 0) {
+        return NextResponse.json({ charges: [], total: 0, page, totalPages: 0 });
+      }
     }
 
     const where: Prisma.MonthlyChargeWhereInput = {
-      unitId: targetUnitId,
+      unitId: { in: targetUnitIds },
     };
 
     // Filter by year (month field is "YYYY-MM")
@@ -72,13 +89,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId, role } = await requireBuildingContext();
 
     try {
-      await requireRole(user.role, "BOARD_MEMBER");
+      await requireRole(role, "BOARD_MEMBER");
     } catch {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -121,6 +135,21 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Verify all units belong to this building
+    const chargeUnitIds = [...new Set(charges.map((c: { unitId: string }) => c.unitId))];
+    const validUnits = await prisma.unit.findMany({
+      where: { id: { in: chargeUnitIds as string[] }, buildingId },
+      select: { id: true },
+    });
+    const validUnitIds = new Set(validUnits.map((u) => u.id));
+    const invalidUnits = (chargeUnitIds as string[]).filter((id) => !validUnitIds.has(id));
+    if (invalidUnits.length > 0) {
+      return NextResponse.json(
+        { error: `${invalidUnits.length} unit(s) not found in this building` },
+        { status: 400 }
+      );
+    }
+
     const result = await prisma.monthlyCharge.createMany({
       data: charges.map((c: { unitId: string; month: string; amount: number }) => ({
         unitId: c.unitId,
@@ -134,7 +163,7 @@ export async function POST(request: NextRequest) {
       entityType: "MonthlyCharge",
       entityId: "bulk",
       action: "CREATE",
-      userId: user.id,
+      userId,
       newValue: { count: result.count, charges },
     });
 

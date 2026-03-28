@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 type RouteContext = {
@@ -8,10 +8,7 @@ type RouteContext = {
 
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { buildingId } = await requireBuildingContext();
 
     const { topicId } = await context.params;
     const { searchParams } = request.nextUrl;
@@ -21,13 +18,13 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const limit = isNaN(rawLimit) || rawLimit < 1 ? 50 : Math.min(rawLimit, 100);
     const skip = (page - 1) * limit;
 
-    // Verify topic exists
+    // Verify topic exists and belongs to this building
     const topic = await prisma.forumTopic.findUnique({
       where: { id: topicId },
-      select: { id: true },
+      include: { category: { select: { buildingId: true } } },
     });
 
-    if (!topic) {
+    if (!topic || topic.category.buildingId !== buildingId) {
       return NextResponse.json(
         { error: "Topic not found" },
         { status: 404 }
@@ -76,25 +73,24 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId } = await requireBuildingContext();
 
     const { topicId } = await context.params;
 
-    // Verify topic exists and check lock status
-    const topic = await prisma.forumTopic.findUnique({
+    // Verify topic exists, belongs to this building, and check lock status
+    const topicForPost = await prisma.forumTopic.findUnique({
       where: { id: topicId },
-      select: { id: true, isLocked: true },
+      select: { id: true, isLocked: true, category: { select: { buildingId: true } } },
     });
 
-    if (!topic) {
+    if (!topicForPost || topicForPost.category.buildingId !== buildingId) {
       return NextResponse.json(
         { error: "Topic not found" },
         { status: 404 }
       );
     }
+
+    const topic = topicForPost;
 
     if (topic.isLocked) {
       return NextResponse.json(
@@ -133,7 +129,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         data: {
           body: replyBody,
           topicId,
-          authorId: user.id,
+          authorId: userId,
           parentReplyId: parentReplyId ?? null,
         },
         include: {

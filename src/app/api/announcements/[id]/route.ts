@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
 import { requireRole, hasMinimumRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
@@ -10,10 +10,7 @@ type RouteContext = {
 
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId, role } = await requireBuildingContext();
 
     const { id } = await context.params;
 
@@ -29,7 +26,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       },
     });
 
-    if (!announcement) {
+    if (!announcement || announcement.buildingId !== buildingId) {
       return NextResponse.json(
         { error: "Announcement not found" },
         { status: 404 }
@@ -39,7 +36,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     // BOARD_ONLY announcements hidden from non-board users
     if (
       announcement.targetAudience === "BOARD_ONLY" &&
-      !hasMinimumRole(user.role, "BOARD_MEMBER")
+      !hasMinimumRole(role, "BOARD_MEMBER")
     ) {
       return NextResponse.json(
         { error: "Announcement not found" },
@@ -51,7 +48,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const readRecord = await prisma.announcementRead.findUnique({
       where: {
         userId_announcementId: {
-          userId: user.id,
+          userId,
           announcementId: id,
         },
       },
@@ -84,10 +81,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId, role } = await requireBuildingContext();
 
     const { id } = await context.params;
 
@@ -95,7 +89,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       where: { id },
     });
 
-    if (!existing) {
+    if (!existing || existing.buildingId !== buildingId) {
       return NextResponse.json(
         { error: "Announcement not found" },
         { status: 404 }
@@ -103,8 +97,8 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     }
 
     // Author or ADMIN+ can update
-    const isAuthor = existing.authorId === user.id;
-    const isAdmin = hasMinimumRole(user.role, "ADMIN");
+    const isAuthor = existing.authorId === userId;
+    const isAdmin = hasMinimumRole(role, "ADMIN");
     if (!isAuthor && !isAdmin) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -141,7 +135,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       entityType: "Announcement",
       entityId: id,
       action: "UPDATE",
-      userId: user.id,
+      userId,
       oldValue: {
         title: existing.title,
         body: existing.body,
@@ -162,10 +156,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
 export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId, role } = await requireBuildingContext();
 
     const { id } = await context.params;
 
@@ -173,7 +164,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       where: { id },
     });
 
-    if (!existing) {
+    if (!existing || existing.buildingId !== buildingId) {
       return NextResponse.json(
         { error: "Announcement not found" },
         { status: 404 }
@@ -181,8 +172,8 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     }
 
     // Author or ADMIN+ can delete
-    const isAuthor = existing.authorId === user.id;
-    const isAdmin = hasMinimumRole(user.role, "ADMIN");
+    const isAuthor = existing.authorId === userId;
+    const isAdmin = hasMinimumRole(role, "ADMIN");
     if (!isAuthor && !isAdmin) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -194,7 +185,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       entityType: "Announcement",
       entityId: id,
       action: "DELETE",
-      userId: user.id,
+      userId,
       oldValue: {
         title: existing.title,
         targetAudience: existing.targetAudience,

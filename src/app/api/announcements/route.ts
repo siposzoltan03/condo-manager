@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
 import { requireRole, hasMinimumRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
 import { notify, NotificationType } from "@/lib/notifications";
@@ -8,10 +8,7 @@ import { Prisma, TargetAudience } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId, role } = await requireBuildingContext();
 
     const { searchParams } = request.nextUrl;
     const search = searchParams.get("search") ?? undefined;
@@ -22,10 +19,10 @@ export async function GET(request: NextRequest) {
     const limit = isNaN(rawLimit) || rawLimit < 1 ? 20 : Math.min(rawLimit, 50);
     const skip = (page - 1) * limit;
 
-    const where: Prisma.AnnouncementWhereInput = {};
+    const where: Prisma.AnnouncementWhereInput = { buildingId };
 
     // Filter by audience visibility based on user role
-    const isBoardPlus = hasMinimumRole(user.role, "BOARD_MEMBER");
+    const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
     if (!isBoardPlus) {
       // TENANT/RESIDENT can only see ALL and SPECIFIC_UNITS
       where.targetAudience = { in: ["ALL", "SPECIFIC_UNITS"] };
@@ -56,7 +53,7 @@ export async function GET(request: NextRequest) {
             select: { name: true, role: true },
           },
           reads: {
-            where: { userId: user.id },
+            where: { userId },
             select: { id: true },
           },
           _count: {
@@ -101,13 +98,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId, role } = await requireBuildingContext();
 
     try {
-      await requireRole(user.role, "BOARD_MEMBER");
+      await requireRole(role, "BOARD_MEMBER");
     } catch {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -138,7 +132,8 @@ export async function POST(request: NextRequest) {
         body: announcementBody,
         targetAudience: targetAudience ?? "ALL",
         attachments: attachments ?? [],
-        authorId: user.id,
+        authorId: userId,
+        buildingId,
       },
       include: {
         author: {
@@ -151,26 +146,32 @@ export async function POST(request: NextRequest) {
       entityType: "Announcement",
       entityId: announcement.id,
       action: "CREATE",
-      userId: user.id,
+      userId,
       newValue: { title, targetAudience: targetAudience ?? "ALL" },
     });
 
     // Notify users based on audience
     const effectiveAudience = targetAudience ?? "ALL";
-    const userFilter: Prisma.UserWhereInput = { isActive: true, id: { not: user.id } };
+    // Notify users in this building
+    const buildingUsers = await prisma.userBuilding.findMany({
+      where: { buildingId, userId: { not: userId } },
+      select: { userId: true, role: true },
+    });
+
+    let targetUserIds = buildingUsers.map((u) => u.userId);
 
     if (effectiveAudience === "BOARD_ONLY") {
-      userFilter.role = { in: ["BOARD_MEMBER", "ADMIN", "SUPER_ADMIN"] };
+      const boardRoles = ["BOARD_MEMBER", "ADMIN", "SUPER_ADMIN"];
+      targetUserIds = buildingUsers
+        .filter((u) => boardRoles.includes(u.role))
+        .map((u) => u.userId);
     }
 
-    const targetUsers = await prisma.user.findMany({
-      where: userFilter,
-      select: { id: true },
-    });
+    const targetUsers = targetUserIds.map((id) => ({ id }));
 
     if (targetUsers.length > 0) {
       await notify({
-        userIds: targetUsers.map((u) => u.id),
+        userIds: targetUserIds,
         type: NotificationType.ANNOUNCEMENT_NEW,
         title: `New Announcement: ${title}`,
         body: announcementBody.substring(0, 200),

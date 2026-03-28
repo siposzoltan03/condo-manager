@@ -1,79 +1,101 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
 import { requireRole, hasMinimumRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import { Prisma, Role } from "@prisma/client";
-
-const userSelect = {
-  id: true,
-  email: true,
-  name: true,
-  role: true,
-  unitId: true,
-  isPrimaryContact: true,
-  language: true,
-  isActive: true,
-  createdAt: true,
-  updatedAt: true,
-  unit: {
-    select: {
-      number: true,
-    },
-  },
-};
+import { Prisma, Role, BuildingRole } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId, role: activeRole } = await requireBuildingContext();
 
     try {
-      await requireRole(user.role, "ADMIN");
+      await requireRole(activeRole, "ADMIN");
     } catch {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const { searchParams } = request.nextUrl;
     const search = searchParams.get("search") ?? undefined;
-    const role = searchParams.get("role") ?? undefined;
+    const roleFilter = searchParams.get("role") ?? undefined;
     const rawPage = parseInt(searchParams.get("page") ?? "1", 10);
     const page = isNaN(rawPage) || rawPage < 1 ? 1 : rawPage;
     const limit = 20;
     const skip = (page - 1) * limit;
 
-    const where: Prisma.UserWhereInput = {};
+    // List users who belong to this building via UserBuilding
+    const where: Prisma.UserBuildingWhereInput = { buildingId };
 
     if (search) {
-      where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        { email: { contains: search, mode: "insensitive" } },
-      ];
+      where.user = {
+        OR: [
+          { name: { contains: search, mode: "insensitive" } },
+          { email: { contains: search, mode: "insensitive" } },
+        ],
+      };
     }
 
-    if (role) {
-      if (!Object.values(Role).includes(role as Role)) {
+    if (roleFilter) {
+      if (!Object.values(Role).includes(roleFilter as Role)) {
         return NextResponse.json(
           { error: "Invalid role filter" },
           { status: 400 }
         );
       }
-      where.role = role as Role;
+      where.role = roleFilter as Role;
     }
 
-    const [users, total] = await Promise.all([
-      prisma.user.findMany({
+    const [userBuildings, total] = await Promise.all([
+      prisma.userBuilding.findMany({
         where,
-        select: userSelect,
-        orderBy: { name: "asc" },
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              isPrimaryContact: true,
+              language: true,
+              isActive: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+          },
+        },
+        orderBy: { user: { name: "asc" } },
         skip,
         take: limit,
       }),
-      prisma.user.count({ where }),
+      prisma.userBuilding.count({ where }),
     ]);
+
+    // Fetch unit assignments for these users in this building
+    const userIds = userBuildings.map((ub) => ub.userId);
+    const unitUsers = await prisma.unitUser.findMany({
+      where: { userId: { in: userIds }, unit: { buildingId } },
+      include: { unit: { select: { id: true, number: true } } },
+    });
+    const unitMap = new Map<string, { unitId: string; unitNumber: string }>();
+    for (const uu of unitUsers) {
+      if (!unitMap.has(uu.userId)) {
+        unitMap.set(uu.userId, { unitId: uu.unit.id, unitNumber: uu.unit.number });
+      }
+    }
+
+    const users = userBuildings.map((ub) => ({
+      id: ub.user.id,
+      email: ub.user.email,
+      name: ub.user.name,
+      role: ub.role,
+      unitId: unitMap.get(ub.userId)?.unitId ?? null,
+      unit: unitMap.get(ub.userId) ? { number: unitMap.get(ub.userId)!.unitNumber } : null,
+      isPrimaryContact: ub.user.isPrimaryContact ?? false,
+      language: ub.user.language,
+      isActive: ub.user.isActive,
+      createdAt: ub.user.createdAt,
+      updatedAt: ub.user.updatedAt,
+    }));
 
     return NextResponse.json({
       users,
@@ -92,13 +114,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId: currentUserId, buildingId, role: activeRole } = await requireBuildingContext();
 
     try {
-      await requireRole(currentUser.role, "ADMIN");
+      await requireRole(activeRole, "ADMIN");
     } catch {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -121,7 +140,7 @@ export async function POST(request: NextRequest) {
     // Only SUPER_ADMIN can assign SUPER_ADMIN or ADMIN roles
     if (
       (role === "SUPER_ADMIN" || role === "ADMIN") &&
-      !hasMinimumRole(currentUser.role, "SUPER_ADMIN")
+      !hasMinimumRole(activeRole, "SUPER_ADMIN")
     ) {
       return NextResponse.json(
         { error: "Only SUPER_ADMIN can assign ADMIN or SUPER_ADMIN roles" },
@@ -129,24 +148,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check email uniqueness
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
-    if (existingUser) {
-      return NextResponse.json(
-        { error: "Email already in use" },
-        { status: 409 }
-      );
-    }
-
-    // Verify unit exists
+    // Verify unit exists and belongs to this building
     const unit = await prisma.unit.findUnique({ where: { id: unitId } });
-    if (!unit) {
+    if (!unit || unit.buildingId !== buildingId) {
       return NextResponse.json({ error: "Unit not found" }, { status: 404 });
     }
 
     const passwordHash = await bcrypt.hash(temporaryPassword, 12);
+
+    // Check if user with this email already exists
+    let existingUser = await prisma.user.findUnique({ where: { email } });
+
+    if (existingUser) {
+      // Check if user is already in this building
+      const existingMembership = await prisma.userBuilding.findFirst({
+        where: { userId: existingUser.id, buildingId },
+      });
+      if (existingMembership) {
+        return NextResponse.json(
+          { error: "User is already a member of this building" },
+          { status: 409 }
+        );
+      }
+    }
 
     // If isPrimaryContact, unset existing primary on that unit
     if (isPrimaryContact) {
@@ -156,27 +180,62 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const newUser = await prisma.user.create({
-      data: {
-        email,
-        name,
-        role: role as Role,
-        unitId,
-        isPrimaryContact: isPrimaryContact ?? false,
-        passwordHash,
-      },
-      select: userSelect,
+    // Use a transaction: create User (if new) + UserBuilding + UnitUser
+    const result = await prisma.$transaction(async (tx) => {
+      let targetUser = existingUser;
+      if (!targetUser) {
+        targetUser = await tx.user.create({
+          data: {
+            email,
+            name,
+            passwordHash,
+            role: role as Role,
+            unitId,
+            isPrimaryContact: isPrimaryContact ?? false,
+          },
+        });
+      }
+
+      // Create UserBuilding membership
+      await tx.userBuilding.create({
+        data: {
+          userId: targetUser.id,
+          buildingId,
+          role: role as BuildingRole,
+        },
+      });
+
+      // Create UnitUser link
+      await tx.unitUser.create({
+        data: {
+          userId: targetUser.id,
+          unitId,
+        },
+      });
+
+      return targetUser;
     });
 
     await createAuditLog({
       entityType: "User",
-      entityId: newUser.id,
+      entityId: result.id,
       action: "CREATE",
-      userId: currentUser.id,
-      newValue: { email, name, role, unitId, isPrimaryContact: isPrimaryContact ?? false },
+      userId: currentUserId,
+      newValue: { email, name, role, unitId, buildingId, isPrimaryContact: isPrimaryContact ?? false },
     });
 
-    return NextResponse.json(newUser, { status: 201 });
+    return NextResponse.json({
+      id: result.id,
+      email: result.email,
+      name: result.name,
+      role,
+      unitId,
+      unit: { number: unit.number },
+      isPrimaryContact: isPrimaryContact ?? false,
+      isActive: result.isActive,
+      createdAt: result.createdAt,
+      updatedAt: result.updatedAt,
+    }, { status: 201 });
   } catch (error) {
     console.error("Failed to create user:", error);
     return NextResponse.json(

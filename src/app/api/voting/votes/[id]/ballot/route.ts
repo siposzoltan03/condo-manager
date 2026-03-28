@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
 import { createHash } from "crypto";
@@ -8,10 +8,7 @@ type RouteContext = { params: Promise<{ id: string }> };
 
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId } = await requireBuildingContext();
 
     const { id: voteId } = await context.params;
     const body = await request.json();
@@ -24,13 +21,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
       );
     }
 
-    // Fetch the vote
+    // Fetch the vote and verify building scope
     const vote = await prisma.vote.findUnique({
       where: { id: voteId },
-      include: { options: true },
+      include: { options: true, meeting: { select: { buildingId: true } } },
     });
 
-    if (!vote) {
+    if (!vote || vote.meeting?.buildingId !== buildingId) {
       return NextResponse.json({ error: "Vote not found" }, { status: 404 });
     }
 
@@ -49,14 +46,21 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
 
     // Determine the unit casting the ballot
-    let unitId = user.unitId!; // TODO: Task 5 — resolve unit from building context
+    const userUnit = await prisma.unitUser.findFirst({
+      where: { userId, unit: { buildingId } },
+      select: { unitId: true },
+    });
+    if (!userUnit) {
+      return NextResponse.json({ error: "No unit found in this building" }, { status: 400 });
+    }
+    let unitId = userUnit.unitId;
 
     if (proxyForUnitId) {
       // Verify proxy assignment
       const now = new Date();
       const proxy = await prisma.proxyAssignment.findFirst({
         where: {
-          granteeId: user.id,
+          granteeId: userId,
           grantor: { unitId: proxyForUnitId },
           validFrom: { lte: now },
           AND: [
@@ -114,7 +118,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         voteId,
         optionId,
         unitId,
-        userId: vote.isSecret ? null : user.id,
+        userId: vote.isSecret ? null : userId,
         weight: unit.ownershipShare,
         receiptHash: null, // will be set below for secret ballots
       },
@@ -139,7 +143,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       entityType: "Ballot",
       entityId: ballot.id,
       action: "CREATE",
-      userId: user.id,
+      userId,
       newValue: {
         voteId,
         unitId,

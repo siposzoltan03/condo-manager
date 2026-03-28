@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
 import { requireRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
@@ -9,13 +9,10 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId, role } = await requireBuildingContext();
 
     try {
-      await requireRole(user.role, "BOARD_MEMBER");
+      await requireRole(role, "BOARD_MEMBER");
     } catch {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -24,9 +21,10 @@ export async function PATCH(
 
     const existing = await prisma.monthlyCharge.findUnique({
       where: { id },
+      include: { unit: { select: { buildingId: true } } },
     });
 
-    if (!existing) {
+    if (!existing || existing.unit.buildingId !== buildingId) {
       return NextResponse.json({ error: "Charge not found" }, { status: 404 });
     }
 
@@ -47,7 +45,7 @@ export async function PATCH(
       entityType: "MonthlyCharge",
       entityId: id,
       action: "UPDATE",
-      userId: user.id,
+      userId,
       oldValue: { status: existing.status, paidAt: existing.paidAt },
       newValue: { status: updated.status, paidAt: updated.paidAt },
     });

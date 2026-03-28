@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
 import { hasMinimumRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
@@ -7,12 +7,9 @@ import { Prisma } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId, role } = await requireBuildingContext();
 
-    if (!hasMinimumRole(user.role, "BOARD_MEMBER")) {
+    if (!hasMinimumRole(role, "BOARD_MEMBER")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -26,7 +23,7 @@ export async function GET(request: NextRequest) {
 
     // Get all EXPENSE accounts with their budget for this year
     const expenseAccounts = await prisma.account.findMany({
-      where: { type: "EXPENSE" },
+      where: { type: "EXPENSE", buildingId },
       include: {
         budgets: {
           where: { year },
@@ -76,12 +73,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId, role } = await requireBuildingContext();
 
-    if (!hasMinimumRole(user.role, "BOARD_MEMBER")) {
+    if (!hasMinimumRole(role, "BOARD_MEMBER")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -121,7 +115,7 @@ export async function POST(request: NextRequest) {
     // Verify all accounts exist and are EXPENSE type
     const accountIds = items.map((i: { accountId: string }) => i.accountId);
     const accounts = await prisma.account.findMany({
-      where: { id: { in: accountIds }, type: "EXPENSE" },
+      where: { id: { in: accountIds }, type: "EXPENSE", buildingId },
       select: { id: true },
     });
 
@@ -157,7 +151,7 @@ export async function POST(request: NextRequest) {
       entityType: "Budget",
       entityId: `year-${year}`,
       action: "UPDATE",
-      userId: user.id,
+      userId,
       newValue: { year, itemCount: result.length, items },
     });
 

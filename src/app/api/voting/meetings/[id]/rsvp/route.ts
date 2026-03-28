@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { RsvpStatus } from "@prisma/client";
 
@@ -7,10 +7,7 @@ type RouteContext = { params: Promise<{ id: string }> };
 
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId } = await requireBuildingContext();
 
     const { id: meetingId } = await context.params;
     const body = await request.json();
@@ -24,18 +21,18 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
 
     const meeting = await prisma.meeting.findUnique({ where: { id: meetingId } });
-    if (!meeting) {
+    if (!meeting || meeting.buildingId !== buildingId) {
       return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
     }
 
     const rsvp = await prisma.meetingRsvp.upsert({
       where: {
-        meetingId_userId: { meetingId, userId: user.id },
+        meetingId_userId: { meetingId, userId },
       },
       update: { status: status as RsvpStatus },
       create: {
         meetingId,
-        userId: user.id,
+        userId,
         status: status as RsvpStatus,
       },
     });

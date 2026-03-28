@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
 import { requireRole, hasMinimumRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
@@ -7,14 +7,11 @@ import { DocumentVisibility } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId, role } = await requireBuildingContext();
 
     // Determine which visibilities user can see
-    const isAdmin = hasMinimumRole(user.role, "ADMIN");
-    const isBoardPlus = hasMinimumRole(user.role, "BOARD_MEMBER");
+    const isAdmin = hasMinimumRole(role, "ADMIN");
+    const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
 
     let allowedVisibilities: DocumentVisibility[];
     if (isAdmin) {
@@ -26,6 +23,7 @@ export async function GET(request: NextRequest) {
     }
 
     const categories = await prisma.documentCategory.findMany({
+      where: { buildingId },
       orderBy: { sortOrder: "asc" },
       include: {
         _count: {
@@ -84,13 +82,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId, role } = await requireBuildingContext();
 
     try {
-      await requireRole(user.role, "ADMIN");
+      await requireRole(role, "ADMIN");
     } catch {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -122,6 +117,7 @@ export async function POST(request: NextRequest) {
         icon: icon ?? null,
         parentId: parentId ?? null,
         sortOrder: sortOrder ?? 0,
+        buildingId,
       },
     });
 
@@ -129,7 +125,7 @@ export async function POST(request: NextRequest) {
       entityType: "DocumentCategory",
       entityId: category.id,
       action: "CREATE",
-      userId: user.id,
+      userId,
       newValue: { name, icon, parentId },
     });
 

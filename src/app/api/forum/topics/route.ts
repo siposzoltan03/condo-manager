@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId } = await requireBuildingContext();
 
     const { searchParams } = request.nextUrl;
     const categoryId = searchParams.get("categoryId");
@@ -20,7 +17,10 @@ export async function GET(request: NextRequest) {
     const limit = isNaN(rawLimit) || rawLimit < 1 ? 20 : Math.min(rawLimit, 50);
     const skip = (page - 1) * limit;
 
-    const where: Prisma.ForumTopicWhereInput = {};
+    // Only show topics from categories belonging to this building
+    const where: Prisma.ForumTopicWhereInput = {
+      category: { buildingId },
+    };
     if (categoryId) {
       where.categoryId = categoryId;
     }
@@ -87,10 +87,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId } = await requireBuildingContext();
 
     const body = await request.json();
     const { title, body: topicBody, categoryId } = body;
@@ -102,11 +99,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify category exists
+    // Verify category exists and belongs to this building
     const category = await prisma.forumCategory.findUnique({
       where: { id: categoryId },
     });
-    if (!category) {
+    if (!category || category.buildingId !== buildingId) {
       return NextResponse.json(
         { error: "Category not found" },
         { status: 404 }
@@ -118,7 +115,7 @@ export async function POST(request: NextRequest) {
         title,
         body: topicBody,
         categoryId,
-        authorId: user.id,
+        authorId: userId,
         lastActivityAt: new Date(),
       },
       include: {
@@ -135,7 +132,7 @@ export async function POST(request: NextRequest) {
       entityType: "ForumTopic",
       entityId: topic.id,
       action: "CREATE",
-      userId: user.id,
+      userId,
       newValue: { title, categoryId },
     });
 

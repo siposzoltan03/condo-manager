@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
 import { requireRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
@@ -10,13 +10,10 @@ type RouteContext = {
 
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId, role } = await requireBuildingContext();
 
     try {
-      await requireRole(user.role, "BOARD_MEMBER");
+      await requireRole(role, "BOARD_MEMBER");
     } catch {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -26,6 +23,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     const document = await prisma.document.findUnique({
       where: { id },
       include: {
+        category: { select: { buildingId: true } },
         versions: {
           orderBy: { versionNumber: "desc" },
           take: 1,
@@ -34,7 +32,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       },
     });
 
-    if (!document) {
+    if (!document || document.category.buildingId !== buildingId) {
       return NextResponse.json(
         { error: "Document not found" },
         { status: 404 }
@@ -62,7 +60,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         fileSize: fileSize ?? 0,
         mimeType: mimeType ?? "application/octet-stream",
         extractedText: null,
-        uploadedById: user.id,
+        uploadedById: userId,
       },
       include: {
         uploadedBy: { select: { id: true, name: true } },
@@ -79,7 +77,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       entityType: "DocumentVersion",
       entityId: version.id,
       action: "CREATE",
-      userId: user.id,
+      userId,
       newValue: {
         documentId: id,
         versionNumber: nextVersion,

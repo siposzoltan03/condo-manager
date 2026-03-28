@@ -1,17 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 /**
  * Lightweight user search endpoint for messaging.
- * Any authenticated user can access — returns only { id, name, unitNumber }.
+ * Returns users who share the active building with the current user.
  */
 export async function GET(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId } = await requireBuildingContext();
 
     const { searchParams } = request.nextUrl;
     const search = searchParams.get("search") ?? "";
@@ -22,30 +19,47 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ users: [] });
     }
 
-    const users = await prisma.user.findMany({
+    // Find users who belong to this building
+    const buildingMembers = await prisma.userBuilding.findMany({
       where: {
-        isActive: true,
-        OR: [
-          { name: { contains: search, mode: "insensitive" } },
-          { email: { contains: search, mode: "insensitive" } },
-        ],
-      },
-      select: {
-        id: true,
-        name: true,
-        unit: {
-          select: { number: true },
+        buildingId,
+        user: {
+          isActive: true,
+          OR: [
+            { name: { contains: search, mode: "insensitive" } },
+            { email: { contains: search, mode: "insensitive" } },
+          ],
         },
       },
-      orderBy: { name: "asc" },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
       take: limit,
     });
 
+    // Get unit numbers for these users in this building
+    const memberUserIds = buildingMembers.map((m) => m.userId);
+    const unitUsers = await prisma.unitUser.findMany({
+      where: { userId: { in: memberUserIds }, unit: { buildingId } },
+      include: { unit: { select: { number: true } } },
+    });
+    const unitMap = new Map<string, string>();
+    for (const uu of unitUsers) {
+      if (!unitMap.has(uu.userId)) {
+        unitMap.set(uu.userId, uu.unit.number);
+      }
+    }
+
     return NextResponse.json({
-      users: users.map((u) => ({
-        id: u.id,
-        name: u.name,
-        unitNumber: u.unit?.number ?? null,
+      users: buildingMembers.map((m) => ({
+        id: m.user.id,
+        name: m.user.name,
+        unitNumber: unitMap.get(m.userId) ?? null,
       })),
     });
   } catch (error) {

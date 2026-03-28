@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
 import { hasMinimumRole } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 
@@ -9,12 +9,9 @@ type RouteContext = {
 
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId, role } = await requireBuildingContext();
 
-    if (!hasMinimumRole(user.role, "ADMIN")) {
+    if (!hasMinimumRole(role, "ADMIN")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -31,10 +28,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     const ticket = await prisma.maintenanceTicket.findUnique({
       where: { id },
-      select: { id: true, status: true, assignedContractorId: true },
+      select: { id: true, status: true, assignedContractorId: true, buildingId: true },
     });
 
-    if (!ticket) {
+    if (!ticket || ticket.buildingId !== buildingId) {
       return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }
 
@@ -58,7 +55,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         notes: notes ?? null,
         contractor: { connect: { id: ticket.assignedContractorId } },
         ticket: { connect: { id: ticket.id } },
-        rater: { connect: { id: user.id } },
+        rater: { connect: { id: userId } },
       },
       include: {
         rater: { select: { id: true, name: true } },

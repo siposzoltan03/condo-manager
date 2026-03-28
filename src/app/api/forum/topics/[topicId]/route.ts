@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
 import { hasMinimumRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
@@ -10,10 +10,7 @@ type RouteContext = {
 
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId, role } = await requireBuildingContext();
 
     const { topicId } = await context.params;
 
@@ -24,7 +21,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
           select: { name: true, role: true },
         },
         category: {
-          select: { id: true, name: true },
+          select: { id: true, name: true, buildingId: true },
         },
         _count: {
           select: { replies: true },
@@ -32,7 +29,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       },
     });
 
-    if (!topic) {
+    if (!topic || topic.category.buildingId !== buildingId) {
       return NextResponse.json(
         { error: "Topic not found" },
         { status: 404 }
@@ -65,26 +62,24 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId, role } = await requireBuildingContext();
 
     const { topicId } = await context.params;
 
     const existing = await prisma.forumTopic.findUnique({
       where: { id: topicId },
+      include: { category: { select: { buildingId: true } } },
     });
 
-    if (!existing) {
+    if (!existing || existing.category.buildingId !== buildingId) {
       return NextResponse.json(
         { error: "Topic not found" },
         { status: 404 }
       );
     }
 
-    const isAuthor = existing.authorId === user.id;
-    const isAdmin = hasMinimumRole(user.role, "ADMIN");
+    const isAuthor = existing.authorId === userId;
+    const isAdmin = hasMinimumRole(role, "ADMIN");
 
     const body = await request.json();
     const { title, body: topicBody, isPinned, isLocked } = body;
@@ -139,7 +134,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       entityType: "ForumTopic",
       entityId: topicId,
       action: "UPDATE",
-      userId: user.id,
+      userId,
       oldValue: {
         title: existing.title,
         body: existing.body,
@@ -161,26 +156,24 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
 export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId, role } = await requireBuildingContext();
 
     const { topicId } = await context.params;
 
     const existing = await prisma.forumTopic.findUnique({
       where: { id: topicId },
+      include: { category: { select: { buildingId: true } } },
     });
 
-    if (!existing) {
+    if (!existing || existing.category.buildingId !== buildingId) {
       return NextResponse.json(
         { error: "Topic not found" },
         { status: 404 }
       );
     }
 
-    const isAuthor = existing.authorId === user.id;
-    const isAdmin = hasMinimumRole(user.role, "ADMIN");
+    const isAuthor = existing.authorId === userId;
+    const isAdmin = hasMinimumRole(role, "ADMIN");
     if (!isAuthor && !isAdmin) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -192,7 +185,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       entityType: "ForumTopic",
       entityId: topicId,
       action: "DELETE",
-      userId: user.id,
+      userId,
       oldValue: { title: existing.title, categoryId: existing.categoryId },
     });
 

@@ -1,26 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
 import { hasMinimumRole } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId, role } = await requireBuildingContext();
 
     const { searchParams } = request.nextUrl;
     const unitIdParam = searchParams.get("unitId") ?? undefined;
-    const isBoardPlus = hasMinimumRole(user.role, "BOARD_MEMBER");
+    const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
 
     // Determine which unit to query
     let targetUnitId: string;
     if (isBoardPlus && unitIdParam) {
+      // Verify unit belongs to this building
+      const unit = await prisma.unit.findUnique({ where: { id: unitIdParam }, select: { buildingId: true } });
+      if (!unit || unit.buildingId !== buildingId) {
+        return NextResponse.json({ currentBalance: 0, nextDue: null, lastPayment: null });
+      }
       targetUnitId = unitIdParam;
     } else {
-      targetUnitId = user.unitId!; // TODO: Task 5 — resolve unit from building context
+      // Resident: get their first unit in this building
+      const userUnit = await prisma.unitUser.findFirst({
+        where: { userId, unit: { buildingId } },
+        select: { unitId: true },
+      });
+      if (!userUnit) {
+        return NextResponse.json({ currentBalance: 0, nextDue: null, lastPayment: null });
+      }
+      targetUnitId = userUnit.unitId;
     }
 
     // Current balance: sum of UNPAID + OVERDUE amounts
