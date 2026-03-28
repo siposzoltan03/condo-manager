@@ -26,9 +26,9 @@ const EVENT_TYPE_KEYS = [
   "voting",
 ] as const;
 
-type DeliveryMethod = "email" | "push" | "none";
+type DeliveryMethod = "email" | "push" | "both" | "none";
 
-const DELIVERY_METHODS: DeliveryMethod[] = ["email", "push", "none"];
+const DELIVERY_METHODS: DeliveryMethod[] = ["email", "push", "both", "none"];
 
 export function NotificationsTab({ preferences, onUpdate }: NotificationsTabProps) {
   const t = useTranslations("common");

@@ -109,6 +109,7 @@
     "passwordTooShort": "Az új jelszónak legalább 8 karakter hosszúnak kell lennie",
     "delivery_email": "E-mail",
     "delivery_push": "Push",
+    "delivery_both": "Mindkettő",
     "delivery_none": "Nincs"
   },
   "announcements": {

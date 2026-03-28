@@ -109,6 +109,7 @@
     "passwordTooShort": "New password must be at least 8 characters",
     "delivery_email": "Email",
     "delivery_push": "Push",
+    "delivery_both": "Both",
     "delivery_none": "None"
   },
   "announcements": {
