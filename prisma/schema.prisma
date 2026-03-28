@@ -81,6 +81,24 @@ enum ChargeStatus {
   OVERDUE
 }
 
+enum VoteType {
+  YES_NO
+  MULTIPLE_CHOICE
+  RANKED_CHOICE
+}
+
+enum VoteStatus {
+  DRAFT
+  OPEN
+  CLOSED
+}
+
+enum RsvpStatus {
+  ATTENDING
+  NOT_ATTENDING
+  PROXY
+}
+
 model Unit {
   id             String   @id @default(cuid())
   number         String   @unique
@@ -89,6 +107,7 @@ model Unit {
   size           Decimal  @db.Decimal(8, 2)
   users          User[]
   monthlyCharges MonthlyCharge[]
+  ballots        Ballot[]
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
@@ -122,6 +141,12 @@ model User {
   maintenanceTickets      MaintenanceTicket[]         @relation("MaintenanceTickets")
   ticketComments          TicketComment[]             @relation("TicketComments")
   contractorRatings       ContractorRating[]          @relation("ContractorRatings")
+  meetingsCreated         Meeting[]                   @relation("MeetingCreator")
+  meetingRsvps            MeetingRsvp[]
+  votesCreated            Vote[]                      @relation("VoteCreator")
+  ballots                 Ballot[]                    @relation("BallotVoter")
+  proxiesGranted          ProxyAssignment[]           @relation("ProxyGrantor")
+  proxiesReceived         ProxyAssignment[]           @relation("ProxyGrantee")
 }
 
 model AuditLog {
@@ -442,4 +467,107 @@ model Budget {
   account       Account @relation(fields: [accountId], references: [id])
   plannedAmount Decimal @db.Decimal(12, 2)
   @@unique([year, accountId])
+}
+
+// ─── Voting & Meetings Module ──────────────────────────────────────────────
+
+model Meeting {
+  id          String        @id @default(cuid())
+  title       String
+  description String?       @db.Text
+  date        DateTime
+  time        String        // "HH:mm" format
+  location    String?
+  agenda      Json          @default("[]")
+  minutes     String?       @db.Text
+  createdBy   User          @relation("MeetingCreator", fields: [createdById], references: [id])
+  createdById String
+  rsvps       MeetingRsvp[]
+  votes       Vote[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([date])
+  @@index([createdById])
+}
+
+model MeetingRsvp {
+  id        String     @id @default(cuid())
+  meeting   Meeting    @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  meetingId String
+  user      User       @relation(fields: [userId], references: [id])
+  userId    String
+  status    RsvpStatus
+  createdAt DateTime   @default(now())
+
+  @@unique([meetingId, userId])
+}
+
+model Vote {
+  id             String       @id @default(cuid())
+  title          String
+  description    String?      @db.Text
+  voteType       VoteType     @default(YES_NO)
+  status         VoteStatus   @default(DRAFT)
+  isSecret       Boolean      @default(false)
+  quorumRequired Decimal      @db.Decimal(5, 4) // e.g. 0.5100 = 51%
+  deadline       DateTime
+  meeting        Meeting?     @relation(fields: [meetingId], references: [id])
+  meetingId      String?
+  createdBy      User         @relation("VoteCreator", fields: [createdById], references: [id])
+  createdById    String
+  options        VoteOption[]
+  ballots        Ballot[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([status])
+  @@index([deadline])
+  @@index([createdById])
+}
+
+model VoteOption {
+  id        String   @id @default(cuid())
+  vote      Vote     @relation(fields: [voteId], references: [id], onDelete: Cascade)
+  voteId    String
+  label     String
+  sortOrder Int      @default(0)
+  ballots   Ballot[]
+
+  @@index([voteId, sortOrder])
+}
+
+model Ballot {
+  id          String      @id @default(cuid())
+  vote        Vote        @relation(fields: [voteId], references: [id], onDelete: Cascade)
+  voteId      String
+  option      VoteOption  @relation(fields: [optionId], references: [id])
+  optionId    String
+  unit        Unit        @relation(fields: [unitId], references: [id])
+  unitId      String
+  user        User?       @relation("BallotVoter", fields: [userId], references: [id])
+  userId      String?     // null for secret ballots
+  weight      Decimal     @db.Decimal(5, 4) // copied from unit.ownershipShare at vote time
+  receiptHash String?     // SHA256 hash for secret ballot receipt
+  createdAt   DateTime    @default(now())
+
+  @@unique([voteId, unitId])
+  @@index([voteId])
+  @@index([optionId])
+}
+
+model ProxyAssignment {
+  id        String    @id @default(cuid())
+  grantor   User      @relation("ProxyGrantor", fields: [grantorId], references: [id])
+  grantorId String
+  grantee   User      @relation("ProxyGrantee", fields: [granteeId], references: [id])
+  granteeId String
+  voteId    String?   // null = general proxy for all votes
+  validFrom DateTime  @default(now())
+  validUntil DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([grantorId])
+  @@index([granteeId])
+  @@index([voteId])
 }
