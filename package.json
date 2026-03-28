@@ -9,6 +9,7 @@
     "lint": "next lint",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css}\"",
     "test": "vitest",
+    "test:e2e": "playwright test",
     "worker": "tsx watch worker/index.ts",
     "postinstall": "prisma generate"
   },
@@ -32,6 +33,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
+    "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4.1.3",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.14.1",

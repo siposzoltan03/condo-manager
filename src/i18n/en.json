@@ -13,7 +13,8 @@
     "search": "Search",
     "loading": "Loading...",
     "error": "An error occurred",
-    "success": "Operation successful"
+    "success": "Operation successful",
+    "selectUnit": "Select a unit"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -517,5 +518,39 @@
     "invalidToken": "Invalid or missing reset token. Please request a new reset link.",
     "newPassword": "New Password",
     "confirmPassword": "Confirm Password"
+  },
+  "dashboard": {
+    "welcomeBack": "Welcome back, {name}",
+    "overview": "Here is an overview of your building.",
+    "adminOverview": "Building management overview and quick actions.",
+    "recentAnnouncements": "Recent Announcements",
+    "viewAll": "View All",
+    "viewDetails": "View Details",
+    "viewMessages": "View Messages",
+    "noRecentAnnouncements": "No recent announcements.",
+    "myPaymentStatus": "My Payment Status",
+    "noPaymentData": "No payment data available.",
+    "currentMonthPaid": "Current month: Paid",
+    "currentMonthOverdue": "Current month: Overdue",
+    "currentMonthUnpaid": "Current month: Unpaid",
+    "nextDue": "Next due",
+    "myOpenTickets": "My Open Tickets",
+    "noOpenTickets": "No open maintenance tickets.",
+    "upcomingVotes": "Upcoming Votes",
+    "noActiveVotes": "No active votes at this time.",
+    "notifications": "Notifications",
+    "unreadNotifications": "{count, plural, one {# unread notification} other {# unread notifications}}",
+    "buildingOverview": "Building Overview",
+    "totalResidents": "{count, plural, one {# resident} other {# residents}}",
+    "financialSummary": "Financial Summary",
+    "reserveFund": "Reserve: {amount} Ft",
+    "overduePayments": "Overdue Payments",
+    "openComplaints": "{count, plural, one {# open complaint} other {# open complaints}}",
+    "pendingMaintenance": "Pending Maintenance",
+    "awaitingAction": "Awaiting action",
+    "quickActions": "Quick Actions",
+    "createAnnouncement": "Create Announcement",
+    "recordPayment": "Record Payment",
+    "newMaintenanceTicket": "New Maintenance Ticket"
   }
 }

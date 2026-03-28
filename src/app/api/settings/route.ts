@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { validatePassword } from "@/lib/password";
 
 export async function GET() {
   try {
@@ -100,9 +101,17 @@ export async function PATCH(request: NextRequest) {
         );
       }
 
-      if (typeof newPassword !== "string" || newPassword.length < 8) {
+      if (typeof newPassword !== "string") {
         return NextResponse.json(
-          { error: "New password must be at least 8 characters" },
+          { error: "Invalid password format" },
+          { status: 400 }
+        );
+      }
+
+      const passwordCheck = validatePassword(newPassword);
+      if (!passwordCheck.valid) {
+        return NextResponse.json(
+          { error: passwordCheck.errors.join(". ") },
           { status: 400 }
         );
       }
