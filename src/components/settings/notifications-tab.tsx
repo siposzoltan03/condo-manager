@@ -51,6 +51,18 @@ export function NotificationsTab({ preferences, onUpdate }: NotificationsTabProp
       const subscription = await subscribeToPush();
       if (subscription) {
         setPushEnabled(true);
+        // Auto-set all event types to "both" (email + push) and save immediately
+        const bothPrefs: NotificationPreferences = {};
+        for (const key of EVENT_TYPE_KEYS) {
+          bothPrefs[key] = "both";
+        }
+        setPrefs((prev) => ({ ...prev, ...bothPrefs }));
+        // Persist to API
+        await fetch("/api/settings", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ notificationPreferences: { ...prefs, ...bothPrefs } }),
+        });
       } else {
         setError(tSettings("pushPermissionDenied"));
       }
