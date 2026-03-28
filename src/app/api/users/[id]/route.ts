@@ -3,7 +3,7 @@ import { requireBuildingContext } from "@/lib/auth";
 import { requireRole, hasMinimumRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
-import { Role, BuildingRole } from "@prisma/client";
+import { Role, BuildingRole, UnitRelationship } from "@prisma/client";
 
 export async function PATCH(
   request: NextRequest,
@@ -39,7 +39,7 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { role, unitId, isPrimaryContact, isActive } = body;
+    const { role, unitId, isPrimaryContact, isActive, relationship } = body;
 
     // Validate role if provided
     if (role !== undefined && !Object.values(Role).includes(role as Role)) {
@@ -86,33 +86,59 @@ export async function PATCH(
       });
     }
 
-    // Update isPrimaryContact on User model
-    if (isPrimaryContact !== undefined) {
-      oldValue.isPrimaryContact = existingUser.isPrimaryContact;
-      newValue.isPrimaryContact = isPrimaryContact;
-      await prisma.user.update({
-        where: { id },
-        data: { isPrimaryContact },
-      });
-    }
-
-    // Update unit assignment if provided
+    // Update unit assignment if provided (also handles isPrimaryContact and relationship on UnitUser)
     if (unitId !== undefined) {
       // Remove existing unit links in this building
       const existingUnitUsers = await prisma.unitUser.findMany({
         where: { userId: id, unit: { buildingId } },
-        select: { id: true, unitId: true },
+        select: { id: true, unitId: true, isPrimaryContact: true, relationship: true },
       });
       if (existingUnitUsers.length > 0) {
         oldValue.unitId = existingUnitUsers[0].unitId;
+        oldValue.isPrimaryContact = existingUnitUsers[0].isPrimaryContact;
+        oldValue.relationship = existingUnitUsers[0].relationship;
         await prisma.unitUser.deleteMany({
           where: { id: { in: existingUnitUsers.map((u) => u.id) } },
         });
       }
       newValue.unitId = unitId;
+      const unitRelationship = relationship && Object.values(UnitRelationship).includes(relationship as UnitRelationship)
+        ? (relationship as UnitRelationship)
+        : UnitRelationship.OWNER;
       await prisma.unitUser.create({
-        data: { userId: id, unitId },
+        data: {
+          userId: id,
+          unitId,
+          relationship: unitRelationship,
+          isPrimaryContact: isPrimaryContact ?? false,
+        },
       });
+      if (isPrimaryContact !== undefined) newValue.isPrimaryContact = isPrimaryContact;
+      if (relationship !== undefined) newValue.relationship = relationship;
+    } else {
+      // Update isPrimaryContact / relationship on existing UnitUser without changing unit
+      const existingUnitUser = await prisma.unitUser.findFirst({
+        where: { userId: id, unit: { buildingId } },
+      });
+      if (existingUnitUser) {
+        const unitUserUpdate: Record<string, unknown> = {};
+        if (isPrimaryContact !== undefined) {
+          oldValue.isPrimaryContact = existingUnitUser.isPrimaryContact;
+          newValue.isPrimaryContact = isPrimaryContact;
+          unitUserUpdate.isPrimaryContact = isPrimaryContact;
+        }
+        if (relationship !== undefined && Object.values(UnitRelationship).includes(relationship as UnitRelationship)) {
+          oldValue.relationship = existingUnitUser.relationship;
+          newValue.relationship = relationship;
+          unitUserUpdate.relationship = relationship as UnitRelationship;
+        }
+        if (Object.keys(unitUserUpdate).length > 0) {
+          await prisma.unitUser.update({
+            where: { id: existingUnitUser.id },
+            data: unitUserUpdate,
+          });
+        }
+      }
     }
 
     // Update User-level fields

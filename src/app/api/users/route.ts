@@ -4,7 +4,7 @@ import { requireRole, hasMinimumRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import { Prisma, Role, BuildingRole } from "@prisma/client";
+import { Prisma, Role, BuildingRole, UnitRelationship } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
   try {
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { email, name, role, unitId, isPrimaryContact, temporaryPassword } =
+    const { email, name, role, unitId, isPrimaryContact, temporaryPassword, relationship } =
       body;
 
     if (!email || !name || !role || !unitId || !temporaryPassword) {
@@ -206,10 +206,15 @@ export async function POST(request: NextRequest) {
       });
 
       // Create UnitUser link
+      const unitRelationship = relationship && Object.values(UnitRelationship).includes(relationship as UnitRelationship)
+        ? (relationship as UnitRelationship)
+        : UnitRelationship.OWNER;
       await tx.unitUser.create({
         data: {
           userId: targetUser.id,
           unitId,
+          relationship: unitRelationship,
+          isPrimaryContact: isPrimaryContact ?? false,
         },
       });
 

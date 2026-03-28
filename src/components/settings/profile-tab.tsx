@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { useAuth } from "@/hooks/use-auth";
 
 interface ProfileData {
   name: string;
@@ -35,6 +36,8 @@ interface ProfileTabProps {
 export function ProfileTab({ profile, onUpdate }: ProfileTabProps) {
   const t = useTranslations("common");
   const tSettings = useTranslations("settings");
+  const tBuilding = useTranslations("building");
+  const { buildings } = useAuth();
   const [name, setName] = useState(profile.name);
   const [language, setLanguage] = useState(profile.language);
   const [saving, setSaving] = useState(false);
@@ -122,20 +125,37 @@ export function ProfileTab({ profile, onUpdate }: ProfileTabProps) {
         />
       </div>
 
-      {/* Role (read-only badge) */}
+      {/* Buildings & Roles */}
       <div>
         <label className="block text-sm font-medium text-slate-700 mb-1.5">
           {tSettings("role")}
         </label>
-        <span
-          className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${
-            ROLE_COLORS[profile.role] ?? "bg-slate-100 text-slate-700"
-          }`}
-        >
-          {ROLE_TO_I18N_KEY[profile.role]
-            ? tSettings(ROLE_TO_I18N_KEY[profile.role] as Parameters<typeof tSettings>[0])
-            : profile.role}
-        </span>
+        {buildings.length > 0 ? (
+          <div className="space-y-2">
+            {buildings.map((b) => (
+              <div key={b.id} className="flex items-center gap-3">
+                <span className="text-sm text-slate-700">{b.name}</span>
+                <span
+                  className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
+                    ROLE_COLORS[b.role] ?? "bg-slate-100 text-slate-700"
+                  }`}
+                >
+                  {tBuilding(`role_${b.role}` as Parameters<typeof tBuilding>[0])}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <span
+            className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${
+              ROLE_COLORS[profile.role] ?? "bg-slate-100 text-slate-700"
+            }`}
+          >
+            {ROLE_TO_I18N_KEY[profile.role]
+              ? tSettings(ROLE_TO_I18N_KEY[profile.role] as Parameters<typeof tSettings>[0])
+              : profile.role}
+          </span>
+        )}
       </div>
 
       {/* Language */}
