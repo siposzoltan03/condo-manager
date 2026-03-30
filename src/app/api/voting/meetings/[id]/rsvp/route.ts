@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
+import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
 import { prisma } from "@/lib/prisma";
 import { RsvpStatus } from "@prisma/client";
 
@@ -8,6 +9,15 @@ type RouteContext = { params: Promise<{ id: string }> };
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
     const { userId, buildingId } = await requireBuildingContext();
+
+    try {
+      await requireFeature(buildingId, "voting");
+    } catch (err) {
+      if (err instanceof FeatureGateError) {
+        return NextResponse.json({ error: err.message, upgrade: true }, { status: 403 });
+      }
+      throw err;
+    }
 
     const { id: meetingId } = await context.params;
     const body = await request.json();

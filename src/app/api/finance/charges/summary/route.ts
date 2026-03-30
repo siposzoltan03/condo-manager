@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
+import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
 import { hasMinimumRole } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
@@ -7,6 +8,15 @@ import { Prisma } from "@prisma/client";
 export async function GET(request: NextRequest) {
   try {
     const { userId, buildingId, role } = await requireBuildingContext();
+
+    try {
+      await requireFeature(buildingId, "finance");
+    } catch (err) {
+      if (err instanceof FeatureGateError) {
+        return NextResponse.json({ error: err.message, upgrade: true }, { status: 403 });
+      }
+      throw err;
+    }
 
     const { searchParams } = request.nextUrl;
     const unitIdParam = searchParams.get("unitId") ?? undefined;

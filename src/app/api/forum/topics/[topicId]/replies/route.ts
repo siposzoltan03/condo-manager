@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
+import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
 import { prisma } from "@/lib/prisma";
 
 type RouteContext = {
@@ -9,6 +10,15 @@ type RouteContext = {
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
     const { buildingId } = await requireBuildingContext();
+
+    try {
+      await requireFeature(buildingId, "forum");
+    } catch (err) {
+      if (err instanceof FeatureGateError) {
+        return NextResponse.json({ error: err.message, upgrade: true }, { status: 403 });
+      }
+      throw err;
+    }
 
     const { topicId } = await context.params;
     const { searchParams } = request.nextUrl;
@@ -74,6 +84,15 @@ export async function GET(request: NextRequest, context: RouteContext) {
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
     const { userId, buildingId } = await requireBuildingContext();
+
+    try {
+      await requireFeature(buildingId, "forum");
+    } catch (err) {
+      if (err instanceof FeatureGateError) {
+        return NextResponse.json({ error: err.message, upgrade: true }, { status: 403 });
+      }
+      throw err;
+    }
 
     const { topicId } = await context.params;
 
