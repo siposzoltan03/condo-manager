@@ -54,6 +54,7 @@ const navItems: NavItem[] = [
   { key: "buildings", href: "/admin/buildings", icon: Building2, minimumRole: "SUPER_ADMIN" },
   { key: "settings", href: "/settings", icon: Settings, minimumRole: "TENANT", subItems: [
     { key: "settingsInvitations", href: "/settings/invitations", minimumRole: "ADMIN" },
+    { key: "settingsBilling", href: "/settings/billing", minimumRole: "ADMIN" },
   ] },
 ];
 

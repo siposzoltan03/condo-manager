@@ -33,7 +33,8 @@
     "maintenanceContractors": "Contractors",
     "maintenanceScheduled": "Scheduled",
     "buildings": "Buildings",
-    "settingsInvitations": "Invitations"
+    "settingsInvitations": "Invitations",
+    "settingsBilling": "Billing"
   },
   "users": {
     "title": "User Management",
@@ -631,6 +632,34 @@
     "inviteLink": "Invite Link",
     "copyLink": "Copy Link",
     "linkCopied": "Link copied to clipboard"
+  },
+  "billing": {
+    "title": "Billing",
+    "subtitle": "Manage your subscription, view plan details, and monitor usage.",
+    "currentPlan": "Current Plan",
+    "usage": "Usage",
+    "buildings": "Buildings",
+    "units": "Units",
+    "unlimited": "Unlimited",
+    "status": "Status",
+    "status_ACTIVE": "Active",
+    "status_TRIALING": "Trial",
+    "status_PAST_DUE": "Past Due",
+    "status_CANCELED": "Canceled",
+    "status_EXPIRED": "Expired",
+    "manageSubscription": "Manage Subscription",
+    "viewPricing": "View Plans",
+    "trialEndsIn": "Trial ends in {days} days",
+    "trialExpired": "Trial expired — choose a plan to continue",
+    "choosePlan": "Choose a Plan",
+    "daysRemaining": "{days} days remaining",
+    "legacyPlan": "Legacy Plan",
+    "legacyDescription": "This is a legacy subscription with all features enabled.",
+    "noStripeSubscription": "No Stripe subscription linked",
+    "frozenBanner": "You have {count} buildings over your plan limit. Remove buildings or upgrade to restore full access.",
+    "frozenBuildingBadge": "Frozen",
+    "overLimit": "Over limit",
+    "removeOrUpgrade": "Remove excess buildings or upgrade your plan."
   },
   "featureGate": {
     "upgradeTitle": "Upgrade Required",

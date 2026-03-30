@@ -33,7 +33,8 @@
     "maintenanceContractors": "Kivitelezők",
     "maintenanceScheduled": "Ütemezett",
     "buildings": "Épületek",
-    "settingsInvitations": "Meghivok"
+    "settingsInvitations": "Meghivok",
+    "settingsBilling": "Szamlazas"
   },
   "users": {
     "title": "Felhasználókezelés",
@@ -631,6 +632,34 @@
     "inviteLink": "Meghivo link",
     "copyLink": "Link masolasa",
     "linkCopied": "Link a vagolapra masolva"
+  },
+  "billing": {
+    "title": "Szamlazas",
+    "subtitle": "Elofizetes kezelese, csomag reszletek es hasznalat figyelese.",
+    "currentPlan": "Jelenlegi csomag",
+    "usage": "Hasznalat",
+    "buildings": "Epuletek",
+    "units": "Lakasok",
+    "unlimited": "Korlatlan",
+    "status": "Allapot",
+    "status_ACTIVE": "Aktiv",
+    "status_TRIALING": "Probaidoszak",
+    "status_PAST_DUE": "Lejarva",
+    "status_CANCELED": "Lemondva",
+    "status_EXPIRED": "Lejart",
+    "manageSubscription": "Elofizetes kezelese",
+    "viewPricing": "Csomagok megtekintese",
+    "trialEndsIn": "A probaidoszak {days} nap mulva jar le",
+    "trialExpired": "A probaidoszak lejart — valasszon csomagot a folytatashoz",
+    "choosePlan": "Csomag valasztasa",
+    "daysRemaining": "{days} nap van hatra",
+    "legacyPlan": "Legacy csomag",
+    "legacyDescription": "Ez egy legacy elofizetes, minden funkcio elerheto.",
+    "noStripeSubscription": "Nincs Stripe elofizetes csatolva",
+    "frozenBanner": "{count} epulet meghaladja a csomag korlatjat. Tavolitson el epuleteket vagy frissitsen a teljes hozzaferes visszaallitasahoz.",
+    "frozenBuildingBadge": "Befagyasztva",
+    "overLimit": "Korlat felett",
+    "removeOrUpgrade": "Tavolitsa el a felesleges epuleteket vagy frissitse a csomagjat."
   },
   "featureGate": {
     "upgradeTitle": "Frissites szukseges",
