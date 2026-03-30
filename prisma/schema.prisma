@@ -206,6 +206,7 @@ model Building {
   subscriptionId       String?
   subscription         Subscription?          @relation(fields: [subscriptionId], references: [id])
   invitationExpiryHours Int                   @default(168)
+  isFrozen             Boolean                @default(false)
   units                Unit[]
   userBuildings        UserBuilding[]
   announcements        Announcement[]
