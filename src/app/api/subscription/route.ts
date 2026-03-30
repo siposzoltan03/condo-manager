@@ -38,13 +38,17 @@ export async function GET() {
         : [];
 
     return NextResponse.json({
+      id: subscription.id,
       planSlug: subscription.plan.slug,
       planName: subscription.plan.name,
       features,
       maxBuildings: subscription.plan.maxBuildings,
       maxUnitsPerBuilding: subscription.plan.maxUnitsPerBuilding,
+      priceMonthly: subscription.plan.priceMonthly,
+      priceYearly: subscription.plan.priceYearly,
       subscriptionStatus: subscription.subscriptionStatus,
       trialEndsAt: subscription.trialEndsAt,
+      hasStripe: !!subscription.stripeCustomerId,
       isLegacy: false,
     });
   } catch (error) {
