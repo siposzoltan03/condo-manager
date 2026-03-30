@@ -33,7 +33,10 @@ export default auth((req) => {
   if (pathname.startsWith("/api")) {
     if (
       pathname.startsWith("/api/auth") ||
-      pathname.startsWith("/api/invitations/by-token")
+      pathname.startsWith("/api/invitations/by-token") ||
+      pathname.startsWith("/api/stripe/checkout") ||
+      pathname.startsWith("/api/stripe/verify-session") ||
+      pathname.startsWith("/api/stripe/webhook")
     ) {
       return NextResponse.next();
     }
