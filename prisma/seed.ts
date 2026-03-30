@@ -18,6 +18,9 @@ async function main() {
   console.log("Seeding database (multi-building)...");
 
   // Cleanup in correct FK order — new tables first, then existing
+  await prisma.invitation.deleteMany();
+  await prisma.subscription.deleteMany();
+  await prisma.plan.deleteMany();
   await prisma.unitUser.deleteMany();
   await prisma.userBuilding.deleteMany();
   await prisma.documentVersion.deleteMany();
@@ -57,6 +60,80 @@ async function main() {
   await prisma.building.deleteMany();
 
   const passwordHash = await bcrypt.hash("password123", 12);
+
+  // ─── Plans ────────────────────────────────────────────────────────────────────
+
+  const starterPlan = await prisma.plan.upsert({
+    where: { slug: "starter" },
+    update: {},
+    create: {
+      name: "Starter",
+      slug: "starter",
+      maxBuildings: 1,
+      maxUnitsPerBuilding: 30,
+      features: ["complaints", "announcements", "messaging", "documents"],
+      priceMonthly: 9.99,
+      priceYearly: 99.99,
+      trialDays: 14,
+    },
+  });
+
+  const proPlan = await prisma.plan.upsert({
+    where: { slug: "pro" },
+    update: {},
+    create: {
+      name: "Professional",
+      slug: "pro",
+      maxBuildings: 5,
+      maxUnitsPerBuilding: 100,
+      features: [
+        "complaints", "announcements", "messaging", "documents",
+        "finance", "voting", "maintenance", "forum",
+      ],
+      priceMonthly: 29.99,
+      priceYearly: 299.99,
+      trialDays: 14,
+    },
+  });
+
+  const enterprisePlan = await prisma.plan.upsert({
+    where: { slug: "enterprise" },
+    update: {},
+    create: {
+      name: "Enterprise",
+      slug: "enterprise",
+      maxBuildings: -1,
+      maxUnitsPerBuilding: -1,
+      features: [
+        "complaints", "announcements", "messaging", "documents",
+        "finance", "voting", "maintenance", "forum",
+        "api_access", "custom_branding", "audit_exports",
+      ],
+      priceMonthly: 99.99,
+      priceYearly: 999.99,
+      trialDays: 14,
+    },
+  });
+
+  const legacyPlan = await prisma.plan.upsert({
+    where: { slug: "legacy" },
+    update: {},
+    create: {
+      name: "Legacy",
+      slug: "legacy",
+      maxBuildings: -1,
+      maxUnitsPerBuilding: -1,
+      features: [
+        "complaints", "announcements", "messaging", "documents",
+        "finance", "voting", "maintenance", "forum",
+        "api_access", "custom_branding", "audit_exports",
+      ],
+      priceMonthly: 0,
+      priceYearly: 0,
+      trialDays: 0,
+      isActive: false,
+    },
+  });
 
   // ─── Buildings ──────────────────────────────────────────────────────────────
 
@@ -173,6 +250,31 @@ async function main() {
       name: "Nagy István",
       language: "hu",
     },
+  });
+
+  // ─── Legacy Subscription ──────────────────────────────────────────────────────
+
+  const legacySubscription = await prisma.subscription.upsert({
+    where: { id: "legacy-subscription" },
+    update: {},
+    create: {
+      id: "legacy-subscription",
+      name: "Legacy",
+      email: superAdmin.email,
+      planId: legacyPlan.id,
+      subscriptionStatus: "ACTIVE",
+      ownerId: superAdmin.id,
+    },
+  });
+
+  // Assign both buildings to the legacy subscription
+  await prisma.building.update({
+    where: { id: building1.id },
+    data: { subscriptionId: legacySubscription.id },
+  });
+  await prisma.building.update({
+    where: { id: building2.id },
+    data: { subscriptionId: legacySubscription.id },
   });
 
   // Admin — building 1 only
@@ -448,7 +550,10 @@ async function main() {
   });
 
   console.log("Seeding complete.");
+  console.log("  - 4 plans created (Starter, Professional, Enterprise, Legacy)");
+  console.log("  - 1 legacy subscription created (assigned to super admin)");
   console.log("  - 2 buildings created (Duna Residence, Margit Apartments)");
+  console.log("  - 2 buildings linked to legacy subscription");
   console.log("  - 8 units created (5 in building 1, 3 in building 2)");
   console.log("  - 11 users created (password: password123)");
   console.log("  - 12 user-building assignments");
