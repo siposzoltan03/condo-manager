@@ -48,7 +48,9 @@ const navItems: NavItem[] = [
   { key: "documents", href: "/documents", icon: FileText, minimumRole: "TENANT" },
   { key: "users", href: "/users", icon: Users, minimumRole: "ADMIN" },
   { key: "buildings", href: "/admin/buildings", icon: Building2, minimumRole: "SUPER_ADMIN" },
-  { key: "settings", href: "/settings", icon: Settings, minimumRole: "TENANT" },
+  { key: "settings", href: "/settings", icon: Settings, minimumRole: "TENANT", subItems: [
+    { key: "settingsInvitations", href: "/settings/invitations", minimumRole: "ADMIN" },
+  ] },
 ];
 
 export function Sidebar() {
