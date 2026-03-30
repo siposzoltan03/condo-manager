@@ -5,6 +5,7 @@ import { createAuditLog } from "@/lib/audit";
 import { notify, NotificationType } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
 import { Prisma, TargetAudience } from "@prisma/client";
+import { requireNotFrozen, FrozenBuildingError } from "@/lib/frozen-check";
 
 export async function GET(request: NextRequest) {
   try {
@@ -99,6 +100,15 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const { userId, buildingId, role } = await requireBuildingContext();
+
+    try {
+      await requireNotFrozen(buildingId);
+    } catch (e) {
+      if (e instanceof FrozenBuildingError) {
+        return NextResponse.json({ error: e.message }, { status: 403 });
+      }
+      throw e;
+    }
 
     try {
       await requireRole(role, "BOARD_MEMBER");

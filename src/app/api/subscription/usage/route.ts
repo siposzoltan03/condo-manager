@@ -2,10 +2,11 @@ import { NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
 import { getSubscriptionForBuilding } from "@/lib/feature-gate";
 import { checkBuildingLimit, checkUnitLimit } from "@/lib/plan-limits";
+import { getFrozenBuildings } from "@/lib/frozen-check";
 
 /**
  * GET /api/subscription/usage
- * Returns building count vs max and unit count vs max for the current building.
+ * Returns building count vs max, unit count vs max, and frozen building info.
  */
 export async function GET() {
   try {
@@ -18,15 +19,17 @@ export async function GET() {
       return NextResponse.json({
         buildings: { current: 0, max: -1 },
         units: { current: 0, max: -1 },
+        frozenBuildings: [],
       });
     }
 
-    const [buildings, units] = await Promise.all([
+    const [buildings, units, frozenBuildings] = await Promise.all([
       checkBuildingLimit(subscription.id),
       checkUnitLimit(buildingId),
+      getFrozenBuildings(subscription.id),
     ]);
 
-    return NextResponse.json({ buildings, units });
+    return NextResponse.json({ buildings, units, frozenBuildings });
   } catch (error) {
     console.error("Failed to fetch subscription usage:", error);
     return NextResponse.json(

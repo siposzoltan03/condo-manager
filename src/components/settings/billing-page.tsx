@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import { CreditCard, BarChart3, Clock, ExternalLink } from "lucide-react";
+import Link from "next/link";
+import { CreditCard, BarChart3, Clock, ExternalLink, AlertTriangle } from "lucide-react";
 
 interface SubscriptionData {
   planSlug: string;
@@ -16,9 +17,16 @@ interface SubscriptionData {
   hasStripe?: boolean;
 }
 
+interface FrozenBuilding {
+  id: string;
+  name: string;
+  address: string;
+}
+
 interface UsageData {
   buildings: { current: number; max: number };
   units: { current: number; max: number };
+  frozenBuildings: FrozenBuilding[];
 }
 
 const STATUS_STYLES: Record<string, string> = {
@@ -179,13 +187,49 @@ export function BillingPage() {
             </div>
           )}
           {(trialExpired || trialDaysRemaining <= 3) && (
-            <a
+            <Link
               href="/en/pricing"
               className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
             >
               {t("choosePlan")}
-            </a>
+            </Link>
           )}
+        </div>
+      )}
+
+      {/* Frozen Buildings Banner */}
+      {usage && usage.frozenBuildings.length > 0 && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-6 shadow-sm">
+          <div className="flex items-center gap-3 mb-3">
+            <AlertTriangle className="h-5 w-5 text-red-600" />
+            <h2 className="text-lg font-semibold text-red-900">
+              {t("overLimit")}
+            </h2>
+          </div>
+          <p className="text-sm text-red-800 mb-3">
+            {t("frozenBanner", { count: usage.frozenBuildings.length })}
+          </p>
+          <div className="space-y-2">
+            {usage.frozenBuildings.map((building) => (
+              <div
+                key={building.id}
+                className="flex items-center gap-2 rounded-lg bg-white/60 px-3 py-2"
+              >
+                <span className="text-sm font-medium text-red-900">
+                  {building.name}
+                </span>
+                <span className="text-xs text-red-600">
+                  {building.address}
+                </span>
+                <span className="ml-auto rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-700">
+                  {t("frozenBuildingBadge")}
+                </span>
+              </div>
+            ))}
+          </div>
+          <p className="mt-3 text-xs text-red-700">
+            {t("removeOrUpgrade")}
+          </p>
         </div>
       )}
 
@@ -307,12 +351,12 @@ export function BillingPage() {
             <ExternalLink className="h-4 w-4" />
             {portalLoading ? tCommon("loading") : t("manageSubscription")}
           </button>
-          <a
+          <Link
             href="/en/pricing"
             className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
           >
             {t("viewPricing")}
-          </a>
+          </Link>
         </div>
       </div>
     </div>
