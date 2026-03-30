@@ -6,7 +6,10 @@ import { auth } from "./lib/auth";
 
 const intlMiddleware = createIntlMiddleware(routing);
 
-const publicPages = ["/login", "/forgot-password", "/reset-password"];
+const publicPages = ["/login", "/forgot-password", "/reset-password", "/accept-invitation"];
+
+/** Pages accessible by both authenticated and unauthenticated users (no redirect to dashboard). */
+const publicAccessiblePages = ["/accept-invitation"];
 
 function isPublicPage(pathname: string): boolean {
   // Strip locale prefix if present (e.g., /hu/login -> /login)
@@ -28,7 +31,10 @@ export default auth((req) => {
 
   // API routes: allow auth endpoints, require auth for everything else
   if (pathname.startsWith("/api")) {
-    if (pathname.startsWith("/api/auth")) {
+    if (
+      pathname.startsWith("/api/auth") ||
+      pathname.startsWith("/api/invitations/by-token")
+    ) {
       return NextResponse.next();
     }
     if (!req.auth) {
@@ -51,9 +57,23 @@ export default auth((req) => {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Redirect authenticated users away from login page
+  // Redirect authenticated users away from login page (but not from public accessible pages like accept-invitation)
   if (isAuthenticated && isPublic) {
-    return NextResponse.redirect(new URL(`/${locale}`, req.url));
+    const pathWithoutLocale = routing.locales.reduce(
+      (path, locale) =>
+        path.startsWith(`/${locale}/`)
+          ? path.slice(`/${locale}`.length)
+          : path === `/${locale}`
+            ? "/"
+            : path,
+      pathname
+    );
+    const isPublicAccessible = publicAccessiblePages.some((page) =>
+      pathWithoutLocale.startsWith(page)
+    );
+    if (!isPublicAccessible) {
+      return NextResponse.redirect(new URL(`/${locale}`, req.url));
+    }
   }
 
   // Apply next-intl middleware
