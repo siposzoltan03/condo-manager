@@ -110,6 +110,91 @@ enum UnitRelationship {
   TENANT
 }
 
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  EXPIRED
+}
+
+enum InvitationType {
+  ADMIN_SETUP
+  USER_INVITE
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
+// ─── Subscription & Plan Models ─────────────────────────────────────────────
+
+model Plan {
+  id                  String         @id @default(cuid())
+  name                String
+  slug                String         @unique
+  stripePriceId       String?
+  maxBuildings        Int
+  maxUnitsPerBuilding Int
+  features            Json           @default("[]")
+  priceMonthly        Decimal        @db.Decimal(10, 2)
+  priceYearly         Decimal        @db.Decimal(10, 2)
+  trialDays           Int            @default(14)
+  isActive            Boolean        @default(true)
+  createdAt           DateTime       @default(now())
+  subscriptions       Subscription[]
+}
+
+model Subscription {
+  id                    String             @id @default(cuid())
+  name                  String
+  email                 String
+  stripeCustomerId      String?            @unique
+  stripeSubscriptionId  String?            @unique
+  planId                String
+  plan                  Plan               @relation(fields: [planId], references: [id])
+  trialEndsAt           DateTime?
+  subscriptionStatus    SubscriptionStatus @default(TRIALING)
+  ownerId               String
+  owner                 User               @relation("SubscriptionOwner", fields: [ownerId], references: [id])
+  buildings             Building[]
+  invitations           Invitation[]
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
+  @@index([ownerId])
+  @@index([subscriptionStatus])
+}
+
+model Invitation {
+  id             String           @id @default(cuid())
+  email          String
+  tokenHash      String           @unique
+  type           InvitationType
+  role           BuildingRole?
+  unitId         String?
+  unit           Unit?            @relation(fields: [unitId], references: [id])
+  relationship   UnitRelationship?
+  buildingId     String?
+  building       Building?        @relation(fields: [buildingId], references: [id])
+  subscriptionId String?
+  subscription   Subscription?    @relation(fields: [subscriptionId], references: [id])
+  invitedById    String?
+  invitedBy      User?            @relation("InvitationSender", fields: [invitedById], references: [id])
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  status         InvitationStatus @default(PENDING)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([email])
+  @@index([buildingId])
+  @@index([status])
+}
+
 // ─── Multi-Building Models ────────────────────────────────────────────────────
 
 model Building {
@@ -118,6 +203,9 @@ model Building {
   address              String
   city                 String
   zipCode              String
+  subscriptionId       String?
+  subscription         Subscription?          @relation(fields: [subscriptionId], references: [id])
+  invitationExpiryHours Int                   @default(168)
   units                Unit[]
   userBuildings        UserBuilding[]
   announcements        Announcement[]
@@ -128,6 +216,7 @@ model Building {
   scheduledMaintenance ScheduledMaintenance[]
   meetings             Meeting[]
   documentCategories   DocumentCategory[]
+  invitations          Invitation[]
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
 }
@@ -171,6 +260,7 @@ model Unit {
   unitUsers      UnitUser[]
   monthlyCharges MonthlyCharge[]
   ballots        Ballot[]
+  invitations    Invitation[]
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -213,6 +303,8 @@ model User {
   userBuildings           UserBuilding[]
   unitUsers               UnitUser[]
   pushSubscriptions       PushSubscription[]
+  ownedSubscriptions      Subscription[]          @relation("SubscriptionOwner")
+  invitationsSent         Invitation[]             @relation("InvitationSender")
 }
 
 model AuditLog {
