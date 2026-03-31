@@ -731,6 +731,80 @@
       "notifications": "Okos értesítések",
       "notificationsDesc": "Valós idejű push értesítések, e-mail összefoglalók és alkalmazáson belüli figyelmeztetések."
     },
+    "detailed": {
+      "communication": {
+        "title": "Kommunikációs Központ",
+        "description": "Tartsa összekapcsolva a háztartásokat egy teljes kommunikációs eszköztárral. Hirdetményektől a közvetlen üzenetekig — minden egy helyen.",
+        "announcements": "Épülethirdetmények",
+        "announcementsDesc": "Frissítések közzététele minden lakó számára vagy célzott közönségnek. Olvasottsági nyomon követés.",
+        "forum": "Közösségi Fórum",
+        "forumDesc": "Kategorizált vitafórumok szálazott beszélgetésekkel. Fontos témák kitűzése és moderálás.",
+        "messaging": "Közvetlen Üzenetküldés",
+        "messagingDesc": "Személyes és csoportos beszélgetések a lakók között. Azonnali kézbesítés olvasatlan nyomon követéssel.",
+        "complaints": "Hivatalos Panaszok",
+        "complaintsDesc": "Panaszok benyújtása és nyomon követése automatikus iktatószámmal és állapot munkafolyamattal."
+      },
+      "finance": {
+        "title": "Pénzügyi Kezelés",
+        "description": "Teljes kettős könyvelés társasházakra tervezve. Követheti az összes fizetést, kezelheti a költségvetést és jelentéseket készíthet — teljes audit nyomvonallal.",
+        "ledger": "Kettős Könyvelés",
+        "ledgerDesc": "Minden tranzakció megfelelő terhelésekkel és jóváírásokkal rögzítve. Bankkivonat importálás CSV-ből.",
+        "charges": "Havi Közös Költségek",
+        "chargesDesc": "Automatizált havi díj nyomon követés lakásonként. Fizetés rögzítése egy kattintással.",
+        "budgets": "Költségvetés Tervezés",
+        "budgetsDesc": "Éves költségvetés meghatározása kategóriánként, tényleges kiadások nyomon követése a tervezetthez képest.",
+        "reports": "Pénzügyi Jelentések",
+        "reportsDesc": "PDF jelentések generálása és adatok exportálása a könyvelőjének. Teljes tranzakciós előzmények."
+      },
+      "maintenance": {
+        "title": "Karbantartás Nyomon Követés",
+        "description": "Attól a pillanattól, hogy egy lakó bejelenti a problémát, a végső ellenőrzésig — minden lépés nyomon követve. Vállalkozók kijelölése, folyamat figyelése.",
+        "tickets": "Hibabejelentés",
+        "ticketsDesc": "Lakók fényképekkel és sürgősségi szintekkel küldhetnek bejelentéseket. Automatikus iktatószám minden kéréshez.",
+        "contractors": "Vállalkozó Kezelés",
+        "contractorsDesc": "Megbízható vállalkozók adatbázisa. Munkák előzményei, költségek és értékelések nyomon követése.",
+        "scheduled": "Tervezett Karbantartás",
+        "scheduledDesc": "Ismétlődő karbantartások tervezése, mint éves vizsgálatok és liftkarbantartás naptárnézettel.",
+        "tracking": "Állapot Munkafolyamat",
+        "trackingDesc": "Jegyek nyomon követése minden szakaszon: Benyújtva, Tudomásul véve, Kiosztva, Folyamatban, Kész, Ellenőrizve."
+      },
+      "voting": {
+        "title": "Szavazás és Gyűlések",
+        "description": "Biztonságos digitális szavazás tulajdoni hányad szerinti súlyozással. Gyűlések, meghatalmazásos szavazás és titkos szavazás kezelése — határozatképesség nyomon követéssel.",
+        "weighted": "Súlyozott Szavazás",
+        "weightedDesc": "Minden szavazat automatikusan súlyozva a lakás tulajdoni hányada alapján. Méltányos képviselet garantált.",
+        "proxy": "Meghatalmazásos Szavazás",
+        "proxyDesc": "A lakók delegálhatják szavazati jogaikat. Teljes meghatalmazás nyomon követés és ellenőrzés.",
+        "secret": "Titkos Szavazás",
+        "secretDesc": "Anonim szavazás kriptográfiai igazolással. Ellenőrizheti, hogy szavazata számított, identitása felfedése nélkül.",
+        "quorum": "Határozatképesség Követés",
+        "quorumDesc": "Valós idejű határozatképesség számítás a jelenlévő és meghatalmazott tulajdoni hányadok alapján."
+      },
+      "documents": {
+        "title": "Dokumentumkezelő",
+        "description": "Strukturált tárház az összes épületdokumentumhoz. Alapszabálytól a szerződésekig, jegyzőkönyvektől a pénzügyi jelentésekig — rendszerezve, verziózva és hozzáférés-vezérelve.",
+        "versioning": "Verziókezelés",
+        "versioningDesc": "Új verziók feltöltése a teljes előzmények megőrzésével. Bármely korábbi verzió visszaállítása egy kattintással.",
+        "categories": "Rendszerezett Kategóriák",
+        "categoriesDesc": "Fa struktúrájú kategóriák alkategóriákkal. Szabályzatok, Szerződések, Jegyzőkönyvek, Pénzügyek, Biztosítás és több.",
+        "search": "Teljes Szövegű Keresés",
+        "searchDesc": "Keresés dokumentumcímekben, címkékben és tartalomban. Azonnal megtalálja, amire szüksége van.",
+        "access": "Hozzáférés Kezelés",
+        "accessDesc": "Három láthatósági szint: Nyilvános (minden lakó), Csak Testület, és Csak Adminisztrátor."
+      },
+      "management": {
+        "title": "Többépületes Kezelés",
+        "description": "Kezeljen egy épületet vagy százat. Azonnali váltás az ingatlanok között, épületenkénti szerepkörök és csapattagok meghívása rugalmas jogosultságokkal.",
+        "multiBuilding": "Épületváltó",
+        "multiBuildingDesc": "Azonnali kontextusváltás az épületek között. Minden épületnek saját adatai, felhasználói és beállításai vannak.",
+        "roles": "Épületenkénti Szerepkörök",
+        "rolesDesc": "A felhasználók különböző szerepkörökkel rendelkezhetnek különböző épületekben. Adminisztrátor az egyikben, lakó a másikban.",
+        "invitations": "Meghívó Rendszer",
+        "invitationsDesc": "Lakók és személyzet meghívása e-mailben. Szerepkörök és lakások előre hozzárendelése. Konfigurálható lejárat.",
+        "billing": "Előfizetés Kezelés",
+        "billingDesc": "Rugalmas csomagok bármilyen méretű épülethez. Használat követés, frissítési javaslatok és Stripe-alapú számlázás."
+      }
+    },
     "socialProofTitle": "Ingatlankezelők bizalma",
     "buildingsManaged": "Kezelt épület",
     "residentsConnected": "Összekapcsolt lakó",

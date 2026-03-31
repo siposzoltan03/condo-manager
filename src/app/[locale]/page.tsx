@@ -1,13 +1,23 @@
-import { setRequestLocale } from "next-intl/server";
-import { LandingPageWrapper } from "@/components/public/landing-page-wrapper";
+"use client";
 
-type Props = {
-  params: Promise<{ locale: string }>;
-};
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { LandingPage } from "@/components/public/landing-page";
 
-export default async function HomePage({ params }: Props) {
-  const { locale } = await params;
-  setRequestLocale(locale);
+export default function HomePage() {
+  const { status } = useSession();
+  const router = useRouter();
 
-  return <LandingPageWrapper />;
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.replace("/dashboard");
+    }
+  }, [status, router]);
+
+  if (status === "loading") {
+    return <div className="min-h-screen bg-white" />;
+  }
+
+  return <LandingPage />;
 }

@@ -731,6 +731,80 @@
       "notifications": "Smart Notifications",
       "notificationsDesc": "Real-time push notifications, email digests, and in-app alerts keep everyone in the loop."
     },
+    "detailed": {
+      "communication": {
+        "title": "Communication Hub",
+        "description": "Keep your building community connected with a full suite of communication tools. From building-wide announcements to private messaging — everything in one place.",
+        "announcements": "Building Announcements",
+        "announcementsDesc": "Post updates visible to all residents or target specific audiences. Track who has read each announcement.",
+        "forum": "Community Forum",
+        "forumDesc": "Threaded discussions organized by categories. Pin important topics and moderate with ease.",
+        "messaging": "Direct Messaging",
+        "messagingDesc": "One-on-one and group conversations between residents. Real-time delivery with unread tracking.",
+        "complaints": "Formal Complaints",
+        "complaintsDesc": "Submit and track complaints with auto-generated tracking numbers and status workflow."
+      },
+      "finance": {
+        "title": "Financial Management",
+        "description": "Complete double-entry bookkeeping built for condominiums. Track every payment, manage budgets, and generate reports — all with full audit trails.",
+        "ledger": "Double-Entry Ledger",
+        "ledgerDesc": "Every transaction recorded with proper debits and credits. Import bank statements via CSV.",
+        "charges": "Monthly Charges",
+        "chargesDesc": "Automated monthly charge tracking per unit. Record payments with one click.",
+        "budgets": "Budget Planning",
+        "budgetsDesc": "Set annual budgets by category and track actual spending against planned amounts.",
+        "reports": "Financial Reports",
+        "reportsDesc": "Generate PDF reports and export data for your accountant. Full transaction history at your fingertips."
+      },
+      "maintenance": {
+        "title": "Maintenance Tracking",
+        "description": "From the moment a resident reports an issue to final verification — every step is tracked. Assign contractors, monitor progress, and maintain a complete service history.",
+        "tickets": "Issue Reporting",
+        "ticketsDesc": "Residents submit tickets with photos and urgency levels. Auto-generated tracking numbers for every request.",
+        "contractors": "Contractor Management",
+        "contractorsDesc": "Maintain a database of trusted contractors. Track job history, costs, and ratings.",
+        "scheduled": "Scheduled Maintenance",
+        "scheduledDesc": "Plan recurring maintenance like annual inspections and elevator servicing with calendar views.",
+        "tracking": "Status Workflow",
+        "trackingDesc": "Track tickets through every stage: Submitted, Acknowledged, Assigned, In Progress, Completed, Verified."
+      },
+      "voting": {
+        "title": "Voting & Meetings",
+        "description": "Run secure digital votes with weighted ownership shares. Manage meetings, proxy voting, and secret ballots — all with proper quorum tracking.",
+        "weighted": "Weighted Voting",
+        "weightedDesc": "Each vote automatically weighted by unit ownership share. Fair representation guaranteed.",
+        "proxy": "Proxy Voting",
+        "proxyDesc": "Residents can delegate their voting rights. Full proxy assignment tracking and verification.",
+        "secret": "Secret Ballots",
+        "secretDesc": "Anonymous voting with cryptographic receipt hashes. Verify your vote was counted without revealing identity.",
+        "quorum": "Quorum Tracking",
+        "quorumDesc": "Real-time quorum calculation based on attending and proxy ownership shares."
+      },
+      "documents": {
+        "title": "Document Center",
+        "description": "A structured repository for all building documents. From bylaws to contracts, meeting minutes to financial reports — organized, versioned, and access-controlled.",
+        "versioning": "Version Control",
+        "versioningDesc": "Upload new versions while keeping full history. Restore any previous version with one click.",
+        "categories": "Organized Categories",
+        "categoriesDesc": "Tree-structured categories with subcategories. Rules, Contracts, Minutes, Financials, Insurance, and more.",
+        "search": "Full-Text Search",
+        "searchDesc": "Search across document titles, tags, and content. Find what you need instantly.",
+        "access": "Access Control",
+        "accessDesc": "Three visibility levels: Public (all residents), Board Only, and Admin Only."
+      },
+      "management": {
+        "title": "Multi-Building Management",
+        "description": "Manage one building or a hundred. Switch between properties instantly, assign per-building roles, and invite team members with flexible permissions.",
+        "multiBuilding": "Building Switcher",
+        "multiBuildingDesc": "Instant context switching between buildings. Each building has its own data, users, and settings.",
+        "roles": "Per-Building Roles",
+        "rolesDesc": "Users can have different roles in different buildings. Admin in one, resident in another.",
+        "invitations": "Invitation System",
+        "invitationsDesc": "Invite residents and staff via email. Pre-assign roles and units. Configurable invitation expiry.",
+        "billing": "Subscription Management",
+        "billingDesc": "Flexible plans for buildings of any size. Usage tracking, upgrade prompts, and Stripe-powered billing."
+      }
+    },
     "socialProofTitle": "Trusted by Property Managers",
     "buildingsManaged": "Buildings Managed",
     "residentsConnected": "Residents Connected",

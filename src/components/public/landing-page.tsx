@@ -13,10 +13,11 @@ import {
   Users,
   CheckCircle2,
   ArrowRight,
+  MessageSquare,
+  Shield,
+  BarChart3,
+  Calendar,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
-import { useEffect } from "react";
 import { PublicNav } from "./public-nav";
 
 const features = [
@@ -28,6 +29,51 @@ const features = [
   { key: "notifications", icon: Bell },
 ] as const;
 
+const detailedFeatures = [
+  {
+    key: "communication",
+    icon: MessageSquare,
+    color: "bg-blue-500",
+    highlights: ["announcements", "forum", "messaging", "complaints"],
+    screenshot: "/screenshots/announcements.png",
+  },
+  {
+    key: "finance",
+    icon: BarChart3,
+    color: "bg-emerald-500",
+    highlights: ["ledger", "charges", "budgets", "reports"],
+    screenshot: "/screenshots/finance.png",
+  },
+  {
+    key: "maintenance",
+    icon: Wrench,
+    color: "bg-amber-500",
+    highlights: ["tickets", "contractors", "scheduled", "tracking"],
+    screenshot: "/screenshots/maintenance.png",
+  },
+  {
+    key: "voting",
+    icon: Shield,
+    color: "bg-purple-500",
+    highlights: ["weighted", "proxy", "secret", "quorum"],
+    screenshot: "/screenshots/voting.png",
+  },
+  {
+    key: "documents",
+    icon: FileText,
+    color: "bg-cyan-500",
+    highlights: ["versioning", "categories", "search", "access"],
+    screenshot: "/screenshots/documents.png",
+  },
+  {
+    key: "management",
+    icon: Calendar,
+    color: "bg-rose-500",
+    highlights: ["multiBuilding", "roles", "invitations", "billing"],
+    screenshot: "/screenshots/dashboard.png",
+  },
+] as const;
+
 const stats = [
   { key: "buildingsManaged", value: "500+", icon: Building2 },
   { key: "residentsConnected", value: "12,000+", icon: Users },
@@ -35,19 +81,7 @@ const stats = [
 ] as const;
 
 export function LandingPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
   const t = useTranslations("landing");
-
-  // Redirect authenticated users to dashboard
-  useEffect(() => {
-    if (status === "authenticated" && session?.user) {
-      router.replace("/dashboard");
-    }
-  }, [status, session, router]);
-
-  // Show nothing while checking auth (prevents flash)
-  if (status === "loading") return null;
 
   return (
     <div className="min-h-screen bg-white">
@@ -86,7 +120,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* Features Overview */}
       <section id="features" className="bg-slate-50 py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
@@ -117,6 +151,77 @@ export function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Detailed Feature Sections */}
+      {detailedFeatures.map((feature, index) => {
+        const Icon = feature.icon;
+        const isReversed = index % 2 === 1;
+
+        return (
+          <section
+            key={feature.key}
+            className={`py-20 sm:py-28 ${index % 2 === 0 ? "bg-white" : "bg-slate-50"}`}
+          >
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+              <div
+                className={`flex flex-col items-center gap-12 lg:gap-16 ${
+                  isReversed ? "lg:flex-row-reverse" : "lg:flex-row"
+                }`}
+              >
+                {/* Screenshot */}
+                <div className="w-full lg:w-1/2">
+                  <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-xl">
+                    {/* TODO: Replace with real app screenshot */}
+                    <div className="relative aspect-[16/10] w-full bg-gradient-to-br from-slate-200 to-slate-300">
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="text-center">
+                          <Icon className="mx-auto h-16 w-16 text-slate-400" />
+                          <p className="mt-3 text-sm font-medium text-slate-400">
+                            {t(`detailed.${feature.key}.title`)}
+                          </p>
+                          <p className="mt-1 text-xs text-slate-400">
+                            Screenshot placeholder
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div className="w-full lg:w-1/2">
+                  <div
+                    className={`inline-flex h-12 w-12 items-center justify-center rounded-xl ${feature.color} text-white`}
+                  >
+                    <Icon className="h-6 w-6" />
+                  </div>
+                  <h3 className="mt-4 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+                    {t(`detailed.${feature.key}.title`)}
+                  </h3>
+                  <p className="mt-4 text-lg leading-relaxed text-slate-600">
+                    {t(`detailed.${feature.key}.description`)}
+                  </p>
+                  <ul className="mt-8 space-y-4">
+                    {feature.highlights.map((highlight) => (
+                      <li key={highlight} className="flex items-start gap-3">
+                        <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-500" />
+                        <div>
+                          <span className="font-semibold text-slate-900">
+                            {t(`detailed.${feature.key}.${highlight}`)}
+                          </span>
+                          <p className="mt-0.5 text-sm text-slate-500">
+                            {t(`detailed.${feature.key}.${highlight}Desc`)}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </section>
+        );
+      })}
 
       {/* Social Proof / Stats Section */}
       <section className="bg-white py-20 sm:py-28">

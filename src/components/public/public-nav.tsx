@@ -25,7 +25,7 @@ export function PublicNav() {
         {/* Desktop links */}
         <div className="hidden items-center gap-6 md:flex">
           <a
-            href="#features"
+            href="/#features"
             className="text-sm font-medium text-slate-600 transition hover:text-[#002045]"
           >
             {t("nav.features")}
@@ -77,7 +77,7 @@ export function PublicNav() {
         <div className="border-t border-slate-200 bg-white px-4 pb-4 pt-2 md:hidden">
           <div className="flex flex-col gap-3">
             <a
-              href="#features"
+              href="/#features"
               className="text-sm font-medium text-slate-600"
               onClick={() => setMenuOpen(false)}
             >
