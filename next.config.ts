@@ -8,17 +8,11 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  // Webpack config to handle ioredis/Node.js modules in Edge Runtime warnings
-  webpack: (config, { isServer }) => {
-    if (!isServer) {
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        net: false,
-        tls: false,
-        dns: false,
-      };
-    }
-    return config;
+  experimental: {
+    // Don't attempt to statically analyze/collect API routes during build
+    serverActions: {
+      bodySizeLimit: "2mb",
+    },
   },
 };
 
