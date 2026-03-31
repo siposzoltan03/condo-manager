@@ -775,5 +775,26 @@
       "custom_branding": "Egyedi arculat",
       "audit_exports": "Audit napló exportálás"
     }
+  },
+  "checkout": {
+    "title": "Fizetés",
+    "subtitle": "Fejezze be az előfizetés beállítását a {plan} csomaghoz.",
+    "enterEmail": "E-mail cím",
+    "continueToPayment": "Tovább a fizetéshez",
+    "redirecting": "Átirányítás a biztonságos fizetéshez...",
+    "error": "Hiba történt. Kérjük, próbálja újra.",
+    "planNotFound": "A csomag nem található. Kérjük, lépjen vissza és válasszon érvényes csomagot.",
+    "backToPricing": "Vissza az árakhoz",
+    "verifying": "Fizetés ellenőrzése...",
+    "successTitle": "Sikeres fizetés!",
+    "successMessage": "Az előfizetés létrejött.",
+    "checkEmail": "Ellenőrizze e-mailjeit a beállítási meghívóért.",
+    "emailSentTo": "Meghívót küldtünk a következő címre: {email}. Kattintson az e-mailben található linkre az adminisztrátori fiók beállításához és az első épület létrehozásához.",
+    "setupInstructions": "Fiók beállítása",
+    "goToLogin": "Bejelentkezés",
+    "errorTitle": "Ellenőrzés sikertelen",
+    "errorMessage": "Hiba történt a fizetés ellenőrzése során. Lehetséges, hogy a fizetés feldolgozásra került — kérjük, ellenőrizze e-mailjeit a beállítási meghívóért. Ha 15 percen belül nem kapja meg, lépjen kapcsolatba az ügyfélszolgálattal.",
+    "retry": "Újrapróbálás",
+    "contactSupport": "Kapcsolatfelvétel"
   }
 }

@@ -775,5 +775,26 @@
       "custom_branding": "Custom Branding",
       "audit_exports": "Audit Log Exports"
     }
+  },
+  "checkout": {
+    "title": "Checkout",
+    "subtitle": "Complete your subscription setup for the {plan} plan.",
+    "enterEmail": "Email Address",
+    "continueToPayment": "Continue to Payment",
+    "redirecting": "Redirecting to secure payment...",
+    "error": "Something went wrong. Please try again.",
+    "planNotFound": "Plan not found. Please go back and select a valid plan.",
+    "backToPricing": "Back to Pricing",
+    "verifying": "Verifying your payment...",
+    "successTitle": "Payment Successful!",
+    "successMessage": "Your subscription has been created.",
+    "checkEmail": "Check your email for the setup invitation.",
+    "emailSentTo": "We have sent an invitation to {email}. Click the link in the email to set up your admin account and create your first building.",
+    "setupInstructions": "Set up your account",
+    "goToLogin": "Go to Login",
+    "errorTitle": "Verification Failed",
+    "errorMessage": "Something went wrong verifying your payment. Your payment may have been processed — please check your email for a setup invitation. If you do not receive one within 15 minutes, contact support.",
+    "retry": "Retry",
+    "contactSupport": "Contact Support"
   }
 }
