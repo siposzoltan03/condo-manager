@@ -29,9 +29,8 @@ type Props = {
   params: Promise<{ locale: string }>;
 };
 
-export function generateStaticParams() {
-  return routing.locales.map((locale) => ({ locale }));
-}
+// Dynamic rendering — don't prerender locale pages during build (avoids DB/Redis connections)
+export const dynamic = "force-dynamic";
 
 export default async function LocaleLayout({ children, params }: Props) {
   const { locale } = await params;
