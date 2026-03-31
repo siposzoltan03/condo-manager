@@ -1,15 +1,28 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
-import { Building2, Menu, X } from "lucide-react";
+import { Building2, Menu, X, Globe } from "lucide-react";
 import Link from "next/link";
 
 export function PublicNav() {
   const t = useTranslations();
   const { isAuthenticated } = useAuth();
+  const locale = useLocale();
+  const pathname = usePathname();
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+
+  function switchLocale() {
+    const newLocale = locale === "hu" ? "en" : "hu";
+    const segments = pathname.split("/");
+    if (segments.length > 1 && ["hu", "en"].includes(segments[1])) {
+      segments[1] = newLocale;
+    }
+    router.push(segments.join("/") || "/");
+  }
 
   return (
     <nav className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur-sm">
@@ -36,6 +49,15 @@ export function PublicNav() {
           >
             {t("nav.pricing")}
           </Link>
+
+          <button
+            onClick={switchLocale}
+            className="flex items-center gap-1 text-sm font-medium text-slate-500 transition hover:text-[#002045]"
+            title={locale === "hu" ? "Switch to English" : "Váltás magyarra"}
+          >
+            <Globe className="h-4 w-4" />
+            {locale === "hu" ? "English" : "Magyar"}
+          </button>
 
           {isAuthenticated ? (
             <Link
