@@ -3,6 +3,15 @@ import {
   AccountType,
   BuildingRole,
   UnitRelationship,
+  TargetAudience,
+  MaintenanceCategory,
+  Urgency,
+  TicketStatus,
+  ChargeStatus,
+  ComplaintCategory,
+  ComplaintStatus,
+  RsvpStatus,
+  DocumentVisibility,
 } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
@@ -549,6 +558,593 @@ async function main() {
     ],
   });
 
+  // ─── Announcements — Building 1 ─────────────────────────────────────────────
+
+  await prisma.announcement.createMany({
+    data: [
+      {
+        title: "Éves Közgyűlés — március 15.",
+        body: "Tisztelt Lakók!\n\nEzúton értesítjük Önöket, hogy az éves közgyűlésre 2026. március 15-én, 18:00 órakor kerül sor a Duna Residence közösségi termében (fszt. 3.).\n\nNapirendi pontok:\n1. Az elmúlt év pénzügyi beszámolója\n2. 2026-os éves költségvetés jóváhagyása\n3. Közös területek felújítási terve\n4. Egyéb ügyek\n\nKérjük, hogy szavazati jogukat személyesen vagy meghatalmazott útján gyakorolják. A meghatalmazási nyomtatvány a portán átvehető.\n\nUdvariasan kérjük szíves megjelenésüket!\n\nKovács Mária\nHázkezelő",
+        authorId: admin.id,
+        targetAudience: TargetAudience.ALL,
+        buildingId: building1.id,
+        createdAt: new Date("2026-03-01T09:00:00Z"),
+        updatedAt: new Date("2026-03-01T09:00:00Z"),
+      },
+      {
+        title: "Vízvezeték-csere az északi szárnyban",
+        body: "Kedves Lakók!\n\nTájékoztatjuk Önöket, hogy 2026. március 18–20. között (hétfőtől szerdáig) az északi szárny fővezetékének cseréjét végzik el a Kovács Kft. szakemberei.\n\nA munkálatok ideje alatt (08:00–17:00) a hideg vízszolgáltatás az érintett szárnyban szünetel. Kérjük, hogy elegendő ivóvizet tároljanak el.\n\nAz északi szárny érintett lakásai: 1B, 2B, 3B.\n\nA kényelmetlenségért elnézést kérünk.\n\nSzabó Péter\nTulajdonosi közösség elnöke",
+        authorId: boardMember1.id,
+        targetAudience: TargetAudience.ALL,
+        buildingId: building1.id,
+        createdAt: new Date("2026-03-10T11:30:00Z"),
+        updatedAt: new Date("2026-03-10T11:30:00Z"),
+      },
+      {
+        title: "Q1 Pénzügyi Audit Eredményei",
+        body: "Kedves Igazgatótanács!\n\nAz I. negyedéves belső pénzügyi audit lezárult. Az eredmények összefoglalója:\n\n- Közös költség befizetési arány: 94,3% (tervezett: 95%)\n- Tartalékalap egyenlege: 4 250 000 Ft (tervezett: 4 100 000 Ft)\n- Fő eltérés: az északi szárny vízvezeték-csere előre nem tervezett kiadása (+480 000 Ft)\n- Egyéb ügzemeltetési kiadások: a tervezett kereten belül\n\nRészletes riport a dokumentumtárban elérhető. Kérem, hogy átnézés után esetleges észrevételeiket a következő testületi ülésen jelezzék.\n\nKovács Mária\nHázkezelő",
+        authorId: admin.id,
+        targetAudience: TargetAudience.BOARD_ONLY,
+        buildingId: building1.id,
+        createdAt: new Date("2026-03-25T14:00:00Z"),
+        updatedAt: new Date("2026-03-25T14:00:00Z"),
+      },
+      {
+        title: "Nyári Tetőterasz Összejövetel — június 21.",
+        body: "Kedves Szomszédok!\n\nÖrömmel értesítjük Önöket, hogy idén is megrendezzük a hagyományos nyári tetőterasz bulit!\n\nIdőpont: 2026. június 21. (vasárnap), 17:00-tól\nHelyszín: Tetőterasz (4. emelet)\n\nA közösség biztosít: alkoholmentes italokat, papírtányérokat és evőeszközöket.\nMindenkit szeretettel várunk saját fogással, italokkal!\n\nKérjük, jelezzék részvételi szándékukat május 31-ig a házkezelőnek, hogy megfelelően tudjunk előkészíteni.\n\nSzabó Péter\nTulajdonosi közösség elnöke",
+        authorId: boardMember1.id,
+        targetAudience: TargetAudience.ALL,
+        buildingId: building1.id,
+        createdAt: new Date("2026-03-28T10:00:00Z"),
+        updatedAt: new Date("2026-03-28T10:00:00Z"),
+      },
+    ],
+  });
+
+  // ─── Forum Topics & Replies — Building 1, "General" category ────────────────
+
+  const b1GeneralCategory = await prisma.forumCategory.findFirst({
+    where: { buildingId: building1.id, name: "General" },
+  });
+
+  if (b1GeneralCategory) {
+    const topic1 = await prisma.forumTopic.create({
+      data: {
+        title: "Erkélyláda szabályok?",
+        body: "Sziasztok!\n\nSzeretnék virágládákat kirakni az erkélykorlát külső oldalára, de nem vagyok biztos benne, hogy ez megengedett-e. Valaki tud erről valamit? Az SZMSZ-ben nem találtam egyértelmű szabályt ezzel kapcsolatban.\n\nElőre is köszönöm!",
+        categoryId: b1GeneralCategory.id,
+        authorId: resident1.id,
+        isPinned: false,
+        lastActivityAt: new Date("2026-03-20T16:45:00Z"),
+        createdAt: new Date("2026-03-18T09:15:00Z"),
+        updatedAt: new Date("2026-03-20T16:45:00Z"),
+      },
+    });
+
+    await prisma.forumReply.createMany({
+      data: [
+        {
+          body: "Érdeklődtem korábban a házkezelőnél — a korlát külső oldalán nem szabad, mert esővízzel lecsöpöghet az alattad lévők teraszára. Belső oldalon igen, de 2 kg/fm-es korlátterhelési limitet ne lépd túl.",
+          topicId: topic1.id,
+          authorId: resident2.id,
+          createdAt: new Date("2026-03-18T11:30:00Z"),
+          updatedAt: new Date("2026-03-18T11:30:00Z"),
+        },
+        {
+          body: "Megerősítem, amit Horváth úr írt. Az SZMSZ 4.3-as pontja szerint kültéri erkélykorlát külső felületén semmilyen tárgy nem rögzíthető tartósan. Ha belülre teszed, nincs gond, csak a csöpögést érdemes megoldani.",
+          topicId: topic1.id,
+          authorId: admin.id,
+          createdAt: new Date("2026-03-20T16:45:00Z"),
+          updatedAt: new Date("2026-03-20T16:45:00Z"),
+        },
+      ],
+    });
+
+    const topic2 = await prisma.forumTopic.create({
+      data: {
+        title: "Ablaktisztítóra ajánlás?",
+        body: "Helló!\n\nTudna valaki megbízható ablaktisztítót ajánlani? Lehetőleg olyat, aki lakásablakokat is vállal, ne csak az épület egészét. Kb. 8 db kétszárnyú ablakot kellene kitakaríttatni a 3A-ban.\n\nÁr-érték arányban is örülnék véleménynek, ha van tapasztalatotok!",
+        categoryId: b1GeneralCategory.id,
+        authorId: resident2.id,
+        isPinned: false,
+        lastActivityAt: new Date("2026-03-22T14:20:00Z"),
+        createdAt: new Date("2026-03-21T08:00:00Z"),
+        updatedAt: new Date("2026-03-22T14:20:00Z"),
+      },
+    });
+
+    await prisma.forumReply.createMany({
+      data: [
+        {
+          body: "Én a Kristálytiszta Bt.-t ajánlom (+36 70 444 5566). Tavaly hívtam őket, pontosak, alaposak és nem horribilis az áruk. Kb. 3500–4500 Ft/ablak, mérettől függően.",
+          topicId: topic2.id,
+          authorId: resident1.id,
+          createdAt: new Date("2026-03-21T10:15:00Z"),
+          updatedAt: new Date("2026-03-21T10:15:00Z"),
+        },
+        {
+          body: "Mi tavasszal és ősszel a Sparkle Clean-t szoktuk hívni (sparkle@clean.hu). Gyorsan reagálnak és a belső párkányokat is letörlik. Tóth Anna ajánlásával akár 10% kedvezmény is jár az első megrendelésre.",
+          topicId: topic2.id,
+          authorId: tenant1.id,
+          createdAt: new Date("2026-03-22T14:20:00Z"),
+          updatedAt: new Date("2026-03-22T14:20:00Z"),
+        },
+      ],
+    });
+
+    const topic3 = await prisma.forumTopic.create({
+      data: {
+        title: "Az edzőterem klímájával gond van?",
+        body: "Sziasztok!\n\nMár néhány hete észreveszem, hogy az edzőteremben (fszt.) a légkondicionáló alig fúj, és nagyon bemelegel. Tegnap 28 fokot mutatott a hőmérő belül, kint 16 volt. Valaki más is tapasztalta? Érdemes jegyet beadni?",
+        categoryId: b1GeneralCategory.id,
+        authorId: resident3.id,
+        isPinned: false,
+        lastActivityAt: new Date("2026-03-29T18:00:00Z"),
+        createdAt: new Date("2026-03-27T19:30:00Z"),
+        updatedAt: new Date("2026-03-29T18:00:00Z"),
+      },
+    });
+
+    await prisma.forumReply.createMany({
+      data: [
+        {
+          body: "Igen, én is tapasztaltam múlt héten. Hétfőn és szerdán is brutálisan meleg volt. Valószínűleg a filter eltömött — ezt érdemes jelezni a kezelőnek.",
+          topicId: topic3.id,
+          authorId: tenant2.id,
+          createdAt: new Date("2026-03-28T07:45:00Z"),
+          updatedAt: new Date("2026-03-28T07:45:00Z"),
+        },
+        {
+          body: "Karbantartási jegyet már leadtam tegnap. Az ElektroFix Bt. foglalkozik a klímarendszerekkel, a kezelő ígérte, hogy ezen a héten kinéznek rá.",
+          topicId: topic3.id,
+          authorId: boardMember1.id,
+          createdAt: new Date("2026-03-29T09:10:00Z"),
+          updatedAt: new Date("2026-03-29T09:10:00Z"),
+        },
+        {
+          body: "Köszönöm a gyors intézkedést! Addig is, ha van valakinek hordozható ventilátora, amit be lehetne vinni, az nagyon jól jönne. 😅",
+          topicId: topic3.id,
+          authorId: resident3.id,
+          createdAt: new Date("2026-03-29T18:00:00Z"),
+          updatedAt: new Date("2026-03-29T18:00:00Z"),
+        },
+      ],
+    });
+  }
+
+  // ─── Maintenance Tickets — Building 1 ───────────────────────────────────────
+
+  const contractorKovacs = await prisma.contractor.findFirst({
+    where: { name: "Kovács Kft." },
+  });
+  const contractorElektrofix = await prisma.contractor.findFirst({
+    where: { name: "ElektroFix Bt." },
+  });
+
+  const ticket1 = await prisma.maintenanceTicket.create({
+    data: {
+      title: "Csöpögő csap a 2A lakásban",
+      description:
+        "A konyhai csap folyamatosan csöpög, az előző napi vízszámla is megemelkedett. Kérjük mielőbbi javítást, mivel a 2A alatti 1A lakásba is szivároghat.",
+      category: MaintenanceCategory.PLUMBING,
+      location: "2A lakás, konyha",
+      urgency: Urgency.HIGH,
+      status: TicketStatus.IN_PROGRESS,
+      trackingNumber: "TKT-2026-001",
+      reporterId: boardMember1.id,
+      assignedContractorId: contractorKovacs?.id,
+      buildingId: building1.id,
+      createdAt: new Date("2026-03-15T10:00:00Z"),
+      updatedAt: new Date("2026-03-17T14:30:00Z"),
+    },
+  });
+
+  await prisma.ticketComment.createMany({
+    data: [
+      {
+        ticketId: ticket1.id,
+        authorId: admin.id,
+        body: "Kovács Kft.-t értesítettük, helyszíni szemlét szerdára kértek be.",
+        isInternal: false,
+        createdAt: new Date("2026-03-16T09:00:00Z"),
+      },
+      {
+        ticketId: ticket1.id,
+        authorId: boardMember1.id,
+        body: "A szerelő megérkezett, az alkatrészt meg kellett rendelni. 3–5 munkanapot mondott.",
+        isInternal: false,
+        createdAt: new Date("2026-03-17T14:30:00Z"),
+      },
+    ],
+  });
+
+  await prisma.maintenanceTicket.create({
+    data: {
+      title: "B lift zörgő hangot ad",
+      description:
+        "A B lépcsőházi lift indításkor és megálláskor erős zörgő, kattogó hangot ad. Az utóbbi napokban már lassabban indul és megáll a szintek között egy másodpercre. Biztonságossági szempontból azonnali vizsgálatot kérünk.",
+      category: MaintenanceCategory.ELEVATOR,
+      location: "B lépcsőházi lift",
+      urgency: Urgency.CRITICAL,
+      status: TicketStatus.ACKNOWLEDGED,
+      trackingNumber: "TKT-2026-002",
+      reporterId: resident1.id,
+      buildingId: building1.id,
+      createdAt: new Date("2026-03-20T08:45:00Z"),
+      updatedAt: new Date("2026-03-20T11:00:00Z"),
+    },
+  });
+
+  const ticket3 = await prisma.maintenanceTicket.create({
+    data: {
+      title: "Villogó lámpa az előcsarnokban",
+      description:
+        "Az első emeleti folyosó egyik lámpateste villog, és már néhányszor kialudt teljesen. Valószínűleg a fogyasztó cseréje elegendő lesz.",
+      category: MaintenanceCategory.ELECTRICAL,
+      location: "1. emeleti folyosó, előcsarnok",
+      urgency: Urgency.LOW,
+      status: TicketStatus.COMPLETED,
+      trackingNumber: "TKT-2026-003",
+      reporterId: tenant2.id,
+      assignedContractorId: contractorElektrofix?.id,
+      buildingId: building1.id,
+      createdAt: new Date("2026-03-05T15:20:00Z"),
+      updatedAt: new Date("2026-03-08T12:00:00Z"),
+    },
+  });
+
+  await prisma.ticketComment.createMany({
+    data: [
+      {
+        ticketId: ticket3.id,
+        authorId: admin.id,
+        body: "ElektroFix Bt. elvégezte a fogyasztócsere munkálatait. A lámpa megfelelően működik.",
+        isInternal: false,
+        createdAt: new Date("2026-03-08T12:00:00Z"),
+      },
+    ],
+  });
+
+  await prisma.maintenanceTicket.create({
+    data: {
+      title: "Folyosó festés szükséges (2. emelet)",
+      description:
+        "A 2. emeleti folyosó falai megkoptak és több helyen látható sérülés, karcolás. A festés elkezdett lehullani a sarok közelében. Kérjük az újrafestés felvételét a következő karbantartási tervbe.",
+      category: MaintenanceCategory.COMMON_AREA,
+      location: "2. emeleti folyosó",
+      urgency: Urgency.MEDIUM,
+      status: TicketStatus.SUBMITTED,
+      trackingNumber: "TKT-2026-004",
+      reporterId: resident2.id,
+      buildingId: building1.id,
+      createdAt: new Date("2026-03-28T17:00:00Z"),
+      updatedAt: new Date("2026-03-28T17:00:00Z"),
+    },
+  });
+
+  // ─── Monthly Charges — Building 1 (6 months, all 5 units) ───────────────────
+
+  const months = ["2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03"];
+  const unitChargeConfig: {
+    unitId: string;
+    amount: number;
+    statuses: ChargeStatus[];
+  }[] = [
+    {
+      unitId: b1_unit1A.id,
+      amount: 28600,
+      statuses: [
+        ChargeStatus.PAID,
+        ChargeStatus.PAID,
+        ChargeStatus.PAID,
+        ChargeStatus.PAID,
+        ChargeStatus.PAID,
+        ChargeStatus.UNPAID,
+      ],
+    },
+    {
+      unitId: b1_unit1B.id,
+      amount: 22800,
+      statuses: [
+        ChargeStatus.PAID,
+        ChargeStatus.PAID,
+        ChargeStatus.PAID,
+        ChargeStatus.PAID,
+        ChargeStatus.OVERDUE,
+        ChargeStatus.OVERDUE,
+      ],
+    },
+    {
+      unitId: b1_unit2A.id,
+      amount: 28600,
+      statuses: [
+        ChargeStatus.PAID,
+        ChargeStatus.PAID,
+        ChargeStatus.PAID,
+        ChargeStatus.PAID,
+        ChargeStatus.PAID,
+        ChargeStatus.PAID,
+      ],
+    },
+    {
+      unitId: b1_unit2B.id,
+      amount: 22800,
+      statuses: [
+        ChargeStatus.PAID,
+        ChargeStatus.PAID,
+        ChargeStatus.OVERDUE,
+        ChargeStatus.OVERDUE,
+        ChargeStatus.OVERDUE,
+        ChargeStatus.OVERDUE,
+      ],
+    },
+    {
+      unitId: b1_unit3A.id,
+      amount: 34200,
+      statuses: [
+        ChargeStatus.PAID,
+        ChargeStatus.PAID,
+        ChargeStatus.PAID,
+        ChargeStatus.PAID,
+        ChargeStatus.PAID,
+        ChargeStatus.UNPAID,
+      ],
+    },
+  ];
+
+  for (const cfg of unitChargeConfig) {
+    for (let i = 0; i < months.length; i++) {
+      await prisma.monthlyCharge.create({
+        data: {
+          unitId: cfg.unitId,
+          month: months[i],
+          amount: cfg.amount,
+          status: cfg.statuses[i],
+          paidAt:
+            cfg.statuses[i] === ChargeStatus.PAID
+              ? new Date(`${months[i]}-05T10:00:00Z`)
+              : null,
+        },
+      });
+    }
+  }
+
+  // ─── Complaints — Building 1 ─────────────────────────────────────────────────
+
+  const complaint1 = await prisma.complaint.create({
+    data: {
+      authorId: tenant2.id,
+      category: ComplaintCategory.NOISE,
+      description:
+        "A 3A lakásból rendszeresen késő este (23:00 után) nagyon hangos zene szól, amely megakadályoz az elalvásban. Múlt héten háromszor fordult elő, csütörtökön hajnal 1-ig tartott. Kérem a szükséges intézkedéseket.",
+      isPrivate: false,
+      trackingNumber: "CMP-2026-001",
+      status: ComplaintStatus.UNDER_REVIEW,
+      buildingId: building1.id,
+      createdAt: new Date("2026-03-22T09:00:00Z"),
+      updatedAt: new Date("2026-03-24T11:30:00Z"),
+    },
+  });
+
+  await prisma.complaintNote.create({
+    data: {
+      complaintId: complaint1.id,
+      authorId: admin.id,
+      body: "A panaszt rögzítettük és a 3A lakás tulajdonosát levélben értesítettük a házirendben foglalt zajszabályokról. Kérjük a panaszost, hogy újabb előfordulás esetén jelezze.",
+      isInternal: false,
+      createdAt: new Date("2026-03-24T11:30:00Z"),
+    },
+  });
+
+  const complaint2 = await prisma.complaint.create({
+    data: {
+      authorId: resident1.id,
+      category: ComplaintCategory.PARKING,
+      description:
+        "Ismeretlen rendszámú szürke Ford Transit teherautó immár harmadik napja foglalja el a 7-es számú kijelölt parkolóhelyet, amely az én bérleti szerződésemben szereplő hely. A portás szerint nincs rögzítve az épület nyilvántartásában. Kérem az eltávolítást.",
+      isPrivate: false,
+      trackingNumber: "CMP-2026-002",
+      status: ComplaintStatus.RESOLVED,
+      buildingId: building1.id,
+      createdAt: new Date("2026-03-10T13:15:00Z"),
+      updatedAt: new Date("2026-03-12T16:00:00Z"),
+    },
+  });
+
+  await prisma.complaintNote.createMany({
+    data: [
+      {
+        complaintId: complaint2.id,
+        authorId: admin.id,
+        body: "A rendszámot rögzítettük, a jármű tulajdonosát sikerült azonosítani — egy szomszéd vendége volt. Értesítettük, hogy a jármű nem parkol kijelölt helyen, és azonnal elvitette.",
+        isInternal: false,
+        createdAt: new Date("2026-03-11T10:00:00Z"),
+      },
+      {
+        complaintId: complaint2.id,
+        authorId: admin.id,
+        body: "A parkolóhely felszabadult, a panaszos visszajelzése szerint az ügy lezárható.",
+        isInternal: false,
+        createdAt: new Date("2026-03-12T16:00:00Z"),
+      },
+    ],
+  });
+
+  // ─── Meeting — Building 1 ────────────────────────────────────────────────────
+
+  const meeting1 = await prisma.meeting.create({
+    data: {
+      title: "Q1 Közgyűlés",
+      description:
+        "Az I. negyedéves rendes közgyűlés, amelyen a pénzügyi zárlat, a karbantartási tervek és az aktuális ügyek kerülnek tárgyalásra. A határozatképességhez a tulajdoni hányadok legalább 50%+1 szavazata szükséges.",
+      date: new Date("2026-04-10T00:00:00Z"),
+      time: "18:00",
+      location: "Duna Residence — Közösségi terem (fszt. 3.)",
+      agenda: [
+        "1. Megnyitó és határozatképesség megállapítása",
+        "2. 2026. I. negyedéves pénzügyi beszámoló",
+        "3. Északi szárny vízvezeték-csere utókövetése",
+        "4. B lift felújítási ajánlatok ismertetése",
+        "5. Nyári tetőterasz rendezvény előkészítése",
+        "6. Egyéb kérdések, javaslatok",
+      ],
+      createdById: admin.id,
+      buildingId: building1.id,
+      createdAt: new Date("2026-03-28T10:00:00Z"),
+      updatedAt: new Date("2026-03-28T10:00:00Z"),
+    },
+  });
+
+  await prisma.meetingRsvp.createMany({
+    data: [
+      { meetingId: meeting1.id, userId: admin.id, status: RsvpStatus.ATTENDING },
+      { meetingId: meeting1.id, userId: boardMember1.id, status: RsvpStatus.ATTENDING },
+      { meetingId: meeting1.id, userId: resident1.id, status: RsvpStatus.ATTENDING },
+      { meetingId: meeting1.id, userId: resident2.id, status: RsvpStatus.NOT_ATTENDING },
+      { meetingId: meeting1.id, userId: superAdmin.id, status: RsvpStatus.ATTENDING },
+    ],
+  });
+
+  // ─── Documents — Building 1 ──────────────────────────────────────────────────
+
+  const rulesCategory = await prisma.documentCategory.findFirst({
+    where: { buildingId: building1.id, name: "Rules & Regulations" },
+  });
+
+  const meetingMinutesCategory = await prisma.documentCategory.findFirst({
+    where: { buildingId: building1.id, name: "Meeting Minutes" },
+  });
+
+  const financialReportsCategory = await prisma.documentCategory.findFirst({
+    where: { buildingId: building1.id, name: "Financial Reports" },
+  });
+
+  if (rulesCategory) {
+    const doc1 = await prisma.document.create({
+      data: {
+        title: "Házirend v2.1",
+        description:
+          "A Duna Residence társasház érvényes házirendje, beleértve a zajszabályokat, parkolási előírásokat és a közös területek használatára vonatkozó szabályokat.",
+        categoryId: rulesCategory.id,
+        visibility: DocumentVisibility.PUBLIC,
+        tags: ["házirend", "szabályok", "közösség"],
+        uploadedById: admin.id,
+        createdAt: new Date("2026-01-15T10:00:00Z"),
+        updatedAt: new Date("2026-01-15T10:00:00Z"),
+      },
+    });
+
+    await prisma.documentVersion.createMany({
+      data: [
+        {
+          documentId: doc1.id,
+          versionNumber: 1,
+          fileUrl: "/documents/hazirend-v2.0.pdf",
+          fileName: "Hazirend_v2.0.pdf",
+          fileSize: 245760,
+          mimeType: "application/pdf",
+          uploadedById: admin.id,
+          uploadedAt: new Date("2025-10-01T09:00:00Z"),
+        },
+        {
+          documentId: doc1.id,
+          versionNumber: 2,
+          fileUrl: "/documents/hazirend-v2.1.pdf",
+          fileName: "Hazirend_v2.1.pdf",
+          fileSize: 251904,
+          mimeType: "application/pdf",
+          uploadedById: admin.id,
+          uploadedAt: new Date("2026-01-15T10:00:00Z"),
+        },
+      ],
+    });
+
+    const doc2 = await prisma.document.create({
+      data: {
+        title: "Igazgatótanács Etikai Kódexe",
+        description:
+          "A tulajdonosi közösség igazgatótanácsának etikai kódexe és összeférhetetlenségi szabályzata.",
+        categoryId: rulesCategory.id,
+        visibility: DocumentVisibility.BOARD_ONLY,
+        tags: ["igazgatótanács", "etika", "összeférhetetlenség"],
+        uploadedById: admin.id,
+        createdAt: new Date("2026-02-01T11:00:00Z"),
+        updatedAt: new Date("2026-02-01T11:00:00Z"),
+      },
+    });
+
+    await prisma.documentVersion.create({
+      data: {
+        documentId: doc2.id,
+        versionNumber: 1,
+        fileUrl: "/documents/etikai-kodex-v1.docx",
+        fileName: "Etikai_Kodex_v1.docx",
+        fileSize: 98304,
+        mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        uploadedById: admin.id,
+        uploadedAt: new Date("2026-02-01T11:00:00Z"),
+      },
+    });
+  }
+
+  if (meetingMinutesCategory) {
+    const doc3 = await prisma.document.create({
+      data: {
+        title: "2025. Q4 Közgyűlési Jegyzőkönyv",
+        description:
+          "A 2025. december 12-én megtartott negyedéves közgyűlés hivatalos jegyzőkönyve.",
+        categoryId: meetingMinutesCategory.id,
+        visibility: DocumentVisibility.PUBLIC,
+        tags: ["közgyűlés", "jegyzőkönyv", "2025-Q4"],
+        uploadedById: admin.id,
+        createdAt: new Date("2025-12-20T14:00:00Z"),
+        updatedAt: new Date("2025-12-20T14:00:00Z"),
+      },
+    });
+
+    await prisma.documentVersion.create({
+      data: {
+        documentId: doc3.id,
+        versionNumber: 1,
+        fileUrl: "/documents/kozgyules-jkv-2025-q4.pdf",
+        fileName: "Kozgyules_Jegyzokonyv_2025_Q4.pdf",
+        fileSize: 184320,
+        mimeType: "application/pdf",
+        uploadedById: admin.id,
+        uploadedAt: new Date("2025-12-20T14:00:00Z"),
+      },
+    });
+  }
+
+  if (financialReportsCategory) {
+    const doc4 = await prisma.document.create({
+      data: {
+        title: "2026 Q1 Pénzügyi Riport",
+        description:
+          "A Duna Residence társasház 2026. I. negyedéves pénzügyi összefoglalója: bevételek, kiadások, tartalékalap-egyenleg.",
+        categoryId: financialReportsCategory.id,
+        visibility: DocumentVisibility.BOARD_ONLY,
+        tags: ["pénzügy", "riport", "2026-Q1"],
+        uploadedById: admin.id,
+        createdAt: new Date("2026-03-26T10:00:00Z"),
+        updatedAt: new Date("2026-03-26T10:00:00Z"),
+      },
+    });
+
+    await prisma.documentVersion.create({
+      data: {
+        documentId: doc4.id,
+        versionNumber: 1,
+        fileUrl: "/documents/penzugyi-riport-2026-q1.xlsx",
+        fileName: "Penzugyi_Riport_2026_Q1.xlsx",
+        fileSize: 73728,
+        mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        uploadedById: admin.id,
+        uploadedAt: new Date("2026-03-26T10:00:00Z"),
+      },
+    });
+  }
+
   console.log("Seeding complete.");
   console.log("  - 4 plans created (Starter, Professional, Enterprise, Legacy)");
   console.log("  - 1 legacy subscription created (assigned to super admin)");
@@ -563,6 +1159,13 @@ async function main() {
   console.log("  - 3 contractors (global)");
   console.log("  - 14 document categories (7 per building)");
   console.log("  - 4 scheduled maintenance entries (2 per building)");
+  console.log("  - 4 announcements (building 1)");
+  console.log("  - 3 forum topics with replies (building 1, General category)");
+  console.log("  - 4 maintenance tickets (building 1)");
+  console.log("  - 30 monthly charges (5 units × 6 months, building 1)");
+  console.log("  - 2 complaints with notes (building 1)");
+  console.log("  - 1 upcoming meeting with RSVPs (building 1)");
+  console.log("  - 4 documents with versions (building 1)");
 }
 
 main()
