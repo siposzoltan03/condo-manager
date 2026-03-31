@@ -98,6 +98,10 @@ export const authOptions = {
     signIn: "/login",
   },
   callbacks: {
+    // Allow all requests through auth() wrapper — we handle redirects in middleware ourselves
+    authorized({ auth: session, request }) {
+      return true;
+    },
     async jwt({ token, user, trigger, session: updateData }) {
       if (user) {
         token.id = user.id!;

@@ -32,25 +32,28 @@ function isPublicPage(pathname: string): boolean {
 
 function isPublicAccessiblePage(pathname: string): boolean {
   const p = stripLocale(pathname);
-  // Exact match for "/" (landing page) or starts-with for others
   return publicAccessiblePages.some((page) =>
-    page === "/" ? p === "/" : p === page || p.startsWith(page + "/")
+    page === "/" ? p === "/" || p === "" : p === page || p.startsWith(page + "/")
+  );
+}
+
+function isPublicApiRoute(pathname: string): boolean {
+  return (
+    pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/api/invitations/by-token") ||
+    pathname.startsWith("/api/plans") ||
+    pathname.startsWith("/api/stripe/checkout") ||
+    pathname.startsWith("/api/stripe/verify-session") ||
+    pathname.startsWith("/api/stripe/webhook")
   );
 }
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;
 
-  // API routes: allow public API endpoints, require auth for everything else
+  // API routes
   if (pathname.startsWith("/api")) {
-    if (
-      pathname.startsWith("/api/auth") ||
-      pathname.startsWith("/api/invitations/by-token") ||
-      pathname.startsWith("/api/plans") ||
-      pathname.startsWith("/api/stripe/checkout") ||
-      pathname.startsWith("/api/stripe/verify-session") ||
-      pathname.startsWith("/api/stripe/webhook")
-    ) {
+    if (isPublicApiRoute(pathname)) {
       return NextResponse.next();
     }
     if (!req.auth) {
@@ -63,33 +66,31 @@ export default auth((req) => {
   const isPublic = isPublicPage(pathname);
   const isAccessible = isPublicAccessiblePage(pathname);
 
-  // Extract locale from the current pathname (e.g. /hu/dashboard -> hu)
   const localeMatch = pathname.match(new RegExp(`^/(${routing.locales.join("|")})(\/|$)`));
   const locale = localeMatch ? localeMatch[1] : routing.defaultLocale;
 
   // Public-accessible pages: allow through regardless of auth state
   if (isAccessible) {
-    console.log("[middleware] public accessible page, passing through:", pathname);
     return intlMiddleware(req);
   }
 
-  // Redirect unauthenticated users to login (unless on a public or public-accessible page)
+  // Redirect unauthenticated users to login
   if (!isAuthenticated && !isPublic) {
-    console.log("[middleware] redirecting to login:", pathname, "isPublic:", isPublic, "isAccessible:", isAccessible);
     const loginUrl = new URL(`/${locale}/login`, req.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // Redirect authenticated users away from auth-excluded pages (login, forgot-password, etc.)
+  // Redirect authenticated users away from auth-excluded pages
   if (isAuthenticated && isPublic) {
     return NextResponse.redirect(new URL(`/${locale}/dashboard`, req.url));
   }
 
-  // Apply next-intl middleware
   return intlMiddleware(req);
 });
 
+// Tell NextAuth's auth() wrapper NOT to redirect unauthenticated users automatically.
+// We handle all redirects ourselves in the callback above.
 export const config = {
   matcher: ["/((?!_next|_vercel|.*\\..*).*)"],
 };
