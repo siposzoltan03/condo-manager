@@ -33,7 +33,7 @@ export function TopBar() {
   const roleLabel = roleLabels[role] ?? role;
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-6 lg:pl-72">
+    <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-6 lg:pl-72">
       {/* Left spacer for mobile hamburger */}
       <div className="lg:hidden w-10" />
 

@@ -28,6 +28,51 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
+// Push: show notification when a push message arrives
+self.addEventListener("push", (event) => {
+  if (!event.data) return;
+
+  let data;
+  try {
+    data = event.data.json();
+  } catch {
+    data = { title: "Condo Manager", body: event.data.text() };
+  }
+
+  const title = data.title || "Condo Manager";
+  const options = {
+    body: data.body || "",
+    icon: "/icons/icon-192x192.png",
+    badge: "/icons/icon-72x72.png",
+    data: { url: data.url || "/" },
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+// Notification click: open the app
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+
+  const url = event.notification.data?.url || "/";
+
+  event.waitUntil(
+    self.clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((clientList) => {
+        // Focus an existing window if possible
+        for (const client of clientList) {
+          if (client.url.includes(self.location.origin) && "focus" in client) {
+            client.navigate(url);
+            return client.focus();
+          }
+        }
+        // Otherwise open a new window
+        return self.clients.openWindow(url);
+      })
+  );
+});
+
 // Fetch: network-first for API calls, cache-first for static assets
 self.addEventListener("fetch", (event) => {
   const { request } = event;

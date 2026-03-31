@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
 import { hasMinimumRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
 import { Prisma, ComplaintCategory, ComplaintStatus } from "@prisma/client";
+import { requireNotFrozen, FrozenBuildingError } from "@/lib/frozen-check";
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId, role } = await requireBuildingContext();
 
     const { searchParams } = request.nextUrl;
     const search = searchParams.get("search") ?? undefined;
@@ -22,15 +20,15 @@ export async function GET(request: NextRequest) {
     const limit = isNaN(rawLimit) || rawLimit < 1 ? 20 : Math.min(rawLimit, 100);
     const skip = (page - 1) * limit;
 
-    const isBoardPlus = hasMinimumRole(user.role, "BOARD_MEMBER");
+    const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
 
-    const where: Prisma.ComplaintWhereInput = {};
+    const where: Prisma.ComplaintWhereInput = { buildingId };
 
     // Visibility: public complaints visible to all; private only to author + BOARD_MEMBER+
     if (!isBoardPlus) {
       where.OR = [
         { isPrivate: false },
-        { authorId: user.id },
+        { authorId: userId },
       ];
     }
 
@@ -122,9 +120,15 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { userId, buildingId } = await requireBuildingContext();
+
+    try {
+      await requireNotFrozen(buildingId);
+    } catch (e) {
+      if (e instanceof FrozenBuildingError) {
+        return NextResponse.json({ error: e.message }, { status: 403 });
+      }
+      throw e;
     }
 
     const body = await request.json();
@@ -176,7 +180,8 @@ export async function POST(request: NextRequest) {
             description,
             photos: Array.isArray(photos) ? photos : [],
             isPrivate: isPrivate ?? false,
-            author: { connect: { id: user.id } },
+            author: { connect: { id: userId } },
+            building: { connect: { id: buildingId } },
           },
           include: {
             author: {
@@ -207,7 +212,7 @@ export async function POST(request: NextRequest) {
       entityType: "Complaint",
       entityId: complaint.id,
       action: "CREATE",
-      userId: user.id,
+      userId,
       newValue: {
         trackingNumber: complaint.trackingNumber,
         category,

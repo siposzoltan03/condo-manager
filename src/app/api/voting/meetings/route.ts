@@ -1,14 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
+import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
 import { requireRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { userId, buildingId, role } = await requireBuildingContext();
+
+    try {
+      await requireFeature(buildingId, "voting");
+    } catch (err) {
+      if (err instanceof FeatureGateError) {
+        return NextResponse.json({ error: err.message, upgrade: true }, { status: 403 });
+      }
+      throw err;
     }
 
     const { searchParams } = request.nextUrl;
@@ -19,7 +26,10 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
     const upcoming = searchParams.get("upcoming") === "true";
 
-    const where = upcoming ? { date: { gte: new Date() } } : {};
+    const where: Record<string, unknown> = { buildingId };
+    if (upcoming) {
+      where.date = { gte: new Date() };
+    }
 
     const [meetings, total] = await Promise.all([
       prisma.meeting.findMany({
@@ -54,7 +64,7 @@ export async function GET(request: NextRequest) {
         proxy: m.rsvps.filter((r) => r.status === "PROXY").length,
         total: m.rsvps.length,
       },
-      myRsvp: m.rsvps.find((r) => r.userId === user.id)?.status ?? null,
+      myRsvp: m.rsvps.find((r) => r.userId === userId)?.status ?? null,
       voteCount: m._count.votes,
       createdAt: m.createdAt,
     }));
@@ -73,13 +83,19 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { userId, buildingId, role } = await requireBuildingContext();
+
+    try {
+      await requireFeature(buildingId, "voting");
+    } catch (err) {
+      if (err instanceof FeatureGateError) {
+        return NextResponse.json({ error: err.message, upgrade: true }, { status: 403 });
+      }
+      throw err;
     }
 
     try {
-      await requireRole(user.role, "BOARD_MEMBER");
+      await requireRole(role, "BOARD_MEMBER");
     } catch {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -102,7 +118,8 @@ export async function POST(request: NextRequest) {
         time,
         location: location ?? null,
         agenda: agenda ?? [],
-        createdById: user.id,
+        createdById: userId,
+        buildingId,
       },
       include: {
         createdBy: { select: { id: true, name: true } },
@@ -113,7 +130,7 @@ export async function POST(request: NextRequest) {
       entityType: "Meeting",
       entityId: meeting.id,
       action: "CREATE",
-      userId: user.id,
+      userId,
       newValue: { title, date, time, location },
     });
 

@@ -20,6 +20,9 @@ const OPTIONAL_VARS = [
   "SMTP_PASS",
   "VAPID_PUBLIC_KEY",
   "VAPID_PRIVATE_KEY",
+  "STRIPE_SECRET_KEY",
+  "STRIPE_PUBLISHABLE_KEY",
+  "STRIPE_WEBHOOK_SECRET",
 ] as const;
 
 export function validateEnv(): void {

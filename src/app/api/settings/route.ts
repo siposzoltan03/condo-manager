@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, requireBuildingContext } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
@@ -18,14 +18,8 @@ export async function GET() {
         id: true,
         name: true,
         email: true,
-        role: true,
         language: true,
         notificationPreferences: true,
-        unit: {
-          select: {
-            number: true,
-          },
-        },
       },
     });
 
@@ -33,7 +27,24 @@ export async function GET() {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    return NextResponse.json(user);
+    // Get the user's role and unit from building context
+    const activeRole = sessionUser.activeRole ?? "RESIDENT";
+
+    // Get unit info from UnitUser for the active building
+    let unitInfo: { number: string } | null = null;
+    if (sessionUser.activeBuildingId) {
+      const unitUser = await prisma.unitUser.findFirst({
+        where: { userId: sessionUser.id, unit: { buildingId: sessionUser.activeBuildingId } },
+        include: { unit: { select: { number: true } } },
+      });
+      unitInfo = unitUser ? { number: unitUser.unit.number } : null;
+    }
+
+    return NextResponse.json({
+      ...user,
+      role: activeRole,
+      unit: unitInfo,
+    });
   } catch (error) {
     console.error("Failed to fetch settings:", error);
     return NextResponse.json(
@@ -151,18 +162,15 @@ export async function PATCH(request: NextRequest) {
         id: true,
         name: true,
         email: true,
-        role: true,
         language: true,
         notificationPreferences: true,
-        unit: {
-          select: {
-            number: true,
-          },
-        },
       },
     });
 
-    return NextResponse.json(updatedUser);
+    return NextResponse.json({
+      ...updatedUser,
+      role: sessionUser.activeRole ?? "RESIDENT",
+    });
   } catch (error) {
     console.error("Failed to update settings:", error);
     return NextResponse.json(

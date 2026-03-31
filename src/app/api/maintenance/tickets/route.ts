@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
+import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
 import { hasMinimumRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
@@ -13,9 +14,15 @@ import { generateTrackingNumber } from "@/lib/maintenance/tickets";
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { userId, buildingId, role } = await requireBuildingContext();
+
+    try {
+      await requireFeature(buildingId, "maintenance");
+    } catch (err) {
+      if (err instanceof FeatureGateError) {
+        return NextResponse.json({ error: err.message, upgrade: true }, { status: 403 });
+      }
+      throw err;
     }
 
     const { searchParams } = request.nextUrl;
@@ -29,13 +36,13 @@ export async function GET(request: NextRequest) {
     const limit = isNaN(rawLimit) || rawLimit < 1 ? 20 : Math.min(rawLimit, 100);
     const skip = (page - 1) * limit;
 
-    const isBoardPlus = hasMinimumRole(user.role, "BOARD_MEMBER");
+    const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
 
-    const where: Prisma.MaintenanceTicketWhereInput = {};
+    const where: Prisma.MaintenanceTicketWhereInput = { buildingId };
 
     // Residents see only their own tickets
     if (!isBoardPlus) {
-      where.reporterId = user.id;
+      where.reporterId = userId;
     }
 
     if (search) {
@@ -96,9 +103,15 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { userId, buildingId } = await requireBuildingContext();
+
+    try {
+      await requireFeature(buildingId, "maintenance");
+    } catch (err) {
+      if (err instanceof FeatureGateError) {
+        return NextResponse.json({ error: err.message, upgrade: true }, { status: 403 });
+      }
+      throw err;
     }
 
     const body = await request.json();
@@ -135,7 +148,8 @@ export async function POST(request: NextRequest) {
             category: category as MaintenanceCategory,
             urgency: urgency as Urgency,
             location: location ?? null,
-            reporter: { connect: { id: user.id } },
+            reporter: { connect: { id: userId } },
+            building: { connect: { id: buildingId } },
           },
           include: {
             reporter: { select: { id: true, name: true } },
@@ -164,7 +178,7 @@ export async function POST(request: NextRequest) {
       entityType: "MaintenanceTicket",
       entityId: ticket.id,
       action: "CREATE",
-      userId: user.id,
+      userId,
       newValue: {
         trackingNumber: ticket.trackingNumber,
         title,

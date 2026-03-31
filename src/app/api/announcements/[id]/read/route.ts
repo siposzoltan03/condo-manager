@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 type RouteContext = {
@@ -8,20 +8,17 @@ type RouteContext = {
 
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId } = await requireBuildingContext();
 
     const { id } = await context.params;
 
-    // Verify announcement exists
+    // Verify announcement exists and belongs to building
     const announcement = await prisma.announcement.findUnique({
       where: { id },
-      select: { id: true },
+      select: { id: true, buildingId: true },
     });
 
-    if (!announcement) {
+    if (!announcement || announcement.buildingId !== buildingId) {
       return NextResponse.json(
         { error: "Announcement not found" },
         { status: 404 }
@@ -32,12 +29,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
     await prisma.announcementRead.upsert({
       where: {
         userId_announcementId: {
-          userId: user.id,
+          userId,
           announcementId: id,
         },
       },
       create: {
-        userId: user.id,
+        userId,
         announcementId: id,
       },
       update: {},

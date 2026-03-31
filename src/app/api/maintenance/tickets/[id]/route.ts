@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
+import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
 import { hasMinimumRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
 import { notify, NotificationType } from "@/lib/notifications";
@@ -13,13 +14,19 @@ type RouteContext = {
 
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { userId, buildingId, role } = await requireBuildingContext();
+
+    try {
+      await requireFeature(buildingId, "maintenance");
+    } catch (err) {
+      if (err instanceof FeatureGateError) {
+        return NextResponse.json({ error: err.message, upgrade: true }, { status: 403 });
+      }
+      throw err;
     }
 
     const { id } = await context.params;
-    const isBoardPlus = hasMinimumRole(user.role, "BOARD_MEMBER");
+    const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
 
     const ticket = await prisma.maintenanceTicket.findUnique({
       where: { id },
@@ -42,12 +49,12 @@ export async function GET(request: NextRequest, context: RouteContext) {
       },
     });
 
-    if (!ticket) {
+    if (!ticket || ticket.buildingId !== buildingId) {
       return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }
 
     // Non-board users can only see their own tickets
-    if (!isBoardPlus && ticket.reporterId !== user.id) {
+    if (!isBoardPlus && ticket.reporterId !== userId) {
       return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }
 
@@ -60,12 +67,18 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { userId, buildingId, role } = await requireBuildingContext();
+
+    try {
+      await requireFeature(buildingId, "maintenance");
+    } catch (err) {
+      if (err instanceof FeatureGateError) {
+        return NextResponse.json({ error: err.message, upgrade: true }, { status: 403 });
+      }
+      throw err;
     }
 
-    if (!hasMinimumRole(user.role, "BOARD_MEMBER")) {
+    if (!hasMinimumRole(role, "BOARD_MEMBER")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -86,10 +99,10 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     const ticket = await prisma.maintenanceTicket.findUnique({
       where: { id },
-      select: { id: true, status: true, reporterId: true, trackingNumber: true },
+      select: { id: true, status: true, reporterId: true, trackingNumber: true, buildingId: true },
     });
 
-    if (!ticket) {
+    if (!ticket || ticket.buildingId !== buildingId) {
       return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }
 
@@ -115,7 +128,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       entityType: "MaintenanceTicket",
       entityId: ticket.id,
       action: "UPDATE",
-      userId: user.id,
+      userId,
       oldValue: { status: oldStatus },
       newValue: { status },
     });

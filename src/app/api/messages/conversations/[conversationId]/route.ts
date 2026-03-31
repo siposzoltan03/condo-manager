@@ -21,7 +21,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         participants: {
           include: {
             user: {
-              select: { id: true, name: true, role: true },
+              select: { id: true, name: true },
             },
           },
         },

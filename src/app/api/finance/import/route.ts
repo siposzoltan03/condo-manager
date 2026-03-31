@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
+import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
 import { hasMinimumRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
@@ -8,12 +9,18 @@ import { parseCsv } from "@/lib/finance/csv-import";
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { userId, buildingId, role } = await requireBuildingContext();
+
+    try {
+      await requireFeature(buildingId, "finance");
+    } catch (err) {
+      if (err instanceof FeatureGateError) {
+        return NextResponse.json({ error: err.message, upgrade: true }, { status: 403 });
+      }
+      throw err;
     }
 
-    if (!hasMinimumRole(user.role, "BOARD_MEMBER")) {
+    if (!hasMinimumRole(role, "BOARD_MEMBER")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -51,7 +58,7 @@ export async function POST(request: NextRequest) {
     if (!defaultDebitId || !defaultCreditId) {
       // Try to find an "Uncategorized" account for unspecified side
       const uncategorized = await prisma.account.findFirst({
-        where: { name: { contains: "uncategorized", mode: "insensitive" } },
+        where: { name: { contains: "uncategorized", mode: "insensitive" }, buildingId },
       });
 
       if (!defaultDebitId) {
@@ -60,7 +67,7 @@ export async function POST(request: NextRequest) {
         } else {
           // Fall back to first EXPENSE account
           const fallback = await prisma.account.findFirst({
-            where: { type: "EXPENSE" },
+            where: { type: "EXPENSE", buildingId },
             orderBy: { name: "asc" },
           });
           if (!fallback) {
@@ -79,7 +86,7 @@ export async function POST(request: NextRequest) {
         } else {
           // Fall back to first ASSET account
           const fallback = await prisma.account.findFirst({
-            where: { type: "ASSET" },
+            where: { type: "ASSET", buildingId },
             orderBy: { name: "asc" },
           });
           if (!fallback) {
@@ -107,13 +114,13 @@ export async function POST(request: NextRequest) {
       prisma.account.findUnique({ where: { id: defaultCreditId } }),
     ]);
 
-    if (!debitAcct) {
+    if (!debitAcct || debitAcct.buildingId !== buildingId) {
       return NextResponse.json(
         { error: "Specified debit account not found" },
         { status: 400 }
       );
     }
-    if (!creditAcct) {
+    if (!creditAcct || creditAcct.buildingId !== buildingId) {
       return NextResponse.json(
         { error: "Specified credit account not found" },
         { status: 400 }
@@ -133,7 +140,7 @@ export async function POST(request: NextRequest) {
         creditAccountId: isDebit ? defaultCreditId : defaultDebitId,
         amount: new Prisma.Decimal(amount),
         description: row.description,
-        createdById: user.id,
+        createdById: userId,
       };
     });
 
@@ -147,7 +154,7 @@ export async function POST(request: NextRequest) {
       entityType: "LedgerEntry",
       entityId: "csv-import",
       action: "CREATE",
-      userId: user.id,
+      userId,
       newValue: { importedCount: result.length, rowErrors: errors.length },
     });
 

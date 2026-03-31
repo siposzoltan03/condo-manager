@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
+import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
 import { hasMinimumRole } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 
@@ -9,12 +10,18 @@ type RouteContext = {
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { buildingId, role } = await requireBuildingContext();
+
+    try {
+      await requireFeature(buildingId, "maintenance");
+    } catch (err) {
+      if (err instanceof FeatureGateError) {
+        return NextResponse.json({ error: err.message, upgrade: true }, { status: 403 });
+      }
+      throw err;
     }
 
-    if (!hasMinimumRole(user.role, "BOARD_MEMBER")) {
+    if (!hasMinimumRole(role, "BOARD_MEMBER")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -23,7 +30,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     const { title, description, date, isRecurring, recurrenceRule } = body;
 
     const existing = await prisma.scheduledMaintenance.findUnique({ where: { id } });
-    if (!existing) {
+    if (!existing || existing.buildingId !== buildingId) {
       return NextResponse.json({ error: "Scheduled maintenance not found" }, { status: 404 });
     }
 
@@ -62,19 +69,25 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
 export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { buildingId, role } = await requireBuildingContext();
+
+    try {
+      await requireFeature(buildingId, "maintenance");
+    } catch (err) {
+      if (err instanceof FeatureGateError) {
+        return NextResponse.json({ error: err.message, upgrade: true }, { status: 403 });
+      }
+      throw err;
     }
 
-    if (!hasMinimumRole(user.role, "BOARD_MEMBER")) {
+    if (!hasMinimumRole(role, "BOARD_MEMBER")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const { id } = await context.params;
 
     const existing = await prisma.scheduledMaintenance.findUnique({ where: { id } });
-    if (!existing) {
+    if (!existing || existing.buildingId !== buildingId) {
       return NextResponse.json({ error: "Scheduled maintenance not found" }, { status: 404 });
     }
 

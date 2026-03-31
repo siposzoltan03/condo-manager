@@ -1,0 +1,88 @@
+<h2>Architecture Approaches</h2>
+<p class="subtitle">How to structure subscriptions, organizations, and the invitation system</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Organization-Centric Model</h3>
+      <p>New <code>Organization</code> entity owns subscriptions and buildings. The buyer creates an org during checkout. Buildings belong to an org. Plans are tied to orgs.</p>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>Pros</h4>
+          <ul>
+            <li>Clean separation: billing lives at org level, operations at building level</li>
+            <li>Natural fit for management companies with multiple buildings</li>
+            <li>Easy to add org-level features later (cross-building reports, consolidated billing)</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>Cons</h4>
+          <ul>
+            <li>Extra entity to manage — even single-building owners need an org</li>
+            <li>More complex data model and queries</li>
+            <li>Bigger migration — touches auth context, middleware, most API routes</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Subscription-on-Building Model</h3>
+      <p>No org entity. Each building has its own subscription. A "billing owner" user is the one who pays. Management companies are just users with SUPER_ADMIN across multiple buildings.</p>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>Pros</h4>
+          <ul>
+            <li>Simpler data model — extends existing Building with subscription fields</li>
+            <li>Smaller migration surface — no new auth context layer</li>
+            <li>Easier to reason about: one building = one subscription = one Stripe customer</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>Cons</h4>
+          <ul>
+            <li>Management companies managing 20 buildings need 20 separate subscriptions</li>
+            <li>No consolidated billing or cross-building view</li>
+            <li>Harder to add org-level features later (would need to retrofit the org layer)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Hybrid: Lightweight Account Layer</h3>
+      <p>New <code>Account</code> entity (not a full org) that holds the Stripe subscription and owns buildings. Single-building buyers get an auto-created account. Management companies get a shared account. The account is mostly invisible in the UI for single-building users.</p>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>Pros</h4>
+          <ul>
+            <li>Supports both buyer types without over-engineering</li>
+            <li>Single-building users never see the account layer</li>
+            <li>Consolidated billing for management companies</li>
+            <li>Clean upgrade path to full org features if needed</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>Cons</h4>
+          <ul>
+            <li>Still an extra entity, but thinner than a full org</li>
+            <li>Need to handle auto-creation logic during checkout</li>
+            <li>"Invisible but present" layer can be confusing if not documented well</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 2rem; padding: 1.5rem; background: rgba(99, 102, 241, 0.08); border-radius: 12px; border-left: 4px solid #818cf8;">
+  <h3 style="margin-top: 0;">Recommendation: Option C (Hybrid)</h3>
+  <p style="margin-bottom: 0;">It handles both buyer types cleanly, keeps the UX simple for individual managers, and gives management companies the consolidated experience they expect — without building a full organization management system upfront.</p>
+</div>

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
 import { requireRole, hasMinimumRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
@@ -7,10 +7,7 @@ import { Prisma, DocumentVisibility } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId, role } = await requireBuildingContext();
 
     const { searchParams } = request.nextUrl;
     const search = searchParams.get("search") ?? undefined;
@@ -25,9 +22,12 @@ export async function GET(request: NextRequest) {
 
     const where: Prisma.DocumentWhereInput = {};
 
+    // Filter by category's building
+    where.category = { buildingId };
+
     // Visibility filtering based on role
-    const isAdmin = hasMinimumRole(user.role, "ADMIN");
-    const isBoardPlus = hasMinimumRole(user.role, "BOARD_MEMBER");
+    const isAdmin = hasMinimumRole(role, "ADMIN");
+    const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
 
     if (!isAdmin && !isBoardPlus) {
       // Regular users can only see PUBLIC
@@ -145,13 +145,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId, role } = await requireBuildingContext();
 
     try {
-      await requireRole(user.role, "BOARD_MEMBER");
+      await requireRole(role, "BOARD_MEMBER");
     } catch {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -173,9 +170,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify category exists
+    // Verify category exists and belongs to this building
     const category = await prisma.documentCategory.findUnique({ where: { id: categoryId } });
-    if (!category) {
+    if (!category || category.buildingId !== buildingId) {
       return NextResponse.json(
         { error: "Category not found" },
         { status: 404 }
@@ -190,7 +187,7 @@ export async function POST(request: NextRequest) {
         categoryId,
         visibility: visibility ?? "PUBLIC",
         tags: tags ?? [],
-        uploadedById: user.id,
+        uploadedById: userId,
         versions: {
           create: {
             versionNumber: 1,
@@ -199,7 +196,7 @@ export async function POST(request: NextRequest) {
             fileSize: fileSize ?? 0,
             mimeType: mimeType ?? "application/octet-stream",
             extractedText: null,
-            uploadedById: user.id,
+            uploadedById: userId,
           },
         },
       },
@@ -226,7 +223,7 @@ export async function POST(request: NextRequest) {
       entityType: "Document",
       entityId: document.id,
       action: "CREATE",
-      userId: user.id,
+      userId,
       newValue: { title, categoryId, visibility: visibility ?? "PUBLIC" },
     });
 

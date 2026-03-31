@@ -7,14 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  SUPER_ADMIN
-  ADMIN
-  BOARD_MEMBER
-  RESIDENT
-  TENANT
-}
-
 enum TargetAudience {
   ALL
   SPECIFIC_UNITS
@@ -105,17 +97,175 @@ enum DocumentVisibility {
   ADMIN_ONLY
 }
 
+enum BuildingRole {
+  SUPER_ADMIN
+  ADMIN
+  BOARD_MEMBER
+  RESIDENT
+  TENANT
+}
+
+enum UnitRelationship {
+  OWNER
+  TENANT
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  EXPIRED
+}
+
+enum InvitationType {
+  ADMIN_SETUP
+  USER_INVITE
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
+// ─── Subscription & Plan Models ─────────────────────────────────────────────
+
+model Plan {
+  id                  String         @id @default(cuid())
+  name                String
+  slug                String         @unique
+  stripePriceId       String?
+  maxBuildings        Int
+  maxUnitsPerBuilding Int
+  features            Json           @default("[]")
+  priceMonthly        Decimal        @db.Decimal(10, 2)
+  priceYearly         Decimal        @db.Decimal(10, 2)
+  trialDays           Int            @default(14)
+  isActive            Boolean        @default(true)
+  createdAt           DateTime       @default(now())
+  subscriptions       Subscription[]
+}
+
+model Subscription {
+  id                    String             @id @default(cuid())
+  name                  String
+  email                 String
+  stripeCustomerId      String?            @unique
+  stripeSubscriptionId  String?            @unique
+  planId                String
+  plan                  Plan               @relation(fields: [planId], references: [id])
+  trialEndsAt           DateTime?
+  subscriptionStatus    SubscriptionStatus @default(TRIALING)
+  ownerId               String
+  owner                 User               @relation("SubscriptionOwner", fields: [ownerId], references: [id])
+  buildings             Building[]
+  invitations           Invitation[]
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
+  @@index([ownerId])
+  @@index([subscriptionStatus])
+}
+
+model Invitation {
+  id             String           @id @default(cuid())
+  email          String
+  tokenHash      String           @unique
+  type           InvitationType
+  role           BuildingRole?
+  unitId         String?
+  unit           Unit?            @relation(fields: [unitId], references: [id])
+  relationship   UnitRelationship?
+  buildingId     String?
+  building       Building?        @relation(fields: [buildingId], references: [id])
+  subscriptionId String?
+  subscription   Subscription?    @relation(fields: [subscriptionId], references: [id])
+  invitedById    String?
+  invitedBy      User?            @relation("InvitationSender", fields: [invitedById], references: [id])
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  status         InvitationStatus @default(PENDING)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([email])
+  @@index([buildingId])
+  @@index([status])
+}
+
+// ─── Multi-Building Models ────────────────────────────────────────────────────
+
+model Building {
+  id                   String                 @id @default(cuid())
+  name                 String
+  address              String
+  city                 String
+  zipCode              String
+  subscriptionId       String?
+  subscription         Subscription?          @relation(fields: [subscriptionId], references: [id])
+  invitationExpiryHours Int                   @default(168)
+  isFrozen             Boolean                @default(false)
+  units                Unit[]
+  userBuildings        UserBuilding[]
+  announcements        Announcement[]
+  forumCategories      ForumCategory[]
+  complaints           Complaint[]
+  accounts             Account[]
+  maintenanceTickets   MaintenanceTicket[]
+  scheduledMaintenance ScheduledMaintenance[]
+  meetings             Meeting[]
+  documentCategories   DocumentCategory[]
+  invitations          Invitation[]
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+}
+
+model UserBuilding {
+  id         String       @id @default(cuid())
+  user       User         @relation(fields: [userId], references: [id])
+  userId     String
+  building   Building     @relation(fields: [buildingId], references: [id])
+  buildingId String
+  role       BuildingRole @default(RESIDENT)
+  isActive   Boolean      @default(true)
+  createdAt  DateTime     @default(now())
+
+  @@unique([userId, buildingId])
+  @@index([buildingId])
+}
+
+model UnitUser {
+  id               String           @id @default(cuid())
+  user             User             @relation(fields: [userId], references: [id])
+  userId           String
+  unit             Unit             @relation(fields: [unitId], references: [id])
+  unitId           String
+  relationship     UnitRelationship @default(OWNER)
+  isPrimaryContact Boolean          @default(false)
+  createdAt        DateTime         @default(now())
+
+  @@unique([userId, unitId])
+  @@index([unitId])
+}
+
 model Unit {
   id             String   @id @default(cuid())
-  number         String   @unique
+  number         String
   floor          Int
   ownershipShare Decimal  @db.Decimal(5, 4)
   size           Decimal  @db.Decimal(8, 2)
-  users          User[]
+  building       Building @relation(fields: [buildingId], references: [id])
+  buildingId     String
+  unitUsers      UnitUser[]
   monthlyCharges MonthlyCharge[]
   ballots        Ballot[]
+  invitations    Invitation[]
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
+  @@unique([buildingId, number])
 }
 
 model User {
@@ -123,10 +273,6 @@ model User {
   email                   String               @unique
   passwordHash            String
   name                    String
-  role                    Role                  @default(RESIDENT)
-  unit                    Unit                  @relation(fields: [unitId], references: [id])
-  unitId                  String
-  isPrimaryContact        Boolean              @default(false)
   language                String               @default("hu")
   notificationPreferences Json                 @default("{}")
   isActive                Boolean              @default(true)
@@ -155,6 +301,11 @@ model User {
   proxiesReceived         ProxyAssignment[]           @relation("ProxyGrantee")
   documents               Document[]                  @relation("DocumentUploader")
   documentVersions        DocumentVersion[]           @relation("DocumentVersionUploader")
+  userBuildings           UserBuilding[]
+  unitUsers               UnitUser[]
+  pushSubscriptions       PushSubscription[]
+  ownedSubscriptions      Subscription[]          @relation("SubscriptionOwner")
+  invitationsSent         Invitation[]             @relation("InvitationSender")
 }
 
 model AuditLog {
@@ -210,12 +361,15 @@ model Announcement {
   authorId       String
   targetAudience TargetAudience
   attachments    Json             @default("[]")
+  building       Building         @relation(fields: [buildingId], references: [id])
+  buildingId     String
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
   reads          AnnouncementRead[]
 
   @@index([createdAt])
   @@index([authorId])
+  @@index([buildingId])
 }
 
 model AnnouncementRead {
@@ -231,11 +385,16 @@ model AnnouncementRead {
 
 model ForumCategory {
   id          String       @id @default(cuid())
-  name        String       @unique
+  name        String
   description String?
   sortOrder   Int          @default(0)
+  building    Building     @relation(fields: [buildingId], references: [id])
+  buildingId  String
   createdAt   DateTime     @default(now())
   topics      ForumTopic[]
+
+  @@unique([buildingId, name])
+  @@index([buildingId])
 }
 
 model ForumTopic {
@@ -317,6 +476,8 @@ model Complaint {
   isPrivate      Boolean          @default(false)
   trackingNumber String           @unique
   status         ComplaintStatus  @default(SUBMITTED)
+  building       Building         @relation(fields: [buildingId], references: [id])
+  buildingId     String
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
   notes          ComplaintNote[]
@@ -324,6 +485,7 @@ model Complaint {
   @@index([status])
   @@index([authorId])
   @@index([createdAt])
+  @@index([buildingId])
 }
 
 model ComplaintNote {
@@ -354,6 +516,8 @@ model MaintenanceTicket {
   trackingNumber        String              @unique
   assignedContractorId  String?
   assignedContractor    Contractor?         @relation(fields: [assignedContractorId], references: [id])
+  building              Building            @relation(fields: [buildingId], references: [id])
+  buildingId            String
   comments              TicketComment[]
   attachments           TicketAttachment[]
   ratings               ContractorRating[]
@@ -363,6 +527,7 @@ model MaintenanceTicket {
   @@index([status])
   @@index([reporterId])
   @@index([createdAt])
+  @@index([buildingId])
 }
 
 model TicketComment {
@@ -412,13 +577,17 @@ model ContractorRating {
 }
 
 model ScheduledMaintenance {
-  id              String   @id @default(cuid())
+  id              String    @id @default(cuid())
   title           String
   description     String?
   date            DateTime
-  isRecurring     Boolean  @default(false)
+  isRecurring     Boolean   @default(false)
   recurrenceRule  String?
-  createdAt       DateTime @default(now())
+  building        Building @relation(fields: [buildingId], references: [id])
+  buildingId      String
+  createdAt       DateTime  @default(now())
+
+  @@index([buildingId])
 }
 
 // ─── Finance Module ─────────────────────────────────────────────────────────
@@ -430,11 +599,14 @@ model Account {
   parentId      String?
   parent        Account?    @relation("AccountChildren", fields: [parentId], references: [id])
   children      Account[]   @relation("AccountChildren")
+  building      Building    @relation(fields: [buildingId], references: [id])
+  buildingId    String
   createdAt     DateTime    @default(now())
   debitEntries  LedgerEntry[] @relation("DebitAccount")
   creditEntries LedgerEntry[] @relation("CreditAccount")
   budgets       Budget[]
   @@index([type])
+  @@index([buildingId])
 }
 
 model LedgerEntry {
@@ -490,6 +662,8 @@ model Meeting {
   minutes     String?       @db.Text
   createdBy   User          @relation("MeetingCreator", fields: [createdById], references: [id])
   createdById String
+  building    Building      @relation(fields: [buildingId], references: [id])
+  buildingId  String
   rsvps       MeetingRsvp[]
   votes       Vote[]
   createdAt   DateTime      @default(now())
@@ -497,6 +671,7 @@ model Meeting {
 
   @@index([date])
   @@index([createdById])
+  @@index([buildingId])
 }
 
 model MeetingRsvp {
@@ -583,18 +758,21 @@ model ProxyAssignment {
 // ─── Documents Module ──────────────────────────────────────────────────────
 
 model DocumentCategory {
-  id        String             @id @default(cuid())
-  name      String
-  icon      String?
-  parentId  String?
-  parent    DocumentCategory?  @relation("CategoryChildren", fields: [parentId], references: [id])
-  children  DocumentCategory[] @relation("CategoryChildren")
-  sortOrder Int                @default(0)
-  documents Document[]
-  createdAt DateTime           @default(now())
+  id         String             @id @default(cuid())
+  name       String
+  icon       String?
+  parentId   String?
+  parent     DocumentCategory?  @relation("CategoryChildren", fields: [parentId], references: [id])
+  children   DocumentCategory[] @relation("CategoryChildren")
+  sortOrder  Int                @default(0)
+  building   Building           @relation(fields: [buildingId], references: [id])
+  buildingId String
+  documents  Document[]
+  createdAt  DateTime           @default(now())
 
   @@index([parentId])
   @@index([sortOrder])
+  @@index([buildingId])
 }
 
 model Document {
@@ -633,4 +811,18 @@ model DocumentVersion {
 
   @@unique([documentId, versionNumber])
   @@index([documentId])
+}
+
+// ─── Push Notifications ──────────────────────────────────────────────────────
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  endpoint  String   @unique
+  p256dh    String   // public key
+  auth      String   // auth secret
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }

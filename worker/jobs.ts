@@ -56,6 +56,25 @@ export async function processNotificationJob(job: Job): Promise<void> {
         await sendEmail(user.email, title, htmlBody);
       }
 
+      if (channel === "push" || channel === "both") {
+        const subscriptions = await prisma.pushSubscription.findMany({
+          where: { userId },
+        });
+
+        await Promise.all(
+          subscriptions.map((sub) =>
+            sendPush(
+              {
+                endpoint: sub.endpoint,
+                keys: { p256dh: sub.p256dh, auth: sub.auth },
+              },
+              title,
+              body
+            )
+          )
+        );
+      }
+
       break;
     }
 

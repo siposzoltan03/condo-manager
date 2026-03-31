@@ -1,15 +1,23 @@
 import { NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
+import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { buildingId } = await requireBuildingContext();
+
+    try {
+      await requireFeature(buildingId, "forum");
+    } catch (err) {
+      if (err instanceof FeatureGateError) {
+        return NextResponse.json({ error: err.message, upgrade: true }, { status: 403 });
+      }
+      throw err;
     }
 
     const categories = await prisma.forumCategory.findMany({
+      where: { buildingId },
       orderBy: { sortOrder: "asc" },
       include: {
         _count: {

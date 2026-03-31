@@ -1,17 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
+import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
 import { hasMinimumRole } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { buildingId, role } = await requireBuildingContext();
+
+    try {
+      await requireFeature(buildingId, "finance");
+    } catch (err) {
+      if (err instanceof FeatureGateError) {
+        return NextResponse.json({ error: err.message, upgrade: true }, { status: 403 });
+      }
+      throw err;
     }
 
-    if (!hasMinimumRole(user.role, "BOARD_MEMBER")) {
+    if (!hasMinimumRole(role, "BOARD_MEMBER")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -47,8 +54,9 @@ export async function GET(request: NextRequest) {
 
     const dateFilter = { gte: from, lte: to };
 
-    // Get all accounts for reference
+    // Get all accounts for this building
     const accounts = await prisma.account.findMany({
+      where: { buildingId },
       select: { id: true, type: true },
     });
 
@@ -77,7 +85,7 @@ export async function GET(request: NextRequest) {
     // Split ASSET accounts into current fund vs reserve fund
     // Convention: accounts with "reserve" in name go to reserve fund
     const reserveAccounts = await prisma.account.findMany({
-      where: { type: "ASSET", name: { contains: "reserve", mode: "insensitive" } },
+      where: { type: "ASSET", buildingId, name: { contains: "reserve", mode: "insensitive" } },
       select: { id: true },
     });
     const reserveIds = reserveAccounts.map((a) => a.id);

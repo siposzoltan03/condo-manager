@@ -1,17 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
 import { requireRole } from "@/lib/rbac";
 import { getAuditLogs } from "@/lib/audit";
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { role: activeRole } = await requireBuildingContext();
 
     try {
-      await requireRole(user.role, "ADMIN");
+      await requireRole(activeRole, "ADMIN");
     } catch {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }

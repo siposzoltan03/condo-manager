@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
 import { hasMinimumRole } from "@/lib/rbac";
 import { notify, NotificationType } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
@@ -10,25 +10,22 @@ type RouteContext = {
 
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId, role } = await requireBuildingContext();
 
     const { id } = await context.params;
-    const isBoardPlus = hasMinimumRole(user.role, "BOARD_MEMBER");
+    const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
 
-    // Verify complaint exists and user has access
+    // Verify complaint exists, belongs to building, and user has access
     const complaint = await prisma.complaint.findUnique({
       where: { id },
-      select: { id: true, isPrivate: true, authorId: true },
+      select: { id: true, isPrivate: true, authorId: true, buildingId: true },
     });
 
-    if (!complaint) {
+    if (!complaint || complaint.buildingId !== buildingId) {
       return NextResponse.json({ error: "Complaint not found" }, { status: 404 });
     }
 
-    if (complaint.isPrivate && complaint.authorId !== user.id && !isBoardPlus) {
+    if (complaint.isPrivate && complaint.authorId !== userId && !isBoardPlus) {
       return NextResponse.json({ error: "Complaint not found" }, { status: 404 });
     }
 
@@ -57,10 +54,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { userId, buildingId, role } = await requireBuildingContext();
 
     const { id } = await context.params;
     const reqBody = await request.json();
@@ -73,19 +67,19 @@ export async function POST(request: NextRequest, context: RouteContext) {
       );
     }
 
-    const isBoardPlus = hasMinimumRole(user.role, "BOARD_MEMBER");
+    const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
 
-    // Verify complaint exists and user has access
+    // Verify complaint exists, belongs to building, and user has access
     const complaint = await prisma.complaint.findUnique({
       where: { id },
-      select: { id: true, isPrivate: true, authorId: true, trackingNumber: true },
+      select: { id: true, isPrivate: true, authorId: true, trackingNumber: true, buildingId: true },
     });
 
-    if (!complaint) {
+    if (!complaint || complaint.buildingId !== buildingId) {
       return NextResponse.json({ error: "Complaint not found" }, { status: 404 });
     }
 
-    if (complaint.isPrivate && complaint.authorId !== user.id && !isBoardPlus) {
+    if (complaint.isPrivate && complaint.authorId !== userId && !isBoardPlus) {
       return NextResponse.json({ error: "Complaint not found" }, { status: 404 });
     }
 
@@ -97,7 +91,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         body: noteBody.trim(),
         isInternal: noteIsInternal,
         complaint: { connect: { id } },
-        author: { connect: { id: user.id } },
+        author: { connect: { id: userId } },
       },
       include: {
         author: {
@@ -107,7 +101,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     });
 
     // Notify complaint author if someone else adds a note (and it's not internal)
-    if (!noteIsInternal && complaint.authorId !== user.id) {
+    if (!noteIsInternal && complaint.authorId !== userId) {
       await notify({
         userIds: [complaint.authorId],
         type: NotificationType.COMPLAINT_STATUS,
@@ -118,20 +112,20 @@ export async function POST(request: NextRequest, context: RouteContext) {
       });
     }
 
-    // If the author adds a note, notify board members
-    if (complaint.authorId === user.id && !noteIsInternal) {
-      const boardMembers = await prisma.user.findMany({
+    // If the author adds a note, notify board members in this building
+    if (complaint.authorId === userId && !noteIsInternal) {
+      const boardMembers = await prisma.userBuilding.findMany({
         where: {
+          buildingId,
           role: { in: ["BOARD_MEMBER", "ADMIN", "SUPER_ADMIN"] },
-          isActive: true,
-          id: { not: user.id },
+          userId: { not: userId },
         },
-        select: { id: true },
+        select: { userId: true },
       });
 
       if (boardMembers.length > 0) {
         await notify({
-          userIds: boardMembers.map((m) => m.id),
+          userIds: boardMembers.map((m) => m.userId),
           type: NotificationType.COMPLAINT_STATUS,
           title: "New Note on Complaint",
           body: `A new note was added to complaint ${complaint.trackingNumber}`,

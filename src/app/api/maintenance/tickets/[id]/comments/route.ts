@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
+import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
 import { hasMinimumRole } from "@/lib/rbac";
 import { notify, NotificationType } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
@@ -10,25 +11,31 @@ type RouteContext = {
 
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { userId, buildingId, role } = await requireBuildingContext();
+
+    try {
+      await requireFeature(buildingId, "maintenance");
+    } catch (err) {
+      if (err instanceof FeatureGateError) {
+        return NextResponse.json({ error: err.message, upgrade: true }, { status: 403 });
+      }
+      throw err;
     }
 
     const { id } = await context.params;
-    const isBoardPlus = hasMinimumRole(user.role, "BOARD_MEMBER");
+    const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
 
-    // Verify ticket exists and user has access
+    // Verify ticket exists and belongs to building
     const ticket = await prisma.maintenanceTicket.findUnique({
       where: { id },
-      select: { id: true, reporterId: true },
+      select: { id: true, reporterId: true, buildingId: true },
     });
 
-    if (!ticket) {
+    if (!ticket || ticket.buildingId !== buildingId) {
       return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }
 
-    if (!isBoardPlus && ticket.reporterId !== user.id) {
+    if (!isBoardPlus && ticket.reporterId !== userId) {
       return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }
 
@@ -52,9 +59,15 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { userId, buildingId, role } = await requireBuildingContext();
+
+    try {
+      await requireFeature(buildingId, "maintenance");
+    } catch (err) {
+      if (err instanceof FeatureGateError) {
+        return NextResponse.json({ error: err.message, upgrade: true }, { status: 403 });
+      }
+      throw err;
     }
 
     const { id } = await context.params;
@@ -68,18 +81,18 @@ export async function POST(request: NextRequest, context: RouteContext) {
       );
     }
 
-    const isBoardPlus = hasMinimumRole(user.role, "BOARD_MEMBER");
+    const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
 
     const ticket = await prisma.maintenanceTicket.findUnique({
       where: { id },
-      select: { id: true, reporterId: true, trackingNumber: true },
+      select: { id: true, reporterId: true, trackingNumber: true, buildingId: true },
     });
 
-    if (!ticket) {
+    if (!ticket || ticket.buildingId !== buildingId) {
       return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }
 
-    if (!isBoardPlus && ticket.reporterId !== user.id) {
+    if (!isBoardPlus && ticket.reporterId !== userId) {
       return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }
 
@@ -91,7 +104,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         body: commentBody.trim(),
         isInternal: commentIsInternal,
         ticket: { connect: { id } },
-        author: { connect: { id: user.id } },
+        author: { connect: { id: userId } },
       },
       include: {
         author: { select: { id: true, name: true } },
@@ -99,7 +112,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     });
 
     // Notify reporter if someone else adds a non-internal comment
-    if (!commentIsInternal && ticket.reporterId !== user.id) {
+    if (!commentIsInternal && ticket.reporterId !== userId) {
       await notify({
         userIds: [ticket.reporterId],
         type: NotificationType.MAINTENANCE_STATUS,
@@ -111,19 +124,19 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
 
     // If the reporter adds a comment, notify board members
-    if (ticket.reporterId === user.id && !commentIsInternal) {
-      const boardMembers = await prisma.user.findMany({
+    if (ticket.reporterId === userId && !commentIsInternal) {
+      const boardMembers = await prisma.userBuilding.findMany({
         where: {
+          buildingId,
           role: { in: ["BOARD_MEMBER", "ADMIN", "SUPER_ADMIN"] },
-          isActive: true,
-          id: { not: user.id },
+          userId: { not: userId },
         },
-        select: { id: true },
+        select: { userId: true },
       });
 
       if (boardMembers.length > 0) {
         await notify({
-          userIds: boardMembers.map((m) => m.id),
+          userIds: boardMembers.map((m) => m.userId),
           type: NotificationType.MAINTENANCE_STATUS,
           title: "New Comment on Maintenance Ticket",
           body: `A new comment was added to ticket ${ticket.trackingNumber}`,

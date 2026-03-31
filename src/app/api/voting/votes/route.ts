@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
+import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
 import { requireRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
 import { notify, NotificationType } from "@/lib/notifications";
@@ -9,9 +10,15 @@ import { votingQueue } from "@/lib/queue";
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { userId, buildingId, role } = await requireBuildingContext();
+
+    try {
+      await requireFeature(buildingId, "voting");
+    } catch (err) {
+      if (err instanceof FeatureGateError) {
+        return NextResponse.json({ error: err.message, upgrade: true }, { status: 403 });
+      }
+      throw err;
     }
 
     const { searchParams } = request.nextUrl;
@@ -22,7 +29,8 @@ export async function GET(request: NextRequest) {
     const limit = isNaN(rawLimit) || rawLimit < 1 ? 20 : Math.min(rawLimit, 50);
     const skip = (page - 1) * limit;
 
-    const where: Record<string, unknown> = {};
+    // Scope votes to this building via meeting relationship
+    const where: Record<string, unknown> = { meeting: { buildingId } };
     if (status) {
       if (!Object.values(VoteStatus).includes(status as VoteStatus)) {
         return NextResponse.json({ error: "Invalid status" }, { status: 400 });
@@ -45,15 +53,24 @@ export async function GET(request: NextRequest) {
       prisma.vote.count({ where }),
     ]);
 
+    // Resolve user's unit(s) in this building for ballot lookup
+    const userUnits = await prisma.unitUser.findMany({
+      where: { userId, unit: { buildingId } },
+      select: { unitId: true },
+    });
+    const userUnitIds = userUnits.map((u) => u.unitId);
+
     // Check if user's unit already voted on each vote
     const voteIds = votes.map((v) => v.id);
-    const existingBallots = await prisma.ballot.findMany({
-      where: {
-        voteId: { in: voteIds },
-        unitId: user.unitId,
-      },
-      select: { voteId: true, optionId: true, receiptHash: true },
-    });
+    const existingBallots = userUnitIds.length > 0
+      ? await prisma.ballot.findMany({
+          where: {
+            voteId: { in: voteIds },
+            unitId: { in: userUnitIds },
+          },
+          select: { voteId: true, optionId: true, receiptHash: true },
+        })
+      : [];
 
     const ballotMap = new Map(existingBallots.map((b) => [b.voteId, b]));
 
@@ -94,13 +111,19 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { userId, buildingId, role } = await requireBuildingContext();
+
+    try {
+      await requireFeature(buildingId, "voting");
+    } catch (err) {
+      if (err instanceof FeatureGateError) {
+        return NextResponse.json({ error: err.message, upgrade: true }, { status: 403 });
+      }
+      throw err;
     }
 
     try {
-      await requireRole(user.role, "BOARD_MEMBER");
+      await requireRole(role, "BOARD_MEMBER");
     } catch {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -142,7 +165,7 @@ export async function POST(request: NextRequest) {
         quorumRequired: quorumRequired ?? 0.51,
         deadline: deadlineDate,
         meetingId: meetingId ?? null,
-        createdById: user.id,
+        createdById: userId,
         options: {
           create: options.map((opt: { label: string }, index: number) => ({
             label: opt.label,
@@ -171,19 +194,19 @@ export async function POST(request: NextRequest) {
       entityType: "Vote",
       entityId: vote.id,
       action: "CREATE",
-      userId: user.id,
+      userId,
       newValue: { title, voteType: vote.voteType, deadline, isSecret: vote.isSecret },
     });
 
-    // Notify all active users about the new vote
-    const targetUsers = await prisma.user.findMany({
-      where: { isActive: true, id: { not: user.id } },
-      select: { id: true },
+    // Notify users in this building about the new vote
+    const buildingUsers = await prisma.userBuilding.findMany({
+      where: { buildingId, userId: { not: userId } },
+      select: { userId: true },
     });
 
-    if (targetUsers.length > 0) {
+    if (buildingUsers.length > 0) {
       await notify({
-        userIds: targetUsers.map((u) => u.id),
+        userIds: buildingUsers.map((u) => u.userId),
         type: NotificationType.VOTE_OPEN,
         title: `New Vote: ${title}`,
         body: description?.substring(0, 200) ?? title,

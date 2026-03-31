@@ -1,0 +1,120 @@
+<h2>Plan Tiers</h2>
+<p class="subtitle">Proposed tier structure — limits, features, and pricing</p>
+
+<div class="cards" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;">
+  <div class="card" style="border: 2px solid #334155; border-radius: 12px; padding: 1.5rem;">
+    <div style="text-align: center; margin-bottom: 1rem;">
+      <span class="label" style="color: #94a3b8;">STARTER</span>
+      <h3 style="margin: 0.5rem 0;">Starter</h3>
+      <p style="font-size: 0.9rem; color: #94a3b8;">Individual building managers</p>
+    </div>
+    <div style="border-top: 1px solid #334155; padding-top: 1rem;">
+      <h4 style="margin-bottom: 0.5rem; color: #818cf8;">Limits</h4>
+      <ul style="list-style: none; padding: 0; font-size: 0.9rem;">
+        <li>✓ 1 building</li>
+        <li>✓ Up to 30 units</li>
+      </ul>
+      <h4 style="margin-bottom: 0.5rem; margin-top: 1rem; color: #818cf8;">Features</h4>
+      <ul style="list-style: none; padding: 0; font-size: 0.9rem;">
+        <li>✓ Complaints</li>
+        <li>✓ Announcements</li>
+        <li>✓ Messaging</li>
+        <li>✓ Documents</li>
+        <li style="color: #475569;">✗ Finance</li>
+        <li style="color: #475569;">✗ Voting</li>
+        <li style="color: #475569;">✗ Maintenance</li>
+        <li style="color: #475569;">✗ Forum</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card" style="border: 2px solid #818cf8; border-radius: 12px; padding: 1.5rem; box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);">
+    <div style="text-align: center; margin-bottom: 1rem;">
+      <span style="background: #818cf8; color: #0f172a; padding: 2px 10px; border-radius: 99px; font-size: 0.75rem; font-weight: 600;">POPULAR</span>
+      <h3 style="margin: 0.5rem 0;">Professional</h3>
+      <p style="font-size: 0.9rem; color: #94a3b8;">Growing buildings & HOAs</p>
+    </div>
+    <div style="border-top: 1px solid #334155; padding-top: 1rem;">
+      <h4 style="margin-bottom: 0.5rem; color: #818cf8;">Limits</h4>
+      <ul style="list-style: none; padding: 0; font-size: 0.9rem;">
+        <li>✓ Up to 5 buildings</li>
+        <li>✓ Up to 100 units per building</li>
+      </ul>
+      <h4 style="margin-bottom: 0.5rem; margin-top: 1rem; color: #818cf8;">Features</h4>
+      <ul style="list-style: none; padding: 0; font-size: 0.9rem;">
+        <li>✓ Everything in Starter</li>
+        <li>✓ Finance & billing</li>
+        <li>✓ Voting & meetings</li>
+        <li>✓ Maintenance & tickets</li>
+        <li>✓ Forum</li>
+        <li style="color: #475569;">✗ API access</li>
+        <li style="color: #475569;">✗ Custom branding</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card" style="border: 2px solid #334155; border-radius: 12px; padding: 1.5rem;">
+    <div style="text-align: center; margin-bottom: 1rem;">
+      <span class="label" style="color: #94a3b8;">ENTERPRISE</span>
+      <h3 style="margin: 0.5rem 0;">Enterprise</h3>
+      <p style="font-size: 0.9rem; color: #94a3b8;">Property management companies</p>
+    </div>
+    <div style="border-top: 1px solid #334155; padding-top: 1rem;">
+      <h4 style="margin-bottom: 0.5rem; color: #818cf8;">Limits</h4>
+      <ul style="list-style: none; padding: 0; font-size: 0.9rem;">
+        <li>✓ Unlimited buildings</li>
+        <li>✓ Unlimited units</li>
+      </ul>
+      <h4 style="margin-bottom: 0.5rem; margin-top: 1rem; color: #818cf8;">Features</h4>
+      <ul style="list-style: none; padding: 0; font-size: 0.9rem;">
+        <li>✓ Everything in Professional</li>
+        <li>✓ API access</li>
+        <li>✓ Custom branding</li>
+        <li>✓ Priority support</li>
+        <li>✓ Audit log exports</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 2rem;">
+  <h3>Feature Gating Mechanism</h3>
+  <p class="subtitle">How enforcement works at the code level</p>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1rem;">
+    <div style="background: rgba(30, 41, 59, 0.5); border-radius: 8px; padding: 1rem;">
+      <h4 style="color: #818cf8; margin-top: 0;">Plan stores feature flags</h4>
+      <code style="font-size: 0.85rem; color: #e2e8f0; display: block; white-space: pre; line-height: 1.6;">features: [
+  "complaints",
+  "announcements",
+  "messaging",
+  "documents",
+  "finance",
+  "voting",
+  "maintenance",
+  "forum",
+  "api_access",
+  "custom_branding",
+  "audit_exports"
+]</code>
+    </div>
+    <div style="background: rgba(30, 41, 59, 0.5); border-radius: 8px; padding: 1rem;">
+      <h4 style="color: #818cf8; margin-top: 0;">Middleware checks access</h4>
+      <code style="font-size: 0.85rem; color: #e2e8f0; display: block; white-space: pre; line-height: 1.6;">// API route level
+requireFeature("finance")
+
+// UI level — sidebar hides
+// gated items, pages show
+// upgrade prompt
+
+// Hard block:
+// "This feature requires
+//  the Professional plan.
+//  [Upgrade Now]"</code>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 1.5rem;">
+  <h3>Trial Period</h3>
+  <p>New accounts get <strong>14 days</strong> with all Enterprise features unlocked. After trial ends, they fall back to their selected plan's limits. If no plan selected, access is suspended until they choose one.</p>
+</div>

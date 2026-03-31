@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireBuildingContext } from "@/lib/auth";
+import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
 import { requireRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
@@ -9,9 +10,15 @@ type RouteContext = { params: Promise<{ id: string }> };
 
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { userId, buildingId, role } = await requireBuildingContext();
+
+    try {
+      await requireFeature(buildingId, "voting");
+    } catch (err) {
+      if (err instanceof FeatureGateError) {
+        return NextResponse.json({ error: err.message, upgrade: true }, { status: 403 });
+      }
+      throw err;
     }
 
     const { id } = await context.params;
@@ -21,27 +28,38 @@ export async function GET(request: NextRequest, context: RouteContext) {
       include: {
         createdBy: { select: { id: true, name: true } },
         options: { orderBy: { sortOrder: "asc" } },
+        meeting: { select: { buildingId: true } },
         _count: { select: { ballots: true } },
       },
     });
 
-    if (!vote) {
+    if (!vote || vote.meeting?.buildingId !== buildingId) {
       return NextResponse.json({ error: "Vote not found" }, { status: 404 });
     }
 
     const quorum = await calculateQuorum(id);
 
-    // Check if user's unit already voted
-    const myBallot = await prisma.ballot.findUnique({
-      where: { voteId_unitId: { voteId: id, unitId: user.unitId } },
-      select: { optionId: true, receiptHash: true },
+    // Resolve user's unit in this building
+    const userUnit = await prisma.unitUser.findFirst({
+      where: { userId, unit: { buildingId } },
+      select: { unitId: true },
     });
 
+    // Check if user's unit already voted
+    const myBallot = userUnit
+      ? await prisma.ballot.findUnique({
+          where: { voteId_unitId: { voteId: id, unitId: userUnit.unitId } },
+          select: { optionId: true, receiptHash: true },
+        })
+      : null;
+
     // Get user's unit ownership share for display
-    const unit = await prisma.unit.findUnique({
-      where: { id: user.unitId },
-      select: { ownershipShare: true },
-    });
+    const unit = userUnit
+      ? await prisma.unit.findUnique({
+          where: { id: userUnit.unitId },
+          select: { ownershipShare: true },
+        })
+      : null;
 
     // Results only available when vote is closed
     let results = null;
@@ -84,13 +102,19 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { userId, buildingId, role } = await requireBuildingContext();
+
+    try {
+      await requireFeature(buildingId, "voting");
+    } catch (err) {
+      if (err instanceof FeatureGateError) {
+        return NextResponse.json({ error: err.message, upgrade: true }, { status: 403 });
+      }
+      throw err;
     }
 
     try {
-      await requireRole(user.role, "BOARD_MEMBER");
+      await requireRole(role, "BOARD_MEMBER");
     } catch {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -98,8 +122,11 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     const { id } = await context.params;
     const body = await request.json();
 
-    const existing = await prisma.vote.findUnique({ where: { id } });
-    if (!existing) {
+    const existing = await prisma.vote.findUnique({
+      where: { id },
+      include: { meeting: { select: { buildingId: true } } },
+    });
+    if (!existing || existing.meeting?.buildingId !== buildingId) {
       return NextResponse.json({ error: "Vote not found" }, { status: 404 });
     }
 
@@ -121,7 +148,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       entityType: "Vote",
       entityId: id,
       action: "UPDATE",
-      userId: user.id,
+      userId,
       oldValue: { status: existing.status },
       newValue: data,
     });
