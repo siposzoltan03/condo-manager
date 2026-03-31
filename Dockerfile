@@ -15,6 +15,7 @@ ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 ENV REDIS_URL="redis://localhost:6379"
 ENV NEXTAUTH_SECRET="build-time-secret"
 ENV NEXTAUTH_URL="http://localhost:3000"
+ENV SKIP_BUILD_CONNECTIONS="true"
 RUN npm run build
 
 FROM node:22-alpine AS runner
