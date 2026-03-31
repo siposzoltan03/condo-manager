@@ -1,25 +1,28 @@
-import Redis from "ioredis";
+import type Redis from "ioredis";
 
-const globalForRedis = globalThis as unknown as {
-  redis: Redis | undefined;
-};
+let _redis: Redis | undefined;
 
 export function getRedis(): Redis {
-  if (!globalForRedis.redis) {
-    globalForRedis.redis = new Redis(
-      process.env.REDIS_URL ?? "redis://localhost:6379",
-      {
-        maxRetriesPerRequest: null,
-        lazyConnect: true,
-      }
-    );
+  if (!_redis) {
+    // Dynamic require to avoid module-level connection during build
+    const IORedis = require("ioredis") as typeof import("ioredis").default;
+    _redis = new IORedis(process.env.REDIS_URL ?? "redis://localhost:6379", {
+      maxRetriesPerRequest: null,
+      lazyConnect: true,
+    });
   }
-  return globalForRedis.redis;
+  return _redis;
 }
 
-// Keep backward-compatible export for existing code
+// Backward-compatible named export — callers using `redis.xxx()` will work
+// but connection only happens on first actual use
 export const redis = new Proxy({} as Redis, {
-  get(_target, prop) {
-    return (getRedis() as any)[prop];
+  get(_target, prop: string) {
+    const instance = getRedis();
+    const value = (instance as any)[prop];
+    if (typeof value === "function") {
+      return value.bind(instance);
+    }
+    return value;
   },
 });
