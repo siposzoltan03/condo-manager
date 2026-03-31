@@ -740,5 +740,40 @@
     "footerCopyright": "Condo Manager. All rights reserved.",
     "footerPricing": "Pricing",
     "footerLogin": "Log In"
+  },
+  "pricing": {
+    "title": "Simple, Transparent Pricing",
+    "subtitle": "Choose the plan that fits your needs. All plans include a free trial.",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "savePercent": "Save ~17%",
+    "perMonth": "/mo",
+    "perYear": "/yr",
+    "getStarted": "Start Free Trial",
+    "contactSales": "Contact Sales",
+    "mostPopular": "Most Popular",
+    "buildings": "buildings",
+    "units": "units per building",
+    "unitsPerBuilding": "Units per Building",
+    "unlimited": "Unlimited",
+    "upTo": "Up to",
+    "comparisonTitle": "Feature Comparison",
+    "featureLabel": "Feature",
+    "included": "Included",
+    "notIncluded": "Not included",
+    "trialNote": "Includes {days}-day free trial",
+    "feature": {
+      "complaints": "Complaints & Requests",
+      "announcements": "Announcements",
+      "messaging": "Messaging",
+      "documents": "Document Center",
+      "finance": "Financial Management",
+      "voting": "Voting & Meetings",
+      "maintenance": "Maintenance Tracking",
+      "forum": "Community Forum",
+      "api_access": "API Access",
+      "custom_branding": "Custom Branding",
+      "audit_exports": "Audit Log Exports"
+    }
   }
 }

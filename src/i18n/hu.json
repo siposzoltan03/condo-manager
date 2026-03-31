@@ -740,5 +740,40 @@
     "footerCopyright": "Társasházkezelő. Minden jog fenntartva.",
     "footerPricing": "Árak",
     "footerLogin": "Bejelentkezés"
+  },
+  "pricing": {
+    "title": "Egyszerű, átlátható árazás",
+    "subtitle": "Válassza ki az igényeinek megfelelő csomagot. Minden csomag ingyenes próbaidőszakot tartalmaz.",
+    "monthly": "Havi",
+    "yearly": "Éves",
+    "savePercent": "~17% megtakarítás",
+    "perMonth": "/hó",
+    "perYear": "/év",
+    "getStarted": "Ingyenes próba indítása",
+    "contactSales": "Kapcsolatfelvétel",
+    "mostPopular": "Legnépszerűbb",
+    "buildings": "épület",
+    "units": "lakás épületenként",
+    "unitsPerBuilding": "Lakás épületenként",
+    "unlimited": "Korlátlan",
+    "upTo": "Max.",
+    "comparisonTitle": "Funkciók összehasonlítása",
+    "featureLabel": "Funkció",
+    "included": "Tartalmazza",
+    "notIncluded": "Nem tartalmazza",
+    "trialNote": "{days} napos ingyenes próbaidőszakot tartalmaz",
+    "feature": {
+      "complaints": "Panaszok és kérések",
+      "announcements": "Hirdetmények",
+      "messaging": "Üzenetküldés",
+      "documents": "Dokumentumtár",
+      "finance": "Pénzügyi kezelés",
+      "voting": "Szavazás és gyűlések",
+      "maintenance": "Karbantartás követés",
+      "forum": "Közösségi fórum",
+      "api_access": "API hozzáférés",
+      "custom_branding": "Egyedi arculat",
+      "audit_exports": "Audit napló exportálás"
+    }
   }
 }
