@@ -8,19 +8,32 @@ import { TopBar } from "./topbar";
 /** Pages that render standalone (no sidebar / top bar). */
 const standalonePages = ["/login", "/forgot-password", "/reset-password"];
 
+/** Public marketing pages that render without the app shell (own nav). */
+const publicPages = ["/pricing", "/checkout", "/accept-invitation"];
+
 /** Locales supported by the application. */
 const SUPPORTED_LOCALES = new Set(["hu", "en"]);
 
-function isStandalonePage(pathname: string): boolean {
-  // Strip locale prefix only when segments[1] is a known locale.
-  // e.g. /hu/login -> /login, but /some-page stays as-is.
+function stripLocale(pathname: string): string {
   const segments = pathname.split("/");
-  const pathWithoutLocale =
-    segments.length > 1 && SUPPORTED_LOCALES.has(segments[1])
-      ? "/" + segments.slice(2).join("/")
-      : pathname;
+  return segments.length > 1 && SUPPORTED_LOCALES.has(segments[1])
+    ? "/" + segments.slice(2).join("/")
+    : pathname;
+}
+
+function isStandalonePage(pathname: string): boolean {
+  const p = stripLocale(pathname);
   return standalonePages.some(
-    (p) => pathWithoutLocale === p || pathWithoutLocale.startsWith(p + "/")
+    (page) => p === page || p.startsWith(page + "/")
+  );
+}
+
+function isPublicPage(pathname: string): boolean {
+  const p = stripLocale(pathname);
+  // Root "/" is the landing page (public)
+  if (p === "/" || p === "") return true;
+  return publicPages.some(
+    (page) => p === page || p.startsWith(page + "/")
   );
 }
 
@@ -28,8 +41,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { isAuthenticated, isLoading } = useAuth();
 
-  // Standalone pages (login, forgot-password, etc.) never get the shell
-  if (isStandalonePage(pathname)) {
+  // Standalone pages (login, forgot-password, etc.) and public marketing pages never get the shell
+  if (isStandalonePage(pathname) || isPublicPage(pathname)) {
     return <>{children}</>;
   }
 
