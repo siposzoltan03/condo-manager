@@ -59,26 +59,21 @@ export async function POST(
 
     try {
       const { sendEmail } = await import("@/lib/email");
+      const { invitationResendEmail } = await import("@/lib/email-templates");
       const fullInvitation = await prisma.invitation.findUnique({
         where: { id },
         include: { building: { select: { name: true, invitationExpiryHours: true } } },
       });
       const buildingName = fullInvitation?.building?.name ?? "Condo Manager";
       const roleName = (fullInvitation?.role ?? "RESIDENT").replace("_", " ");
-      await sendEmail(
-        invitation.email,
-        `Reminder: You're invited to join ${buildingName}`,
-        `<div style="font-family: Inter, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1 style="color: #002045;">Invitation Reminder</h1>
-          <p>You've been invited to join <strong>${buildingName}</strong> as a <strong>${roleName}</strong>.</p>
-          <p>Click the button below to set up your account:</p>
-          <p style="text-align: center; margin: 32px 0;">
-            <a href="${inviteLink}" style="background: #002045; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Accept Invitation</a>
-          </p>
-          <p style="color: #666; font-size: 14px;">This is a new invitation link. Any previous links are no longer valid.</p>
-          <p style="color: #999; font-size: 12px;">If you didn't expect this invitation, you can safely ignore it.</p>
-        </div>`
-      );
+      const expiryHours = fullInvitation?.building?.invitationExpiryHours ?? 168;
+      const { subject, html } = invitationResendEmail({
+        buildingName,
+        roleName,
+        inviteLink,
+        expiryHours,
+      });
+      await sendEmail(invitation.email, subject, html);
     } catch (emailErr) {
       console.error("Failed to send resend email:", emailErr);
     }

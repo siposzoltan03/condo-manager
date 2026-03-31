@@ -3,7 +3,8 @@ import { randomBytes, createHash } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { escapeHtml } from "@/lib/escape-html";
 import { rateLimit } from "@/lib/rate-limit";
-import { sendEmail } from "../../../../../worker/processors/email";
+import { sendEmail } from "@/lib/email";
+import { passwordResetEmail } from "@/lib/email-templates";
 
 export async function POST(request: NextRequest) {
   try {
@@ -61,17 +62,11 @@ export async function POST(request: NextRequest) {
         process.env.NEXTAUTH_URL ?? process.env.BASE_URL ?? "http://localhost:3000";
       const resetUrl = `${baseUrl}/${locale}/reset-password?token=${rawToken}`;
 
-      await sendEmail(
-        user.email,
-        "Password Reset — Condo Manager",
-        `
-        <h2>Password Reset</h2>
-        <p>Hello ${escapeHtml(user.name)},</p>
-        <p>You requested a password reset for your Condo Manager account.</p>
-        <p><a href="${resetUrl}" style="display:inline-block;padding:12px 24px;background-color:#002045;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;">Reset Password</a></p>
-        <p>This link expires in 1 hour. If you did not request this, ignore this email.</p>
-        `
-      );
+      const { subject, html } = passwordResetEmail({
+        recipientName: escapeHtml(user.name),
+        resetLink: resetUrl,
+      });
+      await sendEmail(user.email, subject, html);
     }
 
     // Always return success to prevent email enumeration
