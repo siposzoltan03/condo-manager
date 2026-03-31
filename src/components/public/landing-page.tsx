@@ -35,42 +35,42 @@ const detailedFeatures = [
     icon: MessageSquare,
     color: "bg-blue-500",
     highlights: ["announcements", "forum", "messaging", "complaints"],
-    screenshot: "/screenshots/announcements.png",
+    screenshot: "/screenshots/announcements.png", // Announcements page
   },
   {
     key: "finance",
     icon: BarChart3,
     color: "bg-emerald-500",
     highlights: ["ledger", "charges", "budgets", "reports"],
-    screenshot: "/screenshots/finance.png",
+    screenshot: "/screenshots/finance.png", // Finance overview page
   },
   {
     key: "maintenance",
     icon: Wrench,
     color: "bg-amber-500",
     highlights: ["tickets", "contractors", "scheduled", "tracking"],
-    screenshot: "/screenshots/maintenance.png",
+    screenshot: "/screenshots/maintenance.png", // Maintenance tickets page
   },
   {
     key: "voting",
     icon: Shield,
     color: "bg-purple-500",
     highlights: ["weighted", "proxy", "secret", "quorum"],
-    screenshot: "/screenshots/voting.png",
+    screenshot: "/screenshots/voting.png", // Voting page
   },
   {
     key: "documents",
     icon: FileText,
     color: "bg-cyan-500",
     highlights: ["versioning", "categories", "search", "access"],
-    screenshot: "/screenshots/documents.png",
+    screenshot: "/screenshots/documents.png", // Documents page
   },
   {
     key: "management",
     icon: Calendar,
     color: "bg-rose-500",
     highlights: ["multiBuilding", "roles", "invitations", "billing"],
-    screenshot: "/screenshots/dashboard.png",
+    screenshot: "/screenshots/dashboard.png", // Dashboard with building switcher
   },
 ] as const;
 
@@ -171,20 +171,12 @@ export function LandingPage() {
                 {/* Screenshot */}
                 <div className="w-full lg:w-1/2">
                   <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-xl">
-                    {/* TODO: Replace with real app screenshot */}
-                    <div className="relative aspect-[16/10] w-full bg-gradient-to-br from-slate-200 to-slate-300">
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="text-center">
-                          <Icon className="mx-auto h-16 w-16 text-slate-400" />
-                          <p className="mt-3 text-sm font-medium text-slate-400">
-                            {t(`detailed.${feature.key}.title`)}
-                          </p>
-                          <p className="mt-1 text-xs text-slate-400">
-                            Screenshot placeholder
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+                    <img
+                      src={feature.screenshot}
+                      alt={t(`detailed.${feature.key}.title`)}
+                      className="w-full"
+                      loading="lazy"
+                    />
                   </div>
                 </div>
 
