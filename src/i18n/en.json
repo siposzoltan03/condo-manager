@@ -34,7 +34,9 @@
     "maintenanceScheduled": "Scheduled",
     "buildings": "Buildings",
     "settingsInvitations": "Invitations",
-    "settingsBilling": "Billing"
+    "settingsBilling": "Billing",
+    "features": "Features",
+    "pricing": "Pricing"
   },
   "users": {
     "title": "User Management",
@@ -706,5 +708,37 @@
     "createAnnouncement": "Create Announcement",
     "recordPayment": "Record Payment",
     "newMaintenanceTicket": "New Maintenance Ticket"
+  },
+  "landing": {
+    "heroTitle": "Modern Condo Management, Simplified",
+    "heroSubtitle": "Everything you need to manage your buildings, communicate with residents, and handle finances — all in one platform.",
+    "startFreeTrial": "Start Free Trial",
+    "viewPricing": "View Pricing",
+    "goToDashboard": "Go to Dashboard",
+    "featuresTitle": "Everything You Need to Manage Your Building",
+    "featuresSubtitle": "From communication to finance, maintenance to voting — we have you covered.",
+    "feature": {
+      "announcements": "Announcements",
+      "announcementsDesc": "Keep residents informed with building-wide announcements. Target specific audiences and track engagement.",
+      "finance": "Financial Management",
+      "financeDesc": "Track charges, payments, and budgets. Full double-entry bookkeeping with bank statement imports.",
+      "maintenance": "Maintenance Tracking",
+      "maintenanceDesc": "Report issues, assign contractors, and track repairs from submission to completion.",
+      "voting": "Voting & Meetings",
+      "votingDesc": "Run weighted votes, manage meeting agendas, and track quorum — all digitally.",
+      "documents": "Document Center",
+      "documentsDesc": "Store and organize building documents with version control and access permissions.",
+      "notifications": "Smart Notifications",
+      "notificationsDesc": "Real-time push notifications, email digests, and in-app alerts keep everyone in the loop."
+    },
+    "socialProofTitle": "Trusted by Property Managers",
+    "buildingsManaged": "Buildings Managed",
+    "residentsConnected": "Residents Connected",
+    "issuesResolved": "Issues Resolved",
+    "ctaTitle": "Ready to Get Started?",
+    "ctaSubtitle": "Join property managers who are already simplifying their building management. Start your 14-day free trial today.",
+    "footerCopyright": "Condo Manager. All rights reserved.",
+    "footerPricing": "Pricing",
+    "footerLogin": "Log In"
   }
 }

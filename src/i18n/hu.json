@@ -34,7 +34,9 @@
     "maintenanceScheduled": "Ütemezett",
     "buildings": "Épületek",
     "settingsInvitations": "Meghivok",
-    "settingsBilling": "Szamlazas"
+    "settingsBilling": "Szamlazas",
+    "features": "Funkciók",
+    "pricing": "Árak"
   },
   "users": {
     "title": "Felhasználókezelés",
@@ -706,5 +708,37 @@
     "createAnnouncement": "Hirdetmény létrehozása",
     "recordPayment": "Fizetés rögzítése",
     "newMaintenanceTicket": "Új karbantartási jegy"
+  },
+  "landing": {
+    "heroTitle": "Modern társasházkezelés, egyszerűen",
+    "heroSubtitle": "Minden, amire szüksége van az épületek kezeléséhez, a lakókkal való kommunikációhoz és a pénzügyek intézéséhez — egyetlen platformon.",
+    "startFreeTrial": "Ingyenes próba indítása",
+    "viewPricing": "Árak megtekintése",
+    "goToDashboard": "Irányítópult",
+    "featuresTitle": "Minden, ami az épületkezeléshez szükséges",
+    "featuresSubtitle": "A kommunikációtól a pénzügyekig, a karbantartástól a szavazásig — mindenre gondoltunk.",
+    "feature": {
+      "announcements": "Hirdetmények",
+      "announcementsDesc": "Tartsa tájékoztatva a lakókat épületszintű hirdetményekkel. Célzott közönség és elköteleződés nyomon követése.",
+      "finance": "Pénzügyi kezelés",
+      "financeDesc": "Díjak, fizetések és költségvetés nyomon követése. Teljes kettős könyvelés banki kivonat importálással.",
+      "maintenance": "Karbantartás követés",
+      "maintenanceDesc": "Hibák bejelentése, kivitelezők hozzárendelése és javítások nyomon követése a bejelentéstől a befejezésig.",
+      "voting": "Szavazás és gyűlések",
+      "votingDesc": "Súlyozott szavazások, gyűlési napirend kezelés és határozatképesség ellenőrzés — teljesen digitálisan.",
+      "documents": "Dokumentumtár",
+      "documentsDesc": "Épületdokumentumok tárolása és rendszerezése verziókezeléssel és hozzáférési jogosultságokkal.",
+      "notifications": "Okos értesítések",
+      "notificationsDesc": "Valós idejű push értesítések, e-mail összefoglalók és alkalmazáson belüli figyelmeztetések."
+    },
+    "socialProofTitle": "Ingatlankezelők bizalma",
+    "buildingsManaged": "Kezelt épület",
+    "residentsConnected": "Összekapcsolt lakó",
+    "issuesResolved": "Megoldott ügy",
+    "ctaTitle": "Készen áll a kezdésre?",
+    "ctaSubtitle": "Csatlakozzon azokhoz az ingatlankezelőkhöz, akik már egyszerűsítették az épületkezelést. Kezdje el 14 napos ingyenes próbáját még ma.",
+    "footerCopyright": "Társasházkezelő. Minden jog fenntartva.",
+    "footerPricing": "Árak",
+    "footerLogin": "Bejelentkezés"
   }
 }
