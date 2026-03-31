@@ -69,11 +69,13 @@ export default auth((req) => {
 
   // Public-accessible pages: allow through regardless of auth state
   if (isAccessible) {
+    console.log("[middleware] public accessible page, passing through:", pathname);
     return intlMiddleware(req);
   }
 
   // Redirect unauthenticated users to login (unless on a public or public-accessible page)
   if (!isAuthenticated && !isPublic) {
+    console.log("[middleware] redirecting to login:", pathname, "isPublic:", isPublic, "isAccessible:", isAccessible);
     const loginUrl = new URL(`/${locale}/login`, req.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
