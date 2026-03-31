@@ -14,6 +14,9 @@ import {
   CheckCircle2,
   ArrowRight,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { useEffect } from "react";
 import { PublicNav } from "./public-nav";
 
 const features = [
@@ -32,7 +35,19 @@ const stats = [
 ] as const;
 
 export function LandingPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const t = useTranslations("landing");
+
+  // Redirect authenticated users to dashboard
+  useEffect(() => {
+    if (status === "authenticated" && session?.user) {
+      router.replace("/dashboard");
+    }
+  }, [status, session, router]);
+
+  // Show nothing while checking auth (prevents flash)
+  if (status === "loading") return null;
 
   return (
     <div className="min-h-screen bg-white">

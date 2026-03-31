@@ -107,8 +107,32 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Build invite link for the response (caller/email sender can use this)
+    // Build invite link and send invitation email
     const inviteLink = `${process.env.NEXTAUTH_URL}/accept-invitation/${raw}`;
+
+    // Send email directly (not via queue — invitations are time-sensitive)
+    try {
+      const { sendEmail } = await import("@/lib/email");
+      const buildingName = invitation.building?.name ?? "Condo Manager";
+      const roleName = inviteeRole.replace("_", " ");
+      await sendEmail(
+        email,
+        `You're invited to join ${buildingName}`,
+        `<div style="font-family: Inter, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #002045;">You're Invited!</h1>
+          <p>You've been invited to join <strong>${buildingName}</strong> as a <strong>${roleName}</strong>.</p>
+          <p>Click the button below to set up your account:</p>
+          <p style="text-align: center; margin: 32px 0;">
+            <a href="${inviteLink}" style="background: #002045; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Accept Invitation</a>
+          </p>
+          <p style="color: #666; font-size: 14px;">This invitation expires in ${invitation.building?.invitationExpiryHours ?? 168} hours.</p>
+          <p style="color: #999; font-size: 12px;">If you didn't expect this invitation, you can safely ignore it.</p>
+        </div>`
+      );
+    } catch (emailErr) {
+      console.error("Failed to send invitation email:", emailErr);
+      // Don't fail the request — invitation is created, email is best-effort
+    }
 
     return NextResponse.json(
       { ...invitation, inviteLink },

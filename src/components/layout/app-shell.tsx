@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useAuth } from "@/hooks/use-auth";
+import { useSession } from "next-auth/react";
 import { Sidebar } from "./sidebar";
 import { TopBar } from "./topbar";
 
@@ -30,7 +30,6 @@ function isStandalonePage(pathname: string): boolean {
 
 function isPublicPage(pathname: string): boolean {
   const p = stripLocale(pathname);
-  // Root "/" is the landing page (public)
   if (p === "/" || p === "") return true;
   return publicPages.some(
     (page) => p === page || p.startsWith(page + "/")
@@ -39,34 +38,27 @@ function isPublicPage(pathname: string): boolean {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { status } = useSession();
 
-  // Standalone pages (login, forgot-password, etc.) and public marketing pages never get the shell
+  // Public and standalone pages: render children directly, no shell
   if (isStandalonePage(pathname) || isPublicPage(pathname)) {
     return <>{children}</>;
   }
 
-  // While loading auth, show minimal loading state
-  if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
-      </div>
-    );
-  }
+  // For authenticated pages: always render the shell structure to avoid hydration mismatch.
+  // The sidebar/topbar handle their own loading states internally.
+  const isAuthenticated = status === "authenticated";
 
-  // Not authenticated — render children (middleware will redirect)
-  if (!isAuthenticated) {
-    return <>{children}</>;
-  }
-
-  // Authenticated: render full app shell
   return (
     <div className="min-h-screen bg-slate-50">
-      <Sidebar />
-      <TopBar />
-      <main className="lg:pl-64 pt-0">
-        <div className="px-6 py-6">{children}</div>
+      {isAuthenticated && (
+        <>
+          <Sidebar />
+          <TopBar />
+        </>
+      )}
+      <main className={isAuthenticated ? "lg:pl-64 pt-0" : ""}>
+        <div className={isAuthenticated ? "px-6 py-6" : ""}>{children}</div>
       </main>
     </div>
   );
