@@ -22,6 +22,7 @@ import {
   Gavel,
   Home,
   Key,
+  ClipboardList,
 } from "lucide-react";
 import { PublicNav } from "./public-nav";
 
@@ -62,6 +63,13 @@ const detailedFeatures = [
     color: "bg-purple-500",
     highlights: ["weighted", "proxy", "secret", "quorum"],
     screenshot: "/screenshots/voting.png", // Voting page
+  },
+  {
+    key: "meetings",
+    icon: ClipboardList,
+    color: "bg-indigo-500",
+    highlights: ["agenda", "minutes", "voteResults", "attendees"],
+    screenshot: "/screenshots/meeting-detail.png", // Meeting detail page
   },
   {
     key: "documents",

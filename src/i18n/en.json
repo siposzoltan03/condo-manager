@@ -845,6 +845,18 @@
         "access": "Access Control",
         "accessDesc": "Three visibility levels: Public (all residents), Board Only, and Admin Only."
       },
+      "meetings": {
+        "title": "Meeting Management & Minutes",
+        "description": "From scheduling to follow-up — run productive meetings with structured agendas, RSVP tracking, live vote results, and rich-text minutes that become part of your building's permanent record.",
+        "agenda": "Structured Agendas",
+        "agendaDesc": "Create numbered agenda items before the meeting. Attendees see what's coming, and minutes link back to each item discussed.",
+        "minutes": "Rich-Text Minutes",
+        "minutesDesc": "Write meeting minutes in Markdown with live preview. Bold, lists, headings — format professionally. Board members edit, everyone reads.",
+        "voteResults": "Inline Vote Results",
+        "voteResultsDesc": "Votes conducted during the meeting appear with full results — stacked bar charts, pass/fail status, and quorum verification.",
+        "attendees": "Attendee Tracking",
+        "attendeesDesc": "See who's attending, who declined, and who sent a proxy — all in real time. RSVP status drives quorum calculation."
+      },
       "management": {
         "title": "Multi-Building Management",
         "description": "Manage one building or a hundred. Switch between properties instantly, assign per-building roles, and invite team members with flexible permissions.",

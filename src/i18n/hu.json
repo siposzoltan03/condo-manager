@@ -845,6 +845,18 @@
         "access": "Hozzáférés Kezelés",
         "accessDesc": "Három láthatósági szint: Nyilvános (minden lakó), Csak Testület, és Csak Adminisztrátor."
       },
+      "meetings": {
+        "title": "Közgyűlés-kezelés és jegyzőkönyv",
+        "description": "A meghívástól az utókövetésig — tartson produktív közgyűléseket strukturált napirenddel, visszajelzés-követéssel, élő szavazási eredményekkel és formázott jegyzőkönyvvel, amely az épület állandó nyilvántartásának részévé válik.",
+        "agenda": "Strukturált napirend",
+        "agendaDesc": "Hozzon létre számozott napirendi pontokat a közgyűlés előtt. A résztvevők látják, mi következik, és a jegyzőkönyv visszahivatkozik a tárgyalt pontokra.",
+        "minutes": "Formázott jegyzőkönyv",
+        "minutesDesc": "Írjon jegyzőkönyvet Markdown formátumban élő előnézettel. Félkövér, listák, címsorok — professzionális formázás. Igazgatósági tagok szerkesztenek, mindenki olvas.",
+        "voteResults": "Beágyazott szavazási eredmények",
+        "voteResultsDesc": "A közgyűlés során lebonyolított szavazások teljes eredménnyel jelennek meg — oszlopdiagramok, elfogadott/elutasított státusz és határozatképesség-ellenőrzés.",
+        "attendees": "Résztvevő-követés",
+        "attendeesDesc": "Látja, ki vesz részt, ki mondott le, és ki küldött meghatalmazottat — mindezt valós időben. A visszajelzések határozzák meg a határozatképességet."
+      },
       "management": {
         "title": "Többépületes Kezelés",
         "description": "Kezeljen egy épületet vagy százat. Azonnali váltás az ingatlanok között, épületenkénti szerepkörök és csapattagok meghívása rugalmas jogosultságokkal.",
