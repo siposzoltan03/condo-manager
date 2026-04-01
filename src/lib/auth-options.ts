@@ -7,6 +7,10 @@ import Credentials from "next-auth/providers/credentials";
  * loaded in the Edge Runtime (middleware). Heavy imports are deferred
  * to the authorize callback via dynamic import.
  */
+
+/** Dummy hash used for timing-safe comparison when user is not found. */
+const DUMMY_HASH = "$2a$12$000000000000000000000uGIvBnzJPiFABWFCIAHBBfZfQBdAQX2u";
+
 export const authOptions = {
   providers: [
     Credentials({
@@ -29,28 +33,45 @@ export const authOptions = {
           const bcrypt = bcryptModule.default ?? bcryptModule;
           const rateLimitMod = await import("./rate-limit");
 
+          // Rate limit per email
           const rl = await rateLimitMod.rateLimit({
             key: `auth:login:${email.toLowerCase()}`,
             limit: 5,
             windowSeconds: 15 * 60,
           });
           if (!rl.success) {
-            console.log("[auth] rate limited:", email);
             return null;
+          }
+
+          // Rate limit per IP (broader limit to prevent credential stuffing across emails)
+          // Note: headers() not available in Edge, so this is best-effort
+          try {
+            const { headers } = await import("next/headers");
+            const headerStore = await headers();
+            const ip = headerStore.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+            const ipRl = await rateLimitMod.rateLimit({
+              key: `auth:login:ip:${ip}`,
+              limit: 20,
+              windowSeconds: 15 * 60,
+            });
+            if (!ipRl.success) {
+              return null;
+            }
+          } catch {
+            // headers() may not be available in all contexts — skip IP rate limit
           }
 
           const user = await prisma.user.findUnique({
             where: { email },
           });
 
+          // Timing-safe: always run bcrypt.compare even when user not found
           if (!user || !user.isActive) {
-            console.log("[auth] user not found or inactive:", email);
+            await bcrypt.compare(password, DUMMY_HASH);
             return null;
           }
 
-          console.log("[auth] bcrypt type:", typeof bcrypt.compare);
           const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
-          console.log("[auth] password valid:", isPasswordValid);
           if (!isPasswordValid) {
             return null;
           }
@@ -59,7 +80,6 @@ export const authOptions = {
             where: { userId: user.id, isActive: true },
             include: { building: { select: { id: true, name: true } } },
           });
-          console.log("[auth] userBuildings count:", userBuildings.length);
 
           if (userBuildings.length === 0) {
             return null;
@@ -82,8 +102,7 @@ export const authOptions = {
             activeRole: defaultBuilding.role,
             buildings,
           };
-        } catch (err) {
-          console.error("[auth] authorize error:", err);
+        } catch {
           return null;
         }
       },
@@ -98,8 +117,9 @@ export const authOptions = {
     signIn: "/login",
   },
   callbacks: {
-    // Allow all requests through auth() wrapper — we handle redirects in middleware ourselves
-    authorized({ auth: session, request }) {
+    // Allow all requests through auth() wrapper — we handle redirects in middleware ourselves.
+    // Middleware + DAL provide the actual auth checks (defense in depth).
+    authorized() {
       return true;
     },
     async jwt({ token, user, trigger, session: updateData }) {
@@ -110,16 +130,22 @@ export const authOptions = {
         token.activeRole = user.activeRole;
         token.buildings = user.buildings;
       }
+
       // Handle session update (e.g. building switch)
+      // Validate that the requested building/role actually belongs to this user
       if (trigger === "update" && updateData) {
-        if (updateData.activeBuildingId) {
-          token.activeBuildingId = updateData.activeBuildingId;
-        }
-        if (updateData.activeRole) {
-          token.activeRole = updateData.activeRole;
-          token.role = updateData.activeRole;
+        const buildings = token.buildings as { id: string; name: string; role: string }[] | undefined;
+        if (updateData.activeBuildingId && buildings) {
+          const match = buildings.find((b) => b.id === updateData.activeBuildingId);
+          if (match) {
+            token.activeBuildingId = match.id;
+            token.activeRole = match.role;
+            token.role = match.role;
+          }
+          // If no match found, ignore the update (prevents privilege escalation)
         }
       }
+
       return token;
     },
     async session({ session, token }) {

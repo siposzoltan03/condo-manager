@@ -3,6 +3,7 @@ import { getCurrentUser, requireBuildingContext } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { hashPassword } from "@/lib/password";
 import { validatePassword } from "@/lib/password";
 
 export async function GET() {
@@ -145,7 +146,7 @@ export async function PATCH(request: NextRequest) {
         );
       }
 
-      updateData.passwordHash = await bcrypt.hash(newPassword, 12);
+      updateData.passwordHash = await hashPassword(newPassword);
     }
 
     if (Object.keys(updateData).length === 0) {

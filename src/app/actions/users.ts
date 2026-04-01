@@ -6,7 +6,7 @@ import { requireRole, hasMinimumRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
 import { BuildingRole, UnitRelationship } from "@prisma/client";
-import bcrypt from "bcryptjs";
+import { hashPassword } from "@/lib/password";
 
 interface ActionResult {
   success?: boolean;
@@ -58,7 +58,7 @@ export async function createUser(input: CreateUserInput): Promise<ActionResult> 
       return { error: "Unit not found" };
     }
 
-    const passwordHash = await bcrypt.hash(temporaryPassword, 12);
+    const passwordHash = await hashPassword(temporaryPassword);
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {

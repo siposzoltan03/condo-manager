@@ -140,7 +140,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     if (vote.isSecret) {
       // Generate receipt hash: SHA256(ballotId + secret)
-      const secret = process.env.BALLOT_SECRET ?? "default-ballot-secret";
+      const secret = process.env.BALLOT_SECRET;
+      if (!secret) {
+        return NextResponse.json(
+          { error: "Voting system configuration error. Contact administrator." },
+          { status: 500 }
+        );
+      }
       receiptHash = createHash("sha256")
         .update(ballot.id + secret)
         .digest("hex");

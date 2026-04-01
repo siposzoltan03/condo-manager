@@ -10,6 +10,7 @@ const REQUIRED_VARS = [
   "DATABASE_URL",
   "NEXTAUTH_SECRET",
   "NEXTAUTH_URL",
+  "BALLOT_SECRET",
 ] as const;
 
 const OPTIONAL_VARS = [
@@ -42,6 +43,18 @@ export function validateEnv(): void {
       process.exit(1);
     } else {
       console.warn(`WARNING: ${message}`);
+    }
+  }
+
+  // Validate secret strength
+  const secret = process.env.NEXTAUTH_SECRET;
+  if (secret && secret.length < 32) {
+    const msg = "NEXTAUTH_SECRET must be at least 32 characters. Generate with: openssl rand -base64 32";
+    if (process.env.NODE_ENV === "production") {
+      console.error(`FATAL: ${msg}`);
+      process.exit(1);
+    } else {
+      console.warn(`WARNING: ${msg}`);
     }
   }
 

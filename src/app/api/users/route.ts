@@ -5,6 +5,7 @@ import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { Prisma, BuildingRole, UnitRelationship } from "@prisma/client";
+import { hashPassword } from "@/lib/password";
 
 export async function GET(request: NextRequest) {
   try {
@@ -159,7 +160,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unit not found" }, { status: 404 });
     }
 
-    const passwordHash = await bcrypt.hash(temporaryPassword, 12);
+    const passwordHash = await hashPassword(temporaryPassword);
 
     // Check if user with this email already exists
     let existingUser = await prisma.user.findUnique({ where: { email } });

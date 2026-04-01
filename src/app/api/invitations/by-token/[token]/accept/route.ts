@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
-import { validatePassword } from "@/lib/password";
+import { validatePassword, hashPassword } from "@/lib/password";
 import { findInvitationByToken, isInvitationExpired } from "@/lib/invitation";
 
 /**
@@ -85,7 +84,7 @@ export async function POST(
       }
     }
 
-    const passwordHash = await bcrypt.hash(password, 12);
+    const passwordHash = await hashPassword(password);
 
     const result = await prisma.$transaction(async (tx) => {
       // Check if user with this email already exists
