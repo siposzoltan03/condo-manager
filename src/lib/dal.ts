@@ -461,7 +461,10 @@ export const getDocuments = cache(async (): Promise<DocumentsData> => {
   const isAdmin = hasMinimumRole(role, "ADMIN");
   const limit = 20;
 
-  const where: Record<string, unknown> = { buildingId };
+  const where: Record<string, unknown> = {
+    category: { buildingId },
+    isArchived: false,
+  };
   if (!isAdmin) {
     if (isBoardPlus) {
       where.visibility = { in: ["PUBLIC", "BOARD_ONLY"] };

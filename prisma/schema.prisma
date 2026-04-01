@@ -783,6 +783,7 @@ model Document {
   categoryId   String
   visibility   DocumentVisibility @default(PUBLIC)
   tags         Json               @default("[]")
+  isArchived   Boolean            @default(false)
   uploadedBy   User               @relation("DocumentUploader", fields: [uploadedById], references: [id])
   uploadedById String
   versions     DocumentVersion[]
@@ -793,6 +794,7 @@ model Document {
   @@index([visibility])
   @@index([uploadedById])
   @@index([createdAt])
+  @@index([isArchived])
 }
 
 model DocumentVersion {

@@ -839,6 +839,35 @@
         "billingDesc": "Rugalmas csomagok bármilyen méretű épülethez. Használat követés, frissítési javaslatok és Stripe-alapú számlázás."
       }
     },
+    "rolesTitle": "Egy platform, öt egyedi szerepkör",
+    "rolesSubtitle": "Minden felhasználó pontosan azt látja, amire szüksége van — sem többet, sem kevesebbet. Az épülettulajdonostól a bérlőig minden szerepkör testreszabott hozzáféréssel rendelkezik.",
+    "roles": {
+      "superAdmin": {
+        "title": "Főadminisztrátor",
+        "description": "Teljes rendszer-felügyelet az összes épületre. Előfizetések kezelése, épületek létrehozása, adminisztrátorok kijelölése. Az egyetlen szerepkör, amely admin jogosultságot adhat.",
+        "capabilities": "Összes épület, számlázás, felhasználó-kezelés, rendszerbeállítások"
+      },
+      "admin": {
+        "title": "Adminisztrátor",
+        "description": "Napi szintű épületkezelés. Lakások létrehozása és kezelése, lakók meghívása, díjak beállítása és az épület összes műveletének felügyelete.",
+        "capabilities": "Lakáskezelés, meghívók, pénzügyek, teljes adathozzáférés"
+      },
+      "boardMember": {
+        "title": "Igazgatósági tag",
+        "description": "Irányítás és felügyelet. Szavazások és gyűlések létrehozása, hirdetmények kezelése, panaszok áttekintése, kivitelezők kijelölése és pénzügyi jelentések megtekintése.",
+        "capabilities": "Szavazás, hirdetmények, panaszkezelés, pénzügyi felügyelet"
+      },
+      "resident": {
+        "title": "Lakástulajdonos",
+        "description": "Aktív résztvevő az épület életében. Hirdetmények megtekintése, tulajdoni hányad szerinti szavazás, karbantartási igények bejelentése, havi díjak fizetése és megosztott dokumentumok elérése.",
+        "capabilities": "Szavazati jog, díjfizetés, karbantartás bejelentése, fórum"
+      },
+      "tenant": {
+        "title": "Bérlő",
+        "description": "Alapvető hozzáférés bérlők számára. Hirdetmények megtekintése, karbantartási igények bejelentése, fórum-részvétel és kommunikáció a kezelőséggel — szavazati és pénzügyi hozzáférés nélkül.",
+        "capabilities": "Hirdetmények, karbantartás bejelentése, üzenetküldés, fórum"
+      }
+    },
     "socialProofTitle": "Ingatlankezelők bizalma",
     "buildingsManaged": "Kezelt épület",
     "residentsConnected": "Összekapcsolt lakó",

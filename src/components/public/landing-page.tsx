@@ -17,6 +17,11 @@ import {
   Shield,
   BarChart3,
   Calendar,
+  Crown,
+  ShieldCheck,
+  Gavel,
+  Home,
+  Key,
 } from "lucide-react";
 import { PublicNav } from "./public-nav";
 
@@ -78,6 +83,14 @@ const stats = [
   { key: "buildingsManaged", value: "500+", icon: Building2 },
   { key: "residentsConnected", value: "12,000+", icon: Users },
   { key: "issuesResolved", value: "35,000+", icon: CheckCircle2 },
+] as const;
+
+const roles = [
+  { key: "superAdmin", icon: Crown, color: "bg-red-500", gradient: "from-red-500/10 to-red-500/5" },
+  { key: "admin", icon: ShieldCheck, color: "bg-purple-500", gradient: "from-purple-500/10 to-purple-500/5" },
+  { key: "boardMember", icon: Gavel, color: "bg-blue-500", gradient: "from-blue-500/10 to-blue-500/5" },
+  { key: "resident", icon: Home, color: "bg-emerald-500", gradient: "from-emerald-500/10 to-emerald-500/5" },
+  { key: "tenant", icon: Key, color: "bg-slate-500", gradient: "from-slate-500/10 to-slate-500/5" },
 ] as const;
 
 export function LandingPage() {
@@ -214,6 +227,45 @@ export function LandingPage() {
           </section>
         );
       })}
+
+      {/* Roles Section */}
+      <section className="bg-[#faf8ff] py-20 sm:py-28">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-3xl text-center">
+            <h2 className="text-3xl font-extrabold tracking-tight text-[#002045] sm:text-4xl">
+              {t("rolesTitle")}
+            </h2>
+            <p className="mt-4 text-lg text-slate-600">
+              {t("rolesSubtitle")}
+            </p>
+          </div>
+
+          <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {roles.map(({ key, icon: Icon, color, gradient }) => (
+              <div
+                key={key}
+                className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${gradient} border border-slate-200/50 p-6 transition-shadow hover:shadow-lg`}
+              >
+                <div className={`inline-flex items-center justify-center rounded-xl ${color} p-2.5`}>
+                  <Icon className="h-5 w-5 text-white" />
+                </div>
+                <h3 className="mt-4 text-lg font-bold text-[#002045]">
+                  {t(`roles.${key}.title`)}
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                  {t(`roles.${key}.description`)}
+                </p>
+                <div className="mt-4 rounded-lg bg-white/60 px-3 py-2">
+                  <p className="text-xs font-medium text-[#515f74]">
+                    <span className="font-bold text-[#002045]">Access: </span>
+                    {t(`roles.${key}.capabilities`)}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Social Proof / Stats Section */}
       <section className="bg-white py-20 sm:py-28">

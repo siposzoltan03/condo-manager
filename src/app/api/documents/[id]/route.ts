@@ -77,7 +77,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     }
 
     const body = await request.json();
-    const { title, description, categoryId, visibility, tags } = body;
+    const { title, description, categoryId, visibility, tags, isArchived } = body;
 
     if (visibility && !["PUBLIC", "BOARD_ONLY", "ADMIN_ONLY"].includes(visibility)) {
       return NextResponse.json(
@@ -92,6 +92,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     if (categoryId !== undefined) updateData.categoryId = categoryId;
     if (visibility !== undefined) updateData.visibility = visibility;
     if (tags !== undefined) updateData.tags = tags;
+    if (isArchived !== undefined) updateData.isArchived = Boolean(isArchived);
 
     const updated = await prisma.document.update({
       where: { id },

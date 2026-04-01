@@ -25,6 +25,10 @@ export async function GET(request: NextRequest) {
     // Filter by category's building
     where.category = { buildingId };
 
+    // Archive filter: show archived or non-archived (default: non-archived)
+    const archived = searchParams.get("archived");
+    where.isArchived = archived === "true" ? true : false;
+
     // Visibility filtering based on role
     const isAdmin = hasMinimumRole(role, "ADMIN");
     const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");

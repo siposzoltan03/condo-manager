@@ -839,6 +839,35 @@
         "billingDesc": "Flexible plans for buildings of any size. Usage tracking, upgrade prompts, and Stripe-powered billing."
       }
     },
+    "rolesTitle": "One Platform, Five Distinct Roles",
+    "rolesSubtitle": "Every user sees exactly what they need — no more, no less. From building owners to temporary tenants, each role has tailored access and capabilities.",
+    "roles": {
+      "superAdmin": {
+        "title": "Super Admin",
+        "description": "Full system control across all buildings. Manages subscriptions, creates buildings, assigns admins. The only role that can grant admin access to others.",
+        "capabilities": "All buildings, billing, user promotion, system settings"
+      },
+      "admin": {
+        "title": "Administrator",
+        "description": "Day-to-day building management. Creates and manages units, invites residents, configures charges, and oversees all building operations.",
+        "capabilities": "Unit management, user invitations, finance, full data access"
+      },
+      "boardMember": {
+        "title": "Board Member",
+        "description": "Governance and oversight. Creates votes and meetings, manages announcements, reviews complaints, assigns contractors, and accesses financial reports.",
+        "capabilities": "Voting, announcements, complaint review, financial oversight"
+      },
+      "resident": {
+        "title": "Resident (Owner)",
+        "description": "Active participant in building life. Views announcements, votes with ownership-weighted ballots, reports maintenance issues, pays monthly charges, and accesses shared documents.",
+        "capabilities": "Voting rights, charge payments, maintenance reporting, forum"
+      },
+      "tenant": {
+        "title": "Tenant",
+        "description": "Essential access for renters. Views announcements, reports maintenance issues, participates in forum discussions, and communicates with management — without voting or financial access.",
+        "capabilities": "Announcements, maintenance reporting, messaging, forum"
+      }
+    },
     "socialProofTitle": "Trusted by Property Managers",
     "buildingsManaged": "Buildings Managed",
     "residentsConnected": "Residents Connected",
