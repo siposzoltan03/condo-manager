@@ -2,9 +2,13 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { CategorySidebar } from "./category-sidebar";
 import { TopicList } from "./topic-list";
-import { NewTopicForm } from "./new-topic-form";
+import type { ForumData } from "@/lib/dal";
+
+const NewTopicForm = dynamic(() => import("./new-topic-form").then((m) => m.NewTopicForm));
 
 interface Category {
   id: string;
@@ -23,36 +27,23 @@ interface TopicItem {
   lastActivityAt: string;
 }
 
-export function ForumPage() {
-  const tCommon = useTranslations("common");
+interface ForumPageProps {
+  initialData: ForumData;
+}
 
-  const [categories, setCategories] = useState<Category[]>([]);
+export function ForumPage({ initialData }: ForumPageProps) {
+  const tCommon = useTranslations("common");
+  const router = useRouter();
+
+  const [categories, setCategories] = useState<Category[]>(initialData.categories);
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
-  const [topics, setTopics] = useState<TopicItem[]>([]);
+  const [topics, setTopics] = useState<TopicItem[]>(initialData.topics);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(true);
+  const [totalPages, setTotalPages] = useState(initialData.totalPages);
+  const [loading, setLoading] = useState(false);
   const [sort, setSort] = useState("recent");
   const [showNewTopic, setShowNewTopic] = useState(false);
-
-  // Fetch categories
-  useEffect(() => {
-    async function load() {
-      try {
-        const res = await fetch("/api/forum/categories");
-        if (!res.ok) return;
-        const data = await res.json();
-        setCategories(data.categories);
-        // Default to first category if available
-        if (data.categories.length > 0) {
-          setActiveCategoryId(data.categories[0].id);
-        }
-      } catch {
-        // Silently handle
-      }
-    }
-    load();
-  }, []);
+  const [hasInteracted, setHasInteracted] = useState(false);
 
   // Fetch topics
   const fetchTopics = useCallback(async () => {
@@ -89,23 +80,29 @@ export function ForumPage() {
   }, [activeCategoryId, page, sort]);
 
   useEffect(() => {
-    fetchTopics();
-  }, [fetchTopics]);
+    if (hasInteracted) {
+      fetchTopics();
+    }
+  }, [fetchTopics, hasInteracted]);
 
   function handleCategoryChange(categoryId: string | null) {
+    setHasInteracted(true);
     setActiveCategoryId(categoryId);
     setPage(1);
   }
 
   function handleSortChange(newSort: string) {
+    setHasInteracted(true);
     setSort(newSort);
     setPage(1);
   }
 
   function handleTopicCreated() {
     setShowNewTopic(false);
+    setHasInteracted(true);
     setPage(1);
     fetchTopics();
+    router.refresh();
   }
 
   if (categories.length === 0 && loading) {

@@ -2,7 +2,6 @@
 
 import { useTranslations } from "next-intl";
 import { useEffect, useState, useCallback } from "react";
-import { useAuth } from "@/hooks/use-auth";
 import Link from "next/link";
 import { Building2 } from "lucide-react";
 import { PaymentSummaryCards } from "./payment-summary-cards";
@@ -32,17 +31,18 @@ interface ChargesResponse {
   totalPages: number;
 }
 
-export function FinanceOverview() {
+interface FinanceOverviewProps {
+  isBoardPlus: boolean;
+}
+
+export function FinanceOverview({ isBoardPlus }: FinanceOverviewProps) {
   const t = useTranslations("finance");
-  const { hasRole } = useAuth();
 
   const [summary, setSummary] = useState<ChargeSummary | null>(null);
   const [chargesData, setChargesData] = useState<ChargesResponse | null>(null);
   const [allCharges, setAllCharges] = useState<Charge[]>([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
-
-  const isBoardPlus = hasRole("BOARD_MEMBER");
 
   const fetchData = useCallback(async (currentPage: number) => {
     setLoading(true);

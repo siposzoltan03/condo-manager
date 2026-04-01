@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { X } from "lucide-react";
+import { createUser, updateUser } from "@/app/actions/users";
 
 interface UnitOption {
   id: string;
@@ -88,52 +89,42 @@ export function UserFormModal({ user, onClose, onSuccess }: UserFormModalProps) 
 
     try {
       if (isEdit) {
-        // PATCH /api/users/[id]
-        const body: Record<string, unknown> = {
+        const result = await updateUser(user.id, {
           role,
           unitId,
           isPrimaryContact,
           relationship,
-        };
-
-        const res = await fetch(`/api/users/${user.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
         });
 
-        if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.error || "Failed to update user");
+        if (result.error) {
+          setError(result.error);
+          setSubmitting(false);
+          return;
         }
 
         setSuccess("User updated successfully");
         setTimeout(onSuccess, 800);
       } else {
-        // POST /api/users
         if (!name || !email || !temporaryPassword || !unitId) {
           setError("All fields are required");
           setSubmitting(false);
           return;
         }
 
-        const res = await fetch("/api/users", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name,
-            email,
-            temporaryPassword,
-            role,
-            unitId,
-            isPrimaryContact,
-            relationship,
-          }),
+        const result = await createUser({
+          name,
+          email,
+          temporaryPassword,
+          role,
+          unitId,
+          isPrimaryContact,
+          relationship,
         });
 
-        if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.error || "Failed to create user");
+        if (result.error) {
+          setError(result.error);
+          setSubmitting(false);
+          return;
         }
 
         setSuccess("User created successfully");

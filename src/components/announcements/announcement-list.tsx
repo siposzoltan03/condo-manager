@@ -2,11 +2,15 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { AnnouncementCard } from "./announcement-card";
 import { AnnouncementFilters } from "./announcement-filters";
-import { AnnouncementForm } from "./announcement-form";
 import { RoleGuard } from "@/components/auth/role-guard";
+import type { AnnouncementsData } from "@/lib/dal";
+
+const AnnouncementForm = dynamic(() => import("./announcement-form").then((m) => m.AnnouncementForm));
 
 interface AnnouncementItem {
   id: string;
@@ -27,13 +31,18 @@ interface AnnouncementsResponse {
   totalPages: number;
 }
 
-export function AnnouncementList() {
+interface AnnouncementListProps {
+  initialData: AnnouncementsData;
+}
+
+export function AnnouncementList({ initialData }: AnnouncementListProps) {
   const t = useTranslations("announcements");
   const tCommon = useTranslations("common");
-  const [announcements, setAnnouncements] = useState<AnnouncementItem[]>([]);
+  const router = useRouter();
+  const [announcements, setAnnouncements] = useState<AnnouncementItem[]>(initialData.announcements as AnnouncementItem[]);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(true);
+  const [totalPages, setTotalPages] = useState(initialData.totalPages);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
 
@@ -41,15 +50,19 @@ export function AnnouncementList() {
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [audienceFilter, setAudienceFilter] = useState("");
+  const [hasInteracted, setHasInteracted] = useState(false);
 
   // Debounced search
   useEffect(() => {
     const timer = setTimeout(() => {
-      setSearch(searchInput);
-      setPage(1);
+      if (searchInput !== search) {
+        setHasInteracted(true);
+        setSearch(searchInput);
+        setPage(1);
+      }
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchInput]);
+  }, [searchInput, search]);
 
   const fetchAnnouncements = useCallback(async () => {
     setLoading(true);
@@ -75,18 +88,23 @@ export function AnnouncementList() {
   }, [page, search, audienceFilter, tCommon]);
 
   useEffect(() => {
-    fetchAnnouncements();
-  }, [fetchAnnouncements]);
+    if (hasInteracted) {
+      fetchAnnouncements();
+    }
+  }, [fetchAnnouncements, hasInteracted]);
 
   function handleAudienceChange(value: string) {
+    setHasInteracted(true);
     setAudienceFilter(value);
     setPage(1);
   }
 
   function handleFormSuccess() {
     setShowForm(false);
+    setHasInteracted(true);
     setPage(1);
     fetchAnnouncements();
+    router.refresh();
   }
 
   return (
@@ -162,7 +180,7 @@ export function AnnouncementList() {
           </p>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              onClick={() => { setHasInteracted(true); setPage((p) => Math.max(1, p - 1)); }}
               disabled={page === 1}
               className="inline-flex items-center gap-1 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -170,7 +188,7 @@ export function AnnouncementList() {
               {t("previous")}
             </button>
             <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              onClick={() => { setHasInteracted(true); setPage((p) => Math.min(totalPages, p + 1)); }}
               disabled={page === totalPages}
               className="inline-flex items-center gap-1 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >

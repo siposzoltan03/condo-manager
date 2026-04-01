@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { X } from "lucide-react";
+import { createAnnouncement } from "@/app/actions/announcements";
 
 interface AnnouncementFormProps {
   onClose: () => void;
@@ -26,15 +27,14 @@ export function AnnouncementForm({ onClose, onSuccess }: AnnouncementFormProps) 
     setError("");
 
     try {
-      const res = await fetch("/api/announcements", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: title.trim(), body: body.trim(), targetAudience }),
+      const result = await createAnnouncement({
+        title: title.trim(),
+        body: body.trim(),
+        targetAudience,
       });
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to create announcement");
+      if (result.error) {
+        throw new Error(result.error);
       }
 
       onSuccess();

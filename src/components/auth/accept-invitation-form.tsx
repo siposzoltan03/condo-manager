@@ -146,7 +146,7 @@ export function AcceptInvitationForm({ token }: Props) {
           </div>
           <h1
             className="text-2xl font-extrabold mb-2"
-            style={{ color: "#002045", fontFamily: "Manrope, sans-serif" }}
+            style={{ color: "#002045", fontFamily: "var(--font-manrope), sans-serif" }}
           >
             {errorState.type === "expired" ? t("expiredTitle") : t("invalidTitle")}
           </h1>
@@ -179,7 +179,7 @@ export function AcceptInvitationForm({ token }: Props) {
       <div className="mb-8">
         <h1
           className="text-3xl font-extrabold"
-          style={{ color: "#002045", fontFamily: "Manrope, sans-serif" }}
+          style={{ color: "#002045", fontFamily: "var(--font-manrope), sans-serif" }}
         >
           {t("acceptTitle")}
         </h1>

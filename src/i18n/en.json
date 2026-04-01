@@ -14,7 +14,11 @@
     "loading": "Loading...",
     "error": "An error occurred",
     "success": "Operation successful",
-    "selectUnit": "Select a unit"
+    "selectUnit": "Select a unit",
+    "retry": "Try again",
+    "notFound": "Page not found",
+    "notFoundDescription": "The page you are looking for does not exist or has been moved.",
+    "goToDashboard": "Go to Dashboard"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -36,7 +40,8 @@
     "settingsInvitations": "Invitations",
     "settingsBilling": "Billing",
     "features": "Features",
-    "pricing": "Pricing"
+    "pricing": "Pricing",
+    "units": "Units"
   },
   "users": {
     "title": "User Management",
@@ -66,6 +71,35 @@
     "roleBoardMember": "Board Member",
     "roleResident": "Resident",
     "roleTenant": "Tenant"
+  },
+  "units": {
+    "title": "Unit Management",
+    "addUnit": "Add Unit",
+    "editUnit": "Edit Unit",
+    "deleteUnit": "Delete Unit",
+    "unitNumber": "Unit Number",
+    "floor": "Floor",
+    "size": "Size (m\u00b2)",
+    "ownershipShare": "Ownership Share",
+    "ownershipPercent": "Ownership Share",
+    "primaryContact": "Primary Contact",
+    "residents": "Residents",
+    "totalUnits": "Total Units",
+    "totalOwnership": "Total Ownership",
+    "averageSize": "Average Size",
+    "ownershipWarning": "Total ownership share is not 100%",
+    "ownershipOver": "Total ownership exceeds 100%",
+    "ownershipOk": "Ownership shares sum to 100%",
+    "confirmDelete": "Are you sure you want to delete this unit?",
+    "unitHasUsers": "Cannot delete: unit has assigned users. Reassign them first.",
+    "unitHasCharges": "Cannot delete: unit has unpaid charges.",
+    "noUnits": "No units in this building",
+    "numberPlaceholder": "e.g. 1A",
+    "floorPlaceholder": "e.g. 0 (ground)",
+    "sizePlaceholder": "e.g. 65.5",
+    "ownershipPlaceholder": "e.g. 0.0625",
+    "currentTotal": "Current total",
+    "afterAdding": "After adding"
   },
   "settings": {
     "title": "Settings",

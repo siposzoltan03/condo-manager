@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { X } from "lucide-react";
+import { createTopic } from "@/app/actions/forum";
 
 interface Category {
   id: string;
@@ -39,15 +40,14 @@ export function NewTopicForm({
     setError("");
 
     try {
-      const res = await fetch("/api/forum/topics", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: title.trim(), body: body.trim(), categoryId }),
+      const result = await createTopic({
+        title: title.trim(),
+        body: body.trim(),
+        categoryId,
       });
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error ?? "Failed to create topic");
+      if (result.error) {
+        throw new Error(result.error);
       }
 
       onSuccess();

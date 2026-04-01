@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { X, Lock } from "lucide-react";
+import { createComplaint } from "@/app/actions/complaints";
 
 const CATEGORIES = [
   "NOISE",
@@ -37,19 +38,14 @@ export function ComplaintFormModal({ onClose, onCreated }: ComplaintFormProps) {
 
     setLoading(true);
     try {
-      const res = await fetch("/api/complaints", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          category,
-          description: description.trim(),
-          isPrivate,
-        }),
+      const result = await createComplaint({
+        category,
+        description: description.trim(),
+        isPrivate,
       });
 
-      if (!res.ok) {
-        const data = await res.json();
-        setError(data.error || tCommon("error"));
+      if (result.error) {
+        setError(result.error);
         return;
       }
 

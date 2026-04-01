@@ -3,9 +3,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { Search, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { ComplaintCard } from "./complaint-card";
-import { ComplaintFormModal } from "./complaint-form";
+import type { ComplaintsData } from "@/lib/dal";
+
+const ComplaintFormModal = dynamic(() => import("./complaint-form").then((m) => m.ComplaintFormModal));
 
 interface ComplaintSummary {
   id: string;
@@ -45,19 +48,23 @@ const CATEGORIES = [
   "OTHER",
 ];
 
-export function ComplaintList() {
+interface ComplaintListProps {
+  initialData: ComplaintsData;
+}
+
+export function ComplaintList({ initialData }: ComplaintListProps) {
   const t = useTranslations("complaints");
   const tCommon = useTranslations("common");
   const router = useRouter();
 
-  const [complaints, setComplaints] = useState<ComplaintSummary[]>([]);
-  const [total, setTotal] = useState(0);
+  const [complaints, setComplaints] = useState<ComplaintSummary[]>(initialData.complaints as ComplaintSummary[]);
+  const [total, setTotal] = useState(initialData.total);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [totalPages, setTotalPages] = useState(initialData.totalPages);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
 
   const fetchComplaints = useCallback(async () => {
@@ -83,11 +90,15 @@ export function ComplaintList() {
     }
   }, [page, search, statusFilter, categoryFilter]);
 
+  const [hasInteracted, setHasInteracted] = useState(false);
   useEffect(() => {
-    fetchComplaints();
-  }, [fetchComplaints]);
+    if (hasInteracted) {
+      fetchComplaints();
+    }
+  }, [fetchComplaints, hasInteracted]);
 
   function handleSearch(value: string) {
+    setHasInteracted(true);
     setSearch(value);
     setPage(1);
   }
@@ -128,6 +139,7 @@ export function ComplaintList() {
         <select
           value={statusFilter}
           onChange={(e) => {
+            setHasInteracted(true);
             setStatusFilter(e.target.value);
             setPage(1);
           }}
@@ -144,6 +156,7 @@ export function ComplaintList() {
         <select
           value={categoryFilter}
           onChange={(e) => {
+            setHasInteracted(true);
             setCategoryFilter(e.target.value);
             setPage(1);
           }}
@@ -187,7 +200,7 @@ export function ComplaintList() {
           </p>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              onClick={() => { setHasInteracted(true); setPage((p) => Math.max(1, p - 1)); }}
               disabled={page <= 1}
               className="rounded-md border border-slate-300 p-2 text-sm hover:bg-slate-50 disabled:opacity-50"
             >
@@ -197,7 +210,7 @@ export function ComplaintList() {
               {t("pageOf", { page, totalPages })}
             </span>
             <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              onClick={() => { setHasInteracted(true); setPage((p) => Math.min(totalPages, p + 1)); }}
               disabled={page >= totalPages}
               className="rounded-md border border-slate-300 p-2 text-sm hover:bg-slate-50 disabled:opacity-50"
             >
@@ -213,8 +226,10 @@ export function ComplaintList() {
           onClose={() => setShowForm(false)}
           onCreated={() => {
             setShowForm(false);
+            setHasInteracted(true);
             setPage(1);
             fetchComplaints();
+            router.refresh();
           }}
         />
       )}

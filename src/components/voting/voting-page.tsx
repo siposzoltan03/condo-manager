@@ -2,14 +2,18 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { useAuth } from "@/hooks/use-auth";
+import type { VotesData } from "@/lib/dal";
 import { Plus } from "lucide-react";
 import { ActiveVoteCard } from "./active-vote-card";
 import { PastVoteCard } from "./past-vote-card";
 import { VoteSidebar } from "./vote-sidebar";
 import { MeetingList } from "./meeting-list";
-import { CreateVoteModal } from "./create-vote-modal";
-import { CreateMeetingModal } from "./create-meeting-modal";
+
+const CreateVoteModal = dynamic(() => import("./create-vote-modal").then((m) => m.CreateVoteModal));
+const CreateMeetingModal = dynamic(() => import("./create-meeting-modal").then((m) => m.CreateMeetingModal));
 
 interface VoteOption {
   id: string;
@@ -46,16 +50,21 @@ interface MeetingSummary {
   createdAt: string;
 }
 
-export function VotingPage() {
+interface VotingPageProps {
+  initialVotes: VotesData;
+}
+
+export function VotingPage({ initialVotes }: VotingPageProps) {
   const t = useTranslations("voting");
   const tCommon = useTranslations("common");
   const { hasRole } = useAuth();
+  const router = useRouter();
   const isBoardPlus = hasRole("BOARD_MEMBER");
 
   const [activeTab, setActiveTab] = useState<"votes" | "meetings">("votes");
-  const [votes, setVotes] = useState<VoteSummary[]>([]);
+  const [votes, setVotes] = useState<VoteSummary[]>(initialVotes.votes as VoteSummary[]);
   const [meetings, setMeetings] = useState<MeetingSummary[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [showCreateVote, setShowCreateVote] = useState(false);
   const [showCreateMeeting, setShowCreateMeeting] = useState(false);
 
@@ -83,10 +92,11 @@ export function VotingPage() {
     }
   }, []);
 
+  // Fetch meetings client-side (votes come from server)
   useEffect(() => {
     setLoading(true);
-    Promise.all([fetchVotes(), fetchMeetings()]).finally(() => setLoading(false));
-  }, [fetchVotes, fetchMeetings]);
+    fetchMeetings().finally(() => setLoading(false));
+  }, [fetchMeetings]);
 
   const activeVotes = votes.filter((v) => v.status === "OPEN");
   const pastVotes = votes.filter((v) => v.status === "CLOSED");

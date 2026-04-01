@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { X, Plus, Trash2 } from "lucide-react";
+import { createVote } from "@/app/actions/voting";
 
 interface Props {
   onClose: () => void;
@@ -51,25 +52,20 @@ export function CreateVoteModal({ onClose, onCreated }: Props) {
 
     setSubmitting(true);
     try {
-      const res = await fetch("/api/voting/votes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title,
-          description: description || null,
-          voteType,
-          isSecret,
-          quorumRequired: Number(quorumRequired) / 100,
-          deadline,
-          options: options.map((o) => ({ label: o.label.trim() })),
-        }),
+      const result = await createVote({
+        title,
+        description: description || undefined,
+        voteType,
+        isSecret,
+        quorumRequired: Number(quorumRequired) / 100,
+        deadline,
+        options: options.map((o) => ({ label: o.label.trim() })),
       });
 
-      if (res.ok) {
+      if (result.success) {
         onCreated();
       } else {
-        const data = await res.json();
-        setError(data.error || t("createFailed"));
+        setError(result.error || t("createFailed"));
       }
     } catch {
       setError(t("createFailed"));

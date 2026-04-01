@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Inter, Manrope } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -7,8 +8,23 @@ import { SessionProvider } from "@/components/layout/session-provider";
 import { AppShell } from "@/components/layout/app-shell";
 import "@/app/globals.css";
 
+const inter = Inter({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const manrope = Manrope({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-manrope",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "Condo Manager",
+  title: {
+    default: "Condo Manager",
+    template: "%s | Condo Manager",
+  },
   description: "Self-hosted condominium management platform",
   manifest: "/manifest.json",
   appleWebApp: {
@@ -51,7 +67,7 @@ export default async function LocaleLayout({ children, params }: Props) {
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Condo Manager" />
       </head>
-      <body>
+      <body className={`${inter.variable} ${manrope.variable} font-sans`}>
         <SessionProvider>
           <NextIntlClientProvider messages={messages}>
             <AppShell>{children}</AppShell>

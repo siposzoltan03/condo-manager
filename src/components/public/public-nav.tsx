@@ -3,13 +3,11 @@
 import { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { usePathname, useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/use-auth";
 import { Building2, Menu, X, Globe } from "lucide-react";
 import Link from "next/link";
 
 export function PublicNav() {
   const t = useTranslations();
-  const { isAuthenticated } = useAuth();
   const locale = useLocale();
   const pathname = usePathname();
   const router = useRouter();
@@ -59,29 +57,18 @@ export function PublicNav() {
             {locale === "hu" ? "English" : "Magyar"}
           </button>
 
-          {isAuthenticated ? (
-            <Link
-              href="/dashboard"
-              className="rounded-lg bg-[#002045] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#003060]"
-            >
-              {t("landing.goToDashboard")}
-            </Link>
-          ) : (
-            <>
-              <Link
-                href="/login"
-                className="text-sm font-semibold text-[#002045] transition hover:text-[#003060]"
-              >
-                {t("common.login")}
-              </Link>
-              <Link
-                href="/pricing"
-                className="rounded-lg bg-[#002045] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#003060]"
-              >
-                {t("landing.startFreeTrial")}
-              </Link>
-            </>
-          )}
+          <Link
+            href="/login"
+            className="text-sm font-semibold text-[#002045] transition hover:text-[#003060]"
+          >
+            {t("common.login")}
+          </Link>
+          <Link
+            href="/pricing"
+            className="rounded-lg bg-[#002045] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#003060]"
+          >
+            {t("landing.startFreeTrial")}
+          </Link>
         </div>
 
         {/* Mobile hamburger */}
@@ -112,29 +99,18 @@ export function PublicNav() {
             >
               {t("nav.pricing")}
             </Link>
-            {isAuthenticated ? (
-              <Link
-                href="/dashboard"
-                className="rounded-lg bg-[#002045] px-4 py-2 text-center text-sm font-semibold text-white"
-              >
-                {t("landing.goToDashboard")}
-              </Link>
-            ) : (
-              <>
-                <Link
-                  href="/login"
-                  className="text-sm font-semibold text-[#002045]"
-                >
-                  {t("common.login")}
-                </Link>
-                <Link
-                  href="/pricing"
-                  className="rounded-lg bg-[#002045] px-4 py-2 text-center text-sm font-semibold text-white"
-                >
-                  {t("landing.startFreeTrial")}
-                </Link>
-              </>
-            )}
+            <Link
+              href="/login"
+              className="text-sm font-semibold text-[#002045]"
+            >
+              {t("common.login")}
+            </Link>
+            <Link
+              href="/pricing"
+              className="rounded-lg bg-[#002045] px-4 py-2 text-center text-sm font-semibold text-white"
+            >
+              {t("landing.startFreeTrial")}
+            </Link>
           </div>
         </div>
       )}

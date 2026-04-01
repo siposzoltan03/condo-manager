@@ -3,10 +3,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { TicketFilterBar } from "./TicketFilterBar";
 import { TicketRow } from "./TicketRow";
-import { ReportIssueModal } from "./ReportIssueModal";
+import type { TicketsData } from "@/lib/dal";
+
+const ReportIssueModal = dynamic(() => import("./ReportIssueModal").then((m) => m.ReportIssueModal));
 
 interface TicketSummary {
   id: string;
@@ -27,21 +30,26 @@ interface TicketsResponse {
   totalPages: number;
 }
 
-export function TicketList() {
+interface TicketListProps {
+  initialData: TicketsData;
+}
+
+export function TicketList({ initialData }: TicketListProps) {
   const t = useTranslations("maintenance");
   const tCommon = useTranslations("common");
   const router = useRouter();
 
-  const [tickets, setTickets] = useState<TicketSummary[]>([]);
-  const [total, setTotal] = useState(0);
+  const [tickets, setTickets] = useState<TicketSummary[]>(initialData.tickets as TicketSummary[]);
+  const [total, setTotal] = useState(initialData.total);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [totalPages, setTotalPages] = useState(initialData.totalPages);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [urgencyFilter, setUrgencyFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
 
   const fetchTickets = useCallback(async () => {
     setLoading(true);
@@ -68,10 +76,13 @@ export function TicketList() {
   }, [page, search, statusFilter, urgencyFilter, categoryFilter]);
 
   useEffect(() => {
-    fetchTickets();
-  }, [fetchTickets]);
+    if (hasInteracted) {
+      fetchTickets();
+    }
+  }, [fetchTickets, hasInteracted]);
 
   function handleSearch(value: string) {
+    setHasInteracted(true);
     setSearch(value);
     setPage(1);
   }
@@ -137,7 +148,7 @@ export function TicketList() {
           </p>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              onClick={() => { setHasInteracted(true); setPage((p) => Math.max(1, p - 1)); }}
               disabled={page <= 1}
               className="rounded-md border border-slate-300 p-2 text-sm hover:bg-slate-50 disabled:opacity-50"
             >
@@ -147,7 +158,7 @@ export function TicketList() {
               {t("pageOf", { page, totalPages })}
             </span>
             <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              onClick={() => { setHasInteracted(true); setPage((p) => Math.min(totalPages, p + 1)); }}
               disabled={page >= totalPages}
               className="rounded-md border border-slate-300 p-2 text-sm hover:bg-slate-50 disabled:opacity-50"
             >
@@ -163,8 +174,10 @@ export function TicketList() {
           onClose={() => setShowForm(false)}
           onCreated={() => {
             setShowForm(false);
+            setHasInteracted(true);
             setPage(1);
             fetchTickets();
+            router.refresh();
           }}
         />
       )}

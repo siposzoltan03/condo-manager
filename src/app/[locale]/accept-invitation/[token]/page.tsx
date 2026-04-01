@@ -37,7 +37,7 @@ export default async function AcceptInvitationPage({ params }: Props) {
           </div>
           <span
             className="text-xl font-extrabold"
-            style={{ color: "#002045", fontFamily: "Manrope, sans-serif" }}
+            style={{ color: "#002045", fontFamily: "var(--font-manrope), sans-serif" }}
           >
             Condo Manager
           </span>

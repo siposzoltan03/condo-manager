@@ -2,9 +2,14 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { Search, Plus, ChevronLeft, ChevronRight } from "lucide-react";
-import { UserFormModal } from "./user-form";
 import { useAuth } from "@/hooks/use-auth";
+import { toggleUserActive } from "@/app/actions/users";
+import type { UsersData } from "@/lib/dal";
+
+const UserFormModal = dynamic(() => import("./user-form").then((m) => m.UserFormModal));
 
 interface UserUnit {
   number: string;
@@ -47,17 +52,22 @@ const ROLE_KEYS: Record<string, string> = {
 
 const ALL_ROLES = ["SUPER_ADMIN", "ADMIN", "BOARD_MEMBER", "RESIDENT", "TENANT"];
 
-export function UserList() {
+interface UserListProps {
+  initialData: UsersData;
+}
+
+export function UserList({ initialData }: UserListProps) {
   const t = useTranslations("common");
   const tUsers = useTranslations("users");
   const { user: currentUser } = useAuth();
-  const [users, setUsers] = useState<UserData[]>([]);
-  const [total, setTotal] = useState(0);
+  const router = useRouter();
+  const [users, setUsers] = useState<UserData[]>(initialData.users as UserData[]);
+  const [total, setTotal] = useState(initialData.total);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [totalPages, setTotalPages] = useState(initialData.totalPages);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   // Modal state
@@ -85,23 +95,31 @@ export function UserList() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, roleFilter]);
+  }, [page, search, roleFilter, t]);
 
+  // Refetch when page/search/filter changes (skip initial render)
+  const [hasInteracted, setHasInteracted] = useState(false);
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+    if (hasInteracted) {
+      fetchUsers();
+    }
+  }, [fetchUsers, hasInteracted]);
 
   // Debounced search
   const [searchInput, setSearchInput] = useState("");
   useEffect(() => {
     const timer = setTimeout(() => {
-      setSearch(searchInput);
-      setPage(1);
+      if (searchInput !== search) {
+        setHasInteracted(true);
+        setSearch(searchInput);
+        setPage(1);
+      }
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchInput]);
+  }, [searchInput, search]);
 
   function handleRoleFilterChange(value: string) {
+    setHasInteracted(true);
     setRoleFilter(value);
     setPage(1);
   }
@@ -118,13 +136,11 @@ export function UserList() {
 
   async function handleToggleActive(user: UserData) {
     try {
-      const res = await fetch(`/api/users/${user.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isActive: !user.isActive }),
-      });
-      if (!res.ok) throw new Error("Failed to update user");
+      const result = await toggleUserActive(user.id);
+      if (result.error) throw new Error(result.error);
+      setHasInteracted(true);
       fetchUsers();
+      router.refresh();
     } catch {
       setError(t("error"));
     }
@@ -137,7 +153,9 @@ export function UserList() {
 
   function handleModalSuccess() {
     handleModalClose();
+    setHasInteracted(true);
     fetchUsers();
+    router.refresh();
   }
 
   return (
@@ -299,7 +317,7 @@ export function UserList() {
             </p>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                onClick={() => { setHasInteracted(true); setPage((p) => Math.max(1, p - 1)); }}
                 disabled={page === 1}
                 className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
@@ -307,7 +325,7 @@ export function UserList() {
                 {tUsers("previous")}
               </button>
               <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                onClick={() => { setHasInteracted(true); setPage((p) => Math.min(totalPages, p + 1)); }}
                 disabled={page === totalPages}
                 className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >

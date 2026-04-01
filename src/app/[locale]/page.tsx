@@ -1,22 +1,12 @@
-"use client";
-
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/auth";
 import { LandingPage } from "@/components/public/landing-page";
 
-export default function HomePage() {
-  const { status } = useSession();
-  const router = useRouter();
+export default async function HomePage() {
+  const session = await getSession();
 
-  useEffect(() => {
-    if (status === "authenticated") {
-      router.replace("/dashboard");
-    }
-  }, [status, router]);
-
-  if (status === "loading") {
-    return <div className="min-h-screen bg-white" />;
+  if (session?.user) {
+    redirect("/dashboard");
   }
 
   return <LandingPage />;

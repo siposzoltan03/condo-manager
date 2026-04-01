@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { X, Upload } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { createDocument } from "@/app/actions/documents";
 
 interface Category {
   id: string;
@@ -51,24 +52,19 @@ export function UploadDocumentModal({ categories, onClose, onSuccess }: UploadDo
       const fileUrl = `/uploads/${Date.now()}-${file.name}`;
       const mimeType = file.type || guessMimeType(file.name);
 
-      const res = await fetch("/api/documents", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title,
-          description: description || null,
-          categoryId,
-          visibility,
-          fileName: file.name,
-          fileUrl,
-          fileSize: file.size,
-          mimeType,
-        }),
+      const result = await createDocument({
+        title,
+        description: description || undefined,
+        categoryId,
+        visibility,
+        fileName: file.name,
+        fileUrl,
+        fileSize: file.size,
+        mimeType,
       });
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to create document");
+      if (result.error) {
+        throw new Error(result.error);
       }
 
       onSuccess();

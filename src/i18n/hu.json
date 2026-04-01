@@ -14,7 +14,11 @@
     "loading": "Betöltés...",
     "error": "Hiba történt",
     "success": "Sikeres művelet",
-    "selectUnit": "Válasszon lakást"
+    "selectUnit": "Válasszon lakást",
+    "retry": "Próbálja újra",
+    "notFound": "Az oldal nem található",
+    "notFoundDescription": "A keresett oldal nem létezik vagy áthelyezésre került.",
+    "goToDashboard": "Áttekintés"
   },
   "nav": {
     "dashboard": "Áttekintés",
@@ -36,7 +40,8 @@
     "settingsInvitations": "Meghivok",
     "settingsBilling": "Szamlazas",
     "features": "Funkciók",
-    "pricing": "Árak"
+    "pricing": "Árak",
+    "units": "Lakások"
   },
   "users": {
     "title": "Felhasználókezelés",
@@ -66,6 +71,35 @@
     "roleBoardMember": "Igazgatósági tag",
     "roleResident": "Lakástulajdonos",
     "roleTenant": "Bérlő"
+  },
+  "units": {
+    "title": "Lakások kezelése",
+    "addUnit": "Lakás hozzáadása",
+    "editUnit": "Lakás szerkesztése",
+    "deleteUnit": "Lakás törlése",
+    "unitNumber": "Lakásszám",
+    "floor": "Emelet",
+    "size": "Méret (m\u00b2)",
+    "ownershipShare": "Tulajdoni hányad",
+    "ownershipPercent": "Tulajdoni hányad",
+    "primaryContact": "Kapcsolattartó",
+    "residents": "Lakók",
+    "totalUnits": "Összes lakás",
+    "totalOwnership": "Összes tulajdoni hányad",
+    "averageSize": "Átlagos méret",
+    "ownershipWarning": "A tulajdoni hányadok összege nem 100%",
+    "ownershipOver": "A tulajdoni hányadok összege meghaladja a 100%-ot",
+    "ownershipOk": "A tulajdoni hányadok összege 100%",
+    "confirmDelete": "Biztosan törölni szeretné ezt a lakást?",
+    "unitHasUsers": "Nem törölhető: a lakáshoz felhasználók vannak hozzárendelve. Először rendelje át őket.",
+    "unitHasCharges": "Nem törölhető: a lakásnak kifizetetlen díjai vannak.",
+    "noUnits": "Nincsenek lakások ebben az épületben",
+    "numberPlaceholder": "pl. 1A",
+    "floorPlaceholder": "pl. 0 (földszint)",
+    "sizePlaceholder": "pl. 65.5",
+    "ownershipPlaceholder": "pl. 0.0625",
+    "currentTotal": "Jelenlegi összesen",
+    "afterAdding": "Hozzáadás után"
   },
   "settings": {
     "title": "Beállítások",

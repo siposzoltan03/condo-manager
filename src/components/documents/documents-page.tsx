@@ -2,12 +2,16 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+import type { DocumentsData } from "@/lib/dal";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { CategorySidebar } from "./category-sidebar";
 import { DocumentTable } from "./document-table";
 import { DocumentFilters } from "./document-filters";
-import { UploadDocumentModal } from "./upload-document-modal";
 import { VersionHistoryPanel } from "./version-history-panel";
+
+const UploadDocumentModal = dynamic(() => import("./upload-document-modal").then((m) => m.UploadDocumentModal));
 
 interface LatestVersion {
   id: string;
@@ -68,16 +72,21 @@ const CATEGORY_DESCRIPTIONS: Record<string, string> = {
   "Insurance": "Insurance policies and claim documents",
 };
 
-export function DocumentsPage() {
+interface DocumentsPageProps {
+  initialData: DocumentsData;
+}
+
+export function DocumentsPage({ initialData }: DocumentsPageProps) {
   const t = useTranslations("documents");
   const tCommon = useTranslations("common");
+  const router = useRouter();
 
   // Data state
-  const [documents, setDocuments] = useState<DocumentItem[]>([]);
+  const [documents, setDocuments] = useState<DocumentItem[]>(initialData.documents as DocumentItem[]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(true);
+  const [totalPages, setTotalPages] = useState(initialData.totalPages);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   // Filter state
@@ -92,14 +101,19 @@ export function DocumentsPage() {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
 
+  const [hasInteracted, setHasInteracted] = useState(false);
+
   // Debounced search
   useEffect(() => {
     const timer = setTimeout(() => {
-      setSearch(searchInput);
-      setPage(1);
+      if (searchInput !== search) {
+        setHasInteracted(true);
+        setSearch(searchInput);
+        setPage(1);
+      }
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchInput]);
+  }, [searchInput, search]);
 
   // Fetch categories
   useEffect(() => {
@@ -144,8 +158,10 @@ export function DocumentsPage() {
   }, [page, search, selectedCategoryId, visibilityFilter, typeFilter, tCommon]);
 
   useEffect(() => {
-    fetchDocuments();
-  }, [fetchDocuments]);
+    if (hasInteracted) {
+      fetchDocuments();
+    }
+  }, [fetchDocuments, hasInteracted]);
 
   function handleCategoryChange(id: string | null) {
     setSelectedCategoryId(id);

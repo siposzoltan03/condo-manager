@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@/hooks/use-auth";
 import { useBuilding } from "@/hooks/use-building";
+import type { ResidentDashboardData } from "@/lib/dal";
 import {
   Megaphone,
   CreditCard,
@@ -45,49 +46,38 @@ interface VotePreview {
   voteType: string;
 }
 
-export function ResidentDashboard() {
+interface ResidentDashboardProps {
+  initialData: ResidentDashboardData;
+  userName: string;
+}
+
+export function ResidentDashboard({ initialData, userName }: ResidentDashboardProps) {
   const t = useTranslations("dashboard");
   const tCommon = useTranslations("common");
   const { user } = useAuth();
   const { activeBuildingId, buildings } = useBuilding();
   const activeBuilding = buildings.find((b) => b.id === activeBuildingId);
 
-  const [announcements, setAnnouncements] = useState<AnnouncementPreview[]>([]);
+  const [announcements, setAnnouncements] = useState<AnnouncementPreview[]>(initialData.announcements);
   const [payment, setPayment] = useState<PaymentSummary | null>(null);
   const [tickets, setTickets] = useState<MaintenanceTicketPreview[]>([]);
   const [votes, setVotes] = useState<VotePreview[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(initialData.unreadNotificationsCount);
+  const [loading, setLoading] = useState(false);
 
+  // Fetch remaining dashboard data client-side (charges, tickets, votes)
   useEffect(() => {
-    async function fetchDashboardData() {
+    async function fetchRemainingData() {
       setLoading(true);
       try {
-        const [announcementsRes, chargesRes, ticketsRes, votesRes, notifsRes] =
+        const [chargesRes, ticketsRes, votesRes] =
           await Promise.allSettled([
-            fetch("/api/announcements?limit=3"),
             fetch("/api/finance/charges?limit=1"),
             fetch(
               "/api/maintenance/tickets?status=SUBMITTED,ACKNOWLEDGED,ASSIGNED,IN_PROGRESS&limit=5"
             ),
             fetch("/api/voting/votes?status=OPEN&limit=5"),
-            fetch("/api/notifications?limit=1"),
           ]);
-
-        // Announcements
-        if (
-          announcementsRes.status === "fulfilled" &&
-          announcementsRes.value.ok
-        ) {
-          const data = await announcementsRes.value.json();
-          setAnnouncements(
-            (data.announcements || []).slice(0, 3).map((a: Record<string, unknown>) => ({
-              id: a.id,
-              title: a.title,
-              createdAt: a.createdAt,
-            }))
-          );
-        }
 
         // Payment status
         if (chargesRes.status === "fulfilled" && chargesRes.value.ok) {
@@ -137,12 +127,6 @@ export function ResidentDashboard() {
             }))
           );
         }
-
-        // Unread notifications
-        if (notifsRes.status === "fulfilled" && notifsRes.value.ok) {
-          const data = await notifsRes.value.json();
-          setUnreadCount(data.unreadCount ?? 0);
-        }
       } catch {
         // Dashboard is best-effort, individual cards handle their own empty state
       } finally {
@@ -150,7 +134,7 @@ export function ResidentDashboard() {
       }
     }
 
-    fetchDashboardData();
+    fetchRemainingData();
   }, []);
 
   if (loading) {
@@ -165,7 +149,7 @@ export function ResidentDashboard() {
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900">
-          {t("welcomeBack", { name: user?.name || "" })}
+          {t("welcomeBack", { name: userName || user?.name || "" })}
         </h1>
         {activeBuilding && (
           <p className="text-sm font-medium text-blue-600">{activeBuilding.name}</p>

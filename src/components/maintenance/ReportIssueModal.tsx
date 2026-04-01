@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { X } from "lucide-react";
+import { createTicket } from "@/app/actions/maintenance";
 
 const CATEGORIES = [
   "PLUMBING",
@@ -45,26 +46,20 @@ export function ReportIssueModal({ onClose, onCreated }: ReportIssueModalProps) 
 
     setLoading(true);
     try {
-      const res = await fetch("/api/maintenance/tickets", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: title.trim(),
-          description: description.trim(),
-          category,
-          urgency,
-          location: location.trim() || undefined,
-        }),
+      const result = await createTicket({
+        title: title.trim(),
+        description: description.trim(),
+        category,
+        urgency,
+        location: location.trim() || undefined,
       });
 
-      if (!res.ok) {
-        const data = await res.json();
-        setError(data.error || tCommon("error"));
+      if (result.error) {
+        setError(result.error);
         return;
       }
 
-      const data = await res.json();
-      setSuccessTrackingNumber(data.trackingNumber);
+      setSuccessTrackingNumber(result.trackingNumber ?? "");
     } catch {
       setError(tCommon("error"));
     } finally {
