@@ -165,10 +165,21 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     });
   });
 
-  // TODO: Queue email with invitation link
-  console.log(
-    `[stripe:webhook] Created subscription for ${customerEmail}. Invite token: ${inviteToken}`
-  );
+  // Send invitation email
+  try {
+    const { sendEmail } = await import("@/lib/email");
+    const { invitationEmail } = await import("@/lib/email-templates");
+    const inviteLink = `${process.env.NEXTAUTH_URL}/accept-invitation?token=${inviteToken}`;
+    const email = invitationEmail({
+      buildingName: "Your new building",
+      roleName: "Admin",
+      inviteLink,
+      expiryHours: 168,
+    });
+    await sendEmail(customerEmail, email.subject, email.html);
+  } catch (emailErr) {
+    console.error("[stripe:webhook] Failed to send invitation email:", emailErr);
+  }
 }
 
 /**

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { X, RotateCcw, Eye } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -8,6 +8,7 @@ interface Version {
   id: string;
   versionNumber: number;
   fileName: string;
+  fileUrl: string;
   fileSize: number;
   mimeType: string;
   uploadedBy: { id: string; name: string };
@@ -49,23 +50,24 @@ export function VersionHistoryPanel({ documentId, onClose }: VersionHistoryPanel
   const [document, setDocument] = useState<DocumentDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function fetchDocument() {
-      setLoading(true);
-      try {
-        const res = await fetch(`/api/documents/${documentId}`);
-        if (res.ok) {
-          const data = await res.json();
-          setDocument(data);
-        }
-      } catch {
-        // ignore
-      } finally {
-        setLoading(false);
+  const fetchVersions = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/documents/${documentId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setDocument(data);
       }
+    } catch {
+      // ignore
+    } finally {
+      setLoading(false);
     }
-    fetchDocument();
   }, [documentId]);
+
+  useEffect(() => {
+    fetchVersions();
+  }, [fetchVersions]);
 
   return (
     <div className="fixed inset-y-0 right-0 z-40 flex">
@@ -145,12 +147,37 @@ export function VersionHistoryPanel({ documentId, onClose }: VersionHistoryPanel
 
                         {/* Actions */}
                         <div className="mt-2 flex items-center gap-3">
-                          <button className="inline-flex items-center gap-1 text-xs font-medium text-[#002045] hover:underline">
+                          <button
+                            onClick={() => window.open(version.fileUrl, "_blank")}
+                            className="inline-flex items-center gap-1 text-xs font-medium text-[#002045] hover:underline"
+                          >
                             <Eye className="h-3 w-3" />
                             {t("view")}
                           </button>
                           {!isCurrent && (
-                            <button className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-700 hover:underline">
+                            <button
+                              onClick={async () => {
+                                if (!confirm(t("restore") + "?")) return;
+                                try {
+                                  const res = await fetch(`/api/documents/${documentId}/versions`, {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({
+                                      fileName: version.fileName,
+                                      fileUrl: version.fileUrl,
+                                      fileSize: version.fileSize,
+                                      mimeType: version.mimeType,
+                                    }),
+                                  });
+                                  if (res.ok) {
+                                    fetchVersions();
+                                  }
+                                } catch {
+                                  // silent
+                                }
+                              }}
+                              className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-700 hover:underline"
+                            >
                               <RotateCcw className="h-3 w-3" />
                               {t("restore")}
                             </button>

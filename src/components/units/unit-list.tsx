@@ -2,6 +2,7 @@ import { useTranslations } from "next-intl";
 import { Building2, Percent, Ruler, AlertTriangle } from "lucide-react";
 import { AddUnitButton, EditUnitButton } from "./unit-actions";
 import { DeleteUnitButton } from "./unit-delete-button";
+import { ImportUnitsButton } from "./import-units-button";
 import type { UnitsData } from "@/lib/dal";
 
 interface UnitListProps {
@@ -37,7 +38,10 @@ export function UnitList({ initialData }: UnitListProps) {
             {tUnits("title")}
           </h1>
         </div>
-        <AddUnitButton totalOwnershipShare={totalOwnershipShare} />
+        <div className="flex items-center gap-3">
+          <ImportUnitsButton />
+          <AddUnitButton totalOwnershipShare={totalOwnershipShare} />
+        </div>
       </div>
 
       {/* Summary Cards */}

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import crypto from "crypto";
 import { requireBuildingContext } from "@/lib/auth";
 import { requireRole, hasMinimumRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
@@ -267,5 +268,139 @@ export async function toggleUserActive(id: string): Promise<ActionResult> {
   } catch (error) {
     console.error("Failed to toggle user active:", error);
     return { error: error instanceof Error ? error.message : "Internal server error" };
+  }
+}
+
+// ─── Bulk Import ─────────────────────────────────────────────────────────────
+
+interface ImportRow {
+  [key: string]: string;
+}
+
+interface ImportResultType {
+  created: number;
+  skipped: number;
+  errors: { row: number; message: string }[];
+  summary?: Record<string, unknown>;
+}
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const VALID_ROLES = Object.values(BuildingRole);
+const TRUTHY = new Set(["true", "yes", "1", "igen"]);
+
+export async function importUsers(rows: ImportRow[]): Promise<ImportResultType> {
+  try {
+    const { userId: currentUserId, buildingId, role: activeRole } = await requireBuildingContext();
+    await requireRole(activeRole, "ADMIN");
+
+    // Build unit number → id map
+    const units = await prisma.unit.findMany({
+      where: { buildingId },
+      select: { id: true, number: true },
+    });
+    const unitMap = new Map(units.map((u) => [u.number, u.id]));
+
+    // Get existing building members
+    const existingMembers = await prisma.userBuilding.findMany({
+      where: { buildingId },
+      include: { user: { select: { email: true } } },
+    });
+    const existingEmails = new Set(existingMembers.map((m) => m.user.email.toLowerCase()));
+
+    const errors: { row: number; message: string }[] = [];
+    const credentials: { email: string; temporaryPassword: string }[] = [];
+    const seenEmails = new Set<string>();
+    let createdCount = 0;
+
+    // Process in batches of 50
+    const BATCH_SIZE = 50;
+    for (let batchStart = 0; batchStart < rows.length; batchStart += BATCH_SIZE) {
+      const batch = rows.slice(batchStart, batchStart + BATCH_SIZE);
+
+      for (let i = 0; i < batch.length; i++) {
+        const row = batch[i];
+        const rowNum = batchStart + i + 2;
+
+        const email = row.email?.trim()?.toLowerCase();
+        const name = row.name?.trim();
+        const role = row.role?.trim()?.toUpperCase();
+        const unitNumber = row.unit_number?.trim();
+        const isPrimaryContact = TRUTHY.has((row.primary_contact ?? "").trim().toLowerCase());
+        const relationship = (row.relationship?.trim()?.toUpperCase() || "OWNER") as string;
+
+        if (!email || !EMAIL_RE.test(email)) { errors.push({ row: rowNum, message: "Invalid email" }); continue; }
+        if (seenEmails.has(email)) { errors.push({ row: rowNum, message: `Duplicate email ${email}` }); continue; }
+        if (existingEmails.has(email)) { errors.push({ row: rowNum, message: `${email} already in building` }); continue; }
+        if (!name) { errors.push({ row: rowNum, message: "Name is required" }); continue; }
+        if (!role || !VALID_ROLES.includes(role as BuildingRole)) { errors.push({ row: rowNum, message: `Invalid role: ${role}` }); continue; }
+        if (!unitNumber) { errors.push({ row: rowNum, message: "Unit number is required" }); continue; }
+        const unitId = unitMap.get(unitNumber);
+        if (!unitId) { errors.push({ row: rowNum, message: `Unit ${unitNumber} not found` }); continue; }
+
+        // RBAC: only SUPER_ADMIN can assign ADMIN+
+        if ((role === "SUPER_ADMIN" || role === "ADMIN") && !hasMinimumRole(activeRole, "SUPER_ADMIN")) {
+          errors.push({ row: rowNum, message: "Only SUPER_ADMIN can assign ADMIN roles" });
+          continue;
+        }
+
+        const tempPassword = crypto.randomBytes(12).toString("base64url");
+
+        try {
+          const passwordHash = await hashPassword(tempPassword);
+
+          await prisma.$transaction(async (tx) => {
+            let user = await tx.user.findUnique({ where: { email } });
+            if (!user) {
+              user = await tx.user.create({ data: { email, name, passwordHash } });
+            }
+
+            await tx.userBuilding.create({
+              data: { userId: user.id, buildingId, role: role as BuildingRole },
+            });
+
+            const unitRel = Object.values(UnitRelationship).includes(relationship as UnitRelationship)
+              ? (relationship as UnitRelationship)
+              : UnitRelationship.OWNER;
+
+            if (isPrimaryContact) {
+              await tx.unitUser.updateMany({
+                where: { unitId, isPrimaryContact: true },
+                data: { isPrimaryContact: false },
+              });
+            }
+
+            await tx.unitUser.create({
+              data: { userId: user.id, unitId, relationship: unitRel, isPrimaryContact },
+            });
+          });
+
+          seenEmails.add(email);
+          existingEmails.add(email);
+          credentials.push({ email, temporaryPassword: tempPassword });
+          createdCount++;
+        } catch (err) {
+          errors.push({ row: rowNum, message: err instanceof Error ? err.message : "Failed to create user" });
+        }
+      }
+    }
+
+    await createAuditLog({
+      entityType: "User",
+      entityId: "bulk-import",
+      action: "CREATE",
+      userId: currentUserId,
+      newValue: { importedCount: createdCount, errorCount: errors.length },
+    });
+
+    revalidatePath("/users");
+    return {
+      created: createdCount,
+      skipped: 0,
+      errors,
+      summary: { credentials },
+    };
+  } catch (error) {
+    console.error("Failed to import users:", error);
+    return { created: 0, skipped: 0, errors: [{ row: 0, message: error instanceof Error ? error.message : "Internal server error" }] };
   }
 }

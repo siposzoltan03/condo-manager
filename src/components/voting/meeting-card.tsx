@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { MapPin, Users, Calendar } from "lucide-react";
+import { MapPin, Users, Calendar, ClipboardList } from "lucide-react";
 import { RsvpButton } from "./rsvp-button";
+import { AgendaModal } from "./agenda-modal";
 
 interface MeetingSummary {
   id: string;
@@ -12,6 +13,7 @@ interface MeetingSummary {
   date: string;
   time: string;
   location: string | null;
+  agenda?: unknown;
   rsvpCounts: { attending: number; notAttending: number; proxy: number; total: number };
   myRsvp: string | null;
   voteCount: number;
@@ -24,6 +26,7 @@ interface Props {
 
 export function MeetingCard({ meeting, onRsvpChanged }: Props) {
   const t = useTranslations("voting");
+  const [showAgenda, setShowAgenda] = useState(false);
   const meetingDate = new Date(meeting.date);
   const day = meetingDate.getDate();
   const month = meetingDate.toLocaleDateString(undefined, { month: "short" });
@@ -67,6 +70,17 @@ export function MeetingCard({ meeting, onRsvpChanged }: Props) {
           </p>
         )}
 
+        {/* Agenda button */}
+        {Array.isArray(meeting.agenda) && meeting.agenda.length > 0 && (
+          <button
+            onClick={() => setShowAgenda(true)}
+            className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-[#002045] hover:underline"
+          >
+            <ClipboardList className="h-3.5 w-3.5" />
+            {t("viewAgenda")}
+          </button>
+        )}
+
         {/* RSVP status badge */}
         {meeting.myRsvp && (
           <div className="mt-2">
@@ -94,6 +108,14 @@ export function MeetingCard({ meeting, onRsvpChanged }: Props) {
             onChanged={onRsvpChanged}
           />
         </div>
+      )}
+
+      {showAgenda && (
+        <AgendaModal
+          meetingTitle={meeting.title}
+          agenda={meeting.agenda}
+          onClose={() => setShowAgenda(false)}
+        />
       )}
     </div>
   );

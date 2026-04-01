@@ -7,6 +7,7 @@ import dynamic from "next/dynamic";
 import { Search, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { toggleUserActive } from "@/app/actions/users";
+import { ImportUsersButton } from "./import-users-button";
 import type { UsersData } from "@/lib/dal";
 
 const UserFormModal = dynamic(() => import("./user-form").then((m) => m.UserFormModal));
@@ -168,13 +169,16 @@ export function UserList({ initialData }: UserListProps) {
             {tUsers("totalCount", { count: total })}
           </p>
         </div>
-        <button
-          onClick={handleCreateUser}
-          className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 transition-colors"
-        >
-          <Plus className="h-4 w-4" />
-          {tUsers("createUser")}
-        </button>
+        <div className="flex items-center gap-3">
+          <ImportUsersButton />
+          <button
+            onClick={handleCreateUser}
+            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+            {tUsers("createUser")}
+          </button>
+        </div>
       </div>
 
       {/* Filters */}

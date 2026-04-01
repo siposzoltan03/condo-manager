@@ -8,6 +8,8 @@ import { ArrowLeft } from "lucide-react";
 import { BudgetSummaryCards } from "./budget-summary-cards";
 import { BudgetActionBar } from "./budget-action-bar";
 import { BudgetTable } from "./budget-table";
+import { ImportChargesButton } from "./import-charges-button";
+import { ImportAccountsButton } from "./import-accounts-button";
 import { LedgerTable } from "./ledger-table";
 import { AddExpenseModal } from "./add-expense-modal";
 import { AddIncomeModal } from "./add-income-modal";
@@ -172,10 +174,18 @@ export function BuildingFinanceOverview() {
         onAddIncome={() => setIncomeModalOpen(true)}
         onImportStatement={() => setCsvDialogOpen(true)}
         onGenerateReport={() => {
-          // Generate report - could trigger CSV export of ledger
-          window.print();
+          const params = new URLSearchParams();
+          if (fromDate) params.set("from", fromDate);
+          if (toDate) params.set("to", toDate);
+          window.open(`/api/finance/ledger/export?${params.toString()}`, "_blank");
         }}
       />
+
+      {/* Import buttons */}
+      <div className="flex items-center gap-3">
+        <ImportChargesButton />
+        <ImportAccountsButton />
+      </div>
 
       {/* Budget + Ledger grid */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">

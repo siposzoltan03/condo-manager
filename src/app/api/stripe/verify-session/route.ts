@@ -134,10 +134,22 @@ export async function POST(request: NextRequest) {
       return { subscription, placeholderUser };
     });
 
-    // TODO: Queue email with invitation link containing inviteToken
-    console.log(
-      `[stripe:verify-session] Admin setup invitation created for ${customerEmail}. Token: ${inviteToken}`
-    );
+    // Send invitation email
+    try {
+      const { sendEmail } = await import("@/lib/email");
+      const { invitationEmail } = await import("@/lib/email-templates");
+      const inviteLink = `${process.env.NEXTAUTH_URL}/accept-invitation?token=${inviteToken}`;
+      const email = invitationEmail({
+        buildingName: "Your new building",
+        roleName: "Admin",
+        inviteLink,
+        expiryHours: 168,
+      });
+      await sendEmail(customerEmail, email.subject, email.html);
+    } catch (emailErr) {
+      console.error("[stripe:verify-session] Failed to send invitation email:", emailErr);
+      // Non-fatal — invitation token is created, user can use the link from success page
+    }
 
     return NextResponse.json({
       subscription: {
