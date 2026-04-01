@@ -97,3 +97,46 @@ export async function createVote(input: CreateVoteInput): Promise<ActionResult> 
     return { error: error instanceof Error ? error.message : "Internal server error" };
   }
 }
+
+export async function saveMinutes(
+  meetingId: string,
+  minutes: string
+): Promise<ActionResult> {
+  try {
+    const { userId, buildingId, role } = await requireBuildingContext();
+    await requireRole(role, "BOARD_MEMBER");
+    await requireFeature(buildingId, "voting");
+
+    const meeting = await prisma.meeting.findUnique({
+      where: { id: meetingId },
+      select: { id: true, buildingId: true },
+    });
+
+    if (!meeting || meeting.buildingId !== buildingId) {
+      return { error: "Meeting not found" };
+    }
+
+    await prisma.meeting.update({
+      where: { id: meetingId },
+      data: {
+        minutes,
+        minutesUpdatedAt: new Date(),
+        minutesUpdatedById: userId,
+      },
+    });
+
+    await createAuditLog({
+      entityType: "Meeting",
+      entityId: meetingId,
+      action: "UPDATE",
+      userId,
+      newValue: { minutesLength: minutes.length },
+    });
+
+    revalidatePath(`/voting/meetings/${meetingId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to save minutes:", error);
+    return { error: error instanceof Error ? error.message : "Internal server error" };
+  }
+}

@@ -7,3 +7,28 @@
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-manrope: var(--font-manrope), sans-serif;
 }
+
+/* Print styles for meeting minutes and other printable content */
+@media print {
+  nav,
+  aside,
+  .no-print,
+  button:not(.print-include) {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    font-size: 12pt;
+  }
+
+  .rounded-xl {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+}

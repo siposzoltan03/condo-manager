@@ -294,6 +294,7 @@ model User {
   ticketComments          TicketComment[]             @relation("TicketComments")
   contractorRatings       ContractorRating[]          @relation("ContractorRatings")
   meetingsCreated         Meeting[]                   @relation("MeetingCreator")
+  minutesEdited           Meeting[]                   @relation("MinutesEditor")
   meetingRsvps            MeetingRsvp[]
   votesCreated            Vote[]                      @relation("VoteCreator")
   ballots                 Ballot[]                    @relation("BallotVoter")
@@ -659,15 +660,18 @@ model Meeting {
   time        String        // "HH:mm" format
   location    String?
   agenda      Json          @default("[]")
-  minutes     String?       @db.Text
-  createdBy   User          @relation("MeetingCreator", fields: [createdById], references: [id])
-  createdById String
-  building    Building      @relation(fields: [buildingId], references: [id])
-  buildingId  String
-  rsvps       MeetingRsvp[]
-  votes       Vote[]
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  minutes            String?       @db.Text
+  minutesUpdatedAt   DateTime?
+  minutesUpdatedBy   User?         @relation("MinutesEditor", fields: [minutesUpdatedById], references: [id])
+  minutesUpdatedById String?
+  createdBy          User          @relation("MeetingCreator", fields: [createdById], references: [id])
+  createdById        String
+  building           Building      @relation(fields: [buildingId], references: [id])
+  buildingId         String
+  rsvps              MeetingRsvp[]
+  votes              Vote[]
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
 
   @@index([date])
   @@index([createdById])

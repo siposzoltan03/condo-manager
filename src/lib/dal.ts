@@ -426,6 +426,139 @@ export const getVotes = cache(async (): Promise<VotesData> => {
   };
 });
 
+// ─── Meeting Detail ──────────────────────────────────────────────────────────
+
+export interface MeetingVoteResult {
+  id: string;
+  title: string;
+  status: string;
+  voteType: string;
+  isSecret: boolean;
+  deadline: string;
+  options: { id: string; label: string; votes: number; weight: number }[];
+  totalWeight: number;
+  ballotCount: number;
+  quorumRequired: number;
+  passed: boolean | null;
+}
+
+export interface MeetingAttendee {
+  userId: string;
+  userName: string;
+  status: string;
+}
+
+export interface MeetingDetailData {
+  id: string;
+  title: string;
+  description: string | null;
+  date: string;
+  time: string;
+  location: string | null;
+  agenda: unknown;
+  minutes: string | null;
+  minutesUpdatedAt: string | null;
+  minutesUpdatedBy: { name: string } | null;
+  createdBy: { name: string };
+  attendees: MeetingAttendee[];
+  votes: MeetingVoteResult[];
+  canEditMinutes: boolean;
+}
+
+export const getMeetingDetail = cache(async (id: string): Promise<MeetingDetailData> => {
+  const { buildingId, role } = await requireBuildingContext();
+  await requireFeature(buildingId, "voting");
+
+  const meeting = await prisma.meeting.findUnique({
+    where: { id },
+    include: {
+      createdBy: { select: { name: true } },
+      minutesUpdatedBy: { select: { name: true } },
+      rsvps: {
+        include: { user: { select: { id: true, name: true } } },
+      },
+      votes: {
+        include: {
+          options: { orderBy: { sortOrder: "asc" as const } },
+          ballots: { select: { optionId: true, weight: true } },
+          _count: { select: { ballots: true } },
+        },
+      },
+    },
+  });
+
+  if (!meeting || meeting.buildingId !== buildingId) {
+    throw new Error("Meeting not found");
+  }
+
+  const canEditMinutes = hasMinimumRole(role, "BOARD_MEMBER");
+
+  // Calculate vote results
+  const votes: MeetingVoteResult[] = meeting.votes.map((v) => {
+    const optionWeights = new Map<string, number>();
+    const optionCounts = new Map<string, number>();
+    let totalWeight = 0;
+
+    for (const ballot of v.ballots) {
+      const w = Number(ballot.weight);
+      totalWeight += w;
+      optionWeights.set(ballot.optionId, (optionWeights.get(ballot.optionId) ?? 0) + w);
+      optionCounts.set(ballot.optionId, (optionCounts.get(ballot.optionId) ?? 0) + 1);
+    }
+
+    const quorumRequired = Number(v.quorumRequired);
+    // For YES_NO votes, check if "Yes" option has > quorum weight
+    let passed: boolean | null = null;
+    if (v.status === "CLOSED" && totalWeight > 0) {
+      const yesOption = v.options.find((o) => o.label.toLowerCase() === "yes" || o.label.toLowerCase() === "igen");
+      if (yesOption) {
+        const yesWeight = optionWeights.get(yesOption.id) ?? 0;
+        passed = yesWeight / totalWeight >= quorumRequired;
+      }
+    }
+
+    return {
+      id: v.id,
+      title: v.title,
+      status: v.status,
+      voteType: v.voteType,
+      isSecret: v.isSecret,
+      deadline: v.deadline.toISOString(),
+      options: v.options.map((o) => ({
+        id: o.id,
+        label: o.label,
+        votes: optionCounts.get(o.id) ?? 0,
+        weight: optionWeights.get(o.id) ?? 0,
+      })),
+      totalWeight,
+      ballotCount: v._count.ballots,
+      quorumRequired,
+      passed,
+    };
+  });
+
+  return {
+    id: meeting.id,
+    title: meeting.title,
+    description: meeting.description,
+    date: meeting.date.toISOString(),
+    time: meeting.time,
+    location: meeting.location,
+    agenda: meeting.agenda,
+    minutes: meeting.minutes,
+    minutesUpdatedAt: meeting.minutesUpdatedAt?.toISOString() ?? null,
+    minutesUpdatedBy: meeting.minutesUpdatedBy ? { name: meeting.minutesUpdatedBy.name } : null,
+    createdBy: { name: meeting.createdBy.name },
+    attendees: meeting.rsvps.map((r) => ({
+      userId: r.user.id,
+      userName: r.user.name,
+      status: r.status,
+    })),
+    votes,
+    canEditMinutes,
+  };
+});
+
 // ─── Documents ───────────────────────────────────────────────────────────────
 
 export interface DocumentListItem {

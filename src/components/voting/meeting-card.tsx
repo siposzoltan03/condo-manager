@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { MapPin, Users, Calendar, ClipboardList } from "lucide-react";
+import Link from "next/link";
+import { MapPin, Users, Calendar, ClipboardList, FileText, ArrowRight } from "lucide-react";
 import { RsvpButton } from "./rsvp-button";
 import { AgendaModal } from "./agenda-modal";
 
@@ -14,6 +15,7 @@ interface MeetingSummary {
   time: string;
   location: string | null;
   agenda?: unknown;
+  hasMinutes?: boolean;
   rsvpCounts: { attending: number; notAttending: number; proxy: number; total: number };
   myRsvp: string | null;
   voteCount: number;
@@ -42,7 +44,17 @@ export function MeetingCard({ meeting, onRsvpChanged }: Props) {
 
       {/* Content */}
       <div className="min-w-0 flex-1">
-        <h3 className="text-lg font-semibold text-slate-900">{meeting.title}</h3>
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/voting/meetings/${meeting.id}`}
+            className="text-lg font-semibold text-slate-900 hover:text-[#002045] transition-colors"
+          >
+            {meeting.title}
+          </Link>
+          {meeting.hasMinutes && (
+            <span title={t("hasMinutes")}><FileText className="h-4 w-4 text-[#515f74] shrink-0" /></span>
+          )}
+        </div>
 
         <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500">
           <div className="flex items-center gap-1">
@@ -81,9 +93,9 @@ export function MeetingCard({ meeting, onRsvpChanged }: Props) {
           </button>
         )}
 
-        {/* RSVP status badge */}
-        {meeting.myRsvp && (
-          <div className="mt-2">
+        {/* RSVP status badge + View Details */}
+        <div className="mt-2 flex items-center gap-3">
+          {meeting.myRsvp && (
             <span
               className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${
                 meeting.myRsvp === "ATTENDING"
@@ -95,8 +107,15 @@ export function MeetingCard({ meeting, onRsvpChanged }: Props) {
             >
               {t(`rsvpStatus_${meeting.myRsvp}`)}
             </span>
-          </div>
-        )}
+          )}
+          <Link
+            href={`/voting/meetings/${meeting.id}`}
+            className="inline-flex items-center gap-1 text-xs font-medium text-[#002045] hover:underline"
+          >
+            {t("viewDetails")}
+            <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
       </div>
 
       {/* Actions */}
