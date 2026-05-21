@@ -2,6 +2,7 @@ import { Worker } from "bullmq";
 import Redis from "ioredis";
 import { processNotificationJob } from "./jobs";
 import { processVotingJob } from "./processors/voting";
+import { processReportJob } from "./processors/reports";
 
 const connection = new Redis(process.env.REDIS_URL ?? "redis://localhost:6379", {
   maxRetriesPerRequest: null,
@@ -67,8 +68,30 @@ scheduledWorker.on("failed", (job, err) => {
   console.error(`Scheduled job ${job?.id} failed:`, err.message);
 });
 
+// PDF generation is CPU-spiky (fontkit decode, layout, encode). Cap
+// concurrency so a queue burst doesn't starve the rest of the workers.
+const reportsWorker = new Worker(
+  "reports",
+  async (job) => {
+    console.log(`Processing report job ${job.id}: ${job.name}`);
+    await processReportJob(job);
+  },
+  {
+    connection,
+    concurrency: 2,
+  }
+);
+
+reportsWorker.on("completed", (job) => {
+  console.log(`Report job ${job.id} completed successfully`);
+});
+
+reportsWorker.on("failed", (job, err) => {
+  console.error(`Report job ${job?.id} failed:`, err.message);
+});
+
 console.log(
-  "Worker started, listening for jobs on 'notifications', 'voting', and 'scheduled' queues..."
+  "Worker started, listening for jobs on 'notifications', 'voting', 'scheduled', and 'reports' queues..."
 );
 
 const shutdown = async () => {
@@ -76,6 +99,7 @@ const shutdown = async () => {
   await notificationWorker.close();
   await votingWorker.close();
   await scheduledWorker.close();
+  await reportsWorker.close();
   await connection.quit();
   process.exit(0);
 };
