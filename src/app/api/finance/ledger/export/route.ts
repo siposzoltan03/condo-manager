@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
 import { hasMinimumRole } from "@/lib/rbac";
 import { requireFeature } from "@/lib/feature-gate";
-import { prisma } from "@/lib/prisma";
+import { listLedgerEntriesForExport } from "@/lib/finance-dal";
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,34 +15,13 @@ export async function GET(request: NextRequest) {
     await requireFeature(buildingId, "finance");
 
     const { searchParams } = request.nextUrl;
-    const from = searchParams.get("from");
-    const to = searchParams.get("to");
+    const fromRaw = searchParams.get("from");
+    const toRaw = searchParams.get("to");
+    const from = fromRaw ? new Date(fromRaw) : null;
+    const to = toRaw ? new Date(toRaw + "T23:59:59") : null;
 
-    const where: Record<string, unknown> = {
-      OR: [
-        { debitAccount: { buildingId } },
-        { creditAccount: { buildingId } },
-      ],
-    };
+    const entries = await listLedgerEntriesForExport({ buildingId, from, to });
 
-    if (from || to) {
-      where.date = {
-        ...(from ? { gte: new Date(from) } : {}),
-        ...(to ? { lte: new Date(to + "T23:59:59") } : {}),
-      };
-    }
-
-    const entries = await prisma.ledgerEntry.findMany({
-      where,
-      include: {
-        debitAccount: { select: { name: true } },
-        creditAccount: { select: { name: true } },
-      },
-      orderBy: { date: "asc" },
-      take: 10000,
-    });
-
-    // Build CSV
     const header = "Date,Description,Debit Account,Credit Account,Amount";
     const rows = entries.map((e) => {
       const date = e.date.toISOString().split("T")[0];
@@ -54,8 +33,8 @@ export async function GET(request: NextRequest) {
     });
 
     const csv = [header, ...rows].join("\n");
-    const fromLabel = from ?? "all";
-    const toLabel = to ?? "now";
+    const fromLabel = fromRaw ?? "all";
+    const toLabel = toRaw ?? "now";
 
     return new Response(csv, {
       headers: {
@@ -65,6 +44,9 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Failed to export ledger:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }

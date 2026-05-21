@@ -25,6 +25,16 @@ function formatCurrency(value: number, locale: string): string {
   }).format(value);
 }
 
+interface CardConfig {
+  label: string;
+  value: number;
+  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+  /** CSS color expression (token or color-mix). */
+  iconColor: string;
+  /** CSS color expression for the soft background ring around the icon. */
+  iconBg: string;
+}
+
 export function BudgetSummaryCards({ summary, loading }: BudgetSummaryCardsProps) {
   const t = useTranslations("finance");
   const locale = useLocale();
@@ -33,47 +43,46 @@ export function BudgetSummaryCards({ summary, loading }: BudgetSummaryCardsProps
     return (
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="animate-pulse rounded-xl border border-gray-100 bg-white p-6">
-            <div className="h-4 w-20 rounded bg-gray-200" />
-            <div className="mt-4 h-8 w-28 rounded bg-gray-200" />
+          <div
+            key={i}
+            className="animate-pulse rounded-xl border border-ink/8 bg-card p-6"
+          >
+            <div className="h-4 w-20 rounded bg-bg-3" />
+            <div className="mt-4 h-8 w-28 rounded bg-bg-3" />
           </div>
         ))}
       </div>
     );
   }
 
-  const cards = [
+  const cards: CardConfig[] = [
     {
       label: t("currentFund"),
       value: summary?.currentFundBalance ?? 0,
       icon: Wallet,
-      iconBg: "bg-blue-100",
-      iconColor: "text-blue-600",
-      badge: null,
+      iconColor: "var(--color-blue)",
+      iconBg: "color-mix(in srgb, var(--color-blue) 14%, transparent)",
     },
     {
       label: t("reserveFund"),
       value: summary?.reserveFundBalance ?? 0,
       icon: ShieldCheck,
-      iconBg: "bg-purple-100",
-      iconColor: "text-purple-600",
-      badge: null,
+      iconColor: "var(--color-moss)",
+      iconBg: "color-mix(in srgb, var(--color-moss) 16%, transparent)",
     },
     {
       label: t("totalIncomeYtd"),
       value: summary?.totalIncome ?? 0,
       icon: TrendingUp,
-      iconBg: "bg-green-100",
-      iconColor: "text-green-600",
-      badge: null,
+      iconColor: "var(--color-good)",
+      iconBg: "color-mix(in srgb, var(--color-good) 16%, transparent)",
     },
     {
       label: t("totalExpensesYtd"),
       value: summary?.totalExpenses ?? 0,
       icon: TrendingDown,
-      iconBg: "bg-red-100",
-      iconColor: "text-red-600",
-      badge: null,
+      iconColor: "var(--color-danger)",
+      iconBg: "color-mix(in srgb, var(--color-danger) 14%, transparent)",
     },
   ];
 
@@ -84,22 +93,21 @@ export function BudgetSummaryCards({ summary, loading }: BudgetSummaryCardsProps
         return (
           <div
             key={card.label}
-            className="rounded-xl border border-gray-100 bg-white p-6"
+            className="rounded-xl border border-ink/8 bg-card p-6"
           >
-            <div className="flex items-center justify-between">
-              <div className={`inline-flex items-center justify-center rounded-full p-2.5 ${card.iconBg}`}>
-                <Icon className={`h-5 w-5 ${card.iconColor}`} />
-              </div>
-              {card.badge && (
-                <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-700">
-                  {card.badge}
-                </span>
-              )}
+            <div
+              className="inline-flex items-center justify-center rounded-full p-2.5"
+              style={{ background: card.iconBg }}
+            >
+              <Icon
+                className="h-5 w-5"
+                style={{ color: card.iconColor }}
+              />
             </div>
-            <p className="mt-4 text-xs font-medium uppercase tracking-wider text-[#515f74]">
+            <p className="mt-4 font-mono text-[11px] uppercase tracking-wider text-muted">
               {card.label}
             </p>
-            <p className="mt-1 text-2xl font-extrabold text-[#002045]">
+            <p className="mt-1 font-display text-2xl text-ink leading-tight">
               {formatCurrency(card.value, locale)}
             </p>
           </div>

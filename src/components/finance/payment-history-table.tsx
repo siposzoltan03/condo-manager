@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useLocale } from "next-intl";
 import { Download, FileText, ChevronLeft, ChevronRight } from "lucide-react";
+import { DataTable, type Column } from "@/components/shared/data-table";
 
 interface Charge {
   id: string;
@@ -51,25 +52,53 @@ function formatMonth(monthStr: string, locale: string): string {
   }).format(date);
 }
 
-function StatusBadge({ status, t }: { status: string; t: (key: string) => string }) {
-  const config: Record<string, { bg: string; text: string; dot: string; label: string }> = {
-    PAID: { bg: "bg-green-100", text: "text-green-700", dot: "bg-green-500", label: t("paid") },
-    OVERDUE: { bg: "bg-red-100", text: "text-red-700", dot: "bg-red-500", label: t("overdue") },
-    UNPAID: { bg: "bg-amber-100", text: "text-amber-700", dot: "bg-amber-500", label: t("pending") },
-  };
+const STATUS_STYLE: Record<string, React.CSSProperties> = {
+  PAID: {
+    background: "color-mix(in srgb, var(--color-good) 18%, transparent)",
+    color: "var(--color-good)",
+  },
+  OVERDUE: {
+    background: "color-mix(in srgb, var(--color-danger) 16%, transparent)",
+    color: "var(--color-danger)",
+  },
+  UNPAID: {
+    background: "color-mix(in srgb, var(--color-ochre) 22%, transparent)",
+    color: "color-mix(in srgb, var(--color-ochre) 75%, var(--color-ink))",
+  },
+};
 
-  const c = config[status] ?? config.UNPAID;
+const STATUS_DOT: Record<string, string> = {
+  PAID: "var(--color-good)",
+  OVERDUE: "var(--color-danger)",
+  UNPAID: "var(--color-ochre)",
+};
+
+function StatusBadge({ status, t }: { status: string; t: (key: string) => string }) {
+  const style = STATUS_STYLE[status] ?? STATUS_STYLE.UNPAID;
+  const dotColor = STATUS_DOT[status] ?? STATUS_DOT.UNPAID;
+  const label =
+    status === "PAID"
+      ? t("paid")
+      : status === "OVERDUE"
+        ? t("overdue")
+        : t("pending");
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${c.bg} ${c.text}`}>
-      <span className={`inline-block h-2 w-2 rounded-full ${c.dot}`} />
-      {c.label}
+    <span
+      className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-mono text-[11px] uppercase tracking-wider"
+      style={style}
+    >
+      <span
+        className="inline-block h-1.5 w-1.5 rounded-full"
+        style={{ background: dotColor }}
+      />
+      {label}
     </span>
   );
 }
 
 export function PaymentHistoryTable({
   charges,
-  total,
+  total: _total,
   page,
   totalPages,
   onPageChange,
@@ -77,6 +106,7 @@ export function PaymentHistoryTable({
 }: PaymentHistoryTableProps) {
   const t = useTranslations("finance");
   const locale = useLocale();
+  void _total;
 
   const escapeCsvField = (field: string): string => {
     if (field.includes(",") || field.includes('"') || field.includes("\n")) {
@@ -94,7 +124,9 @@ export function PaymentHistoryTable({
       c.paidAt ?? "",
       c.status,
     ]);
-    const csv = [headers, ...rows].map((r) => r.map(escapeCsvField).join(",")).join("\n");
+    const csv = [headers, ...rows]
+      .map((r) => r.map(escapeCsvField).join(","))
+      .join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -104,101 +136,97 @@ export function PaymentHistoryTable({
     URL.revokeObjectURL(url);
   };
 
-  return (
-    <div className="rounded-xl bg-white">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-gray-100 px-8 py-6">
-        <h2 className="text-lg font-bold text-[#002045]">{t("financialHistory")}</h2>
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={handleExportCsv}
-            className="flex items-center gap-2 rounded-lg bg-[#002045] px-4 py-2 text-sm font-medium text-white hover:bg-[#003060]"
-          >
-            <Download className="h-4 w-4" />
-            {t("exportCsv")}
-          </button>
+  const columns: Column<Charge>[] = [
+    {
+      key: "month",
+      header: t("month"),
+      primary: true,
+      render: (c) => (
+        <div>
+          <p className="text-sm text-ink">{formatMonth(c.month, locale)}</p>
+          {c.invoiceId && (
+            <p className="mt-0.5 font-mono text-[11px] text-muted">
+              {c.invoiceId}
+            </p>
+          )}
         </div>
+      ),
+    },
+    {
+      key: "amount",
+      header: t("amount"),
+      mono: true,
+      render: (c) => (
+        <span className="text-ink">{formatCurrency(c.amount, locale)}</span>
+      ),
+    },
+    {
+      key: "dueDate",
+      header: t("dueDate"),
+      mono: true,
+      render: (c) => (
+        <span className="text-[11px] text-muted">{formatDate(c.dueDate, locale)}</span>
+      ),
+    },
+    {
+      key: "paidDate",
+      header: t("paidDate"),
+      mono: true,
+      render: (c) => (
+        <span className="text-[11px] text-muted">{formatDate(c.paidAt, locale)}</span>
+      ),
+    },
+    {
+      key: "status",
+      header: t("status"),
+      render: (c) => <StatusBadge status={c.status} t={t} />,
+    },
+  ];
+
+  return (
+    <div className="rounded-xl border border-ink/8 bg-card overflow-hidden">
+      {/* Header */}
+      <div className="flex flex-col gap-3 border-b border-ink/8 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-5">
+        <h2 className="font-mono text-xs uppercase tracking-wider text-ink">
+          {t("financialHistory")}
+        </h2>
+        <button
+          type="button"
+          onClick={handleExportCsv}
+          className="inline-flex min-h-11 items-center gap-2 self-start rounded-md bg-ink px-4 py-2 font-mono text-[11px] uppercase tracking-wider text-bg hover:opacity-90 transition-opacity sm:min-h-0 sm:self-auto"
+        >
+          <Download className="h-4 w-4" />
+          {t("exportCsv")}
+        </button>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto">
-        {loading ? (
-          <div className="space-y-4 p-8">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-12 animate-pulse rounded bg-gray-100" />
-            ))}
+      <DataTable
+        rows={charges}
+        columns={columns}
+        rowKey={(c) => c.id}
+        loading={loading}
+        emptyState={
+          <div className="py-16 text-center text-sm text-muted">
+            {t("noCharges")}
           </div>
-        ) : charges.length === 0 ? (
-          <div className="py-16 text-center text-sm text-[#515f74]">{t("noCharges")}</div>
-        ) : (
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-100">
-                <th className="px-8 py-4 text-left text-xs font-semibold uppercase tracking-wider text-[#515f74]">
-                  {t("month")}
-                </th>
-                <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-[#515f74]">
-                  {t("amount")}
-                </th>
-                <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-[#515f74]">
-                  {t("dueDate")}
-                </th>
-                <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-[#515f74]">
-                  {t("paidDate")}
-                </th>
-                <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-[#515f74]">
-                  {t("status")}
-                </th>
-                <th className="px-4 py-4 text-right text-xs font-semibold uppercase tracking-wider text-[#515f74]">
-                  {t("actions")}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {charges.map((charge) => (
-                <tr
-                  key={charge.id}
-                  className="border-b border-gray-50 transition-colors hover:bg-gray-50"
-                >
-                  <td className="px-8 py-4">
-                    <p className="font-bold text-[#002045]">{formatMonth(charge.month, locale)}</p>
-                    {charge.invoiceId && (
-                      <p className="mt-0.5 text-xs text-[#515f74]">{charge.invoiceId}</p>
-                    )}
-                  </td>
-                  <td className="px-4 py-4 font-semibold text-[#002045]">
-                    {formatCurrency(charge.amount, locale)}
-                  </td>
-                  <td className="px-4 py-4 text-sm text-[#515f74]">
-                    {formatDate(charge.dueDate, locale)}
-                  </td>
-                  <td className="px-4 py-4 text-sm text-[#515f74]">
-                    {formatDate(charge.paidAt, locale)}
-                  </td>
-                  <td className="px-4 py-4">
-                    <StatusBadge status={charge.status} t={t} />
-                  </td>
-                  <td className="px-4 py-4 text-right">
-                    <button
-                      type="button"
-                      className="rounded-lg p-2 text-[#515f74] transition-colors hover:bg-gray-100 hover:text-[#002045]"
-                      title={t("receipt")}
-                    >
-                      <FileText className="h-4 w-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        }
+        rowActions={() => (
+          <button
+            type="button"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-md text-muted transition-colors hover:bg-bg-3 hover:text-ink sm:h-9 sm:w-9"
+            title={t("receipt")}
+            aria-label={t("receipt")}
+          >
+            <FileText className="h-4 w-4" />
+          </button>
         )}
-      </div>
+        className="!rounded-none !border-0"
+      />
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between border-t border-gray-100 px-8 py-4">
-          <p className="text-sm text-[#515f74]">
+        <div className="flex items-center justify-between border-t border-ink/8 px-4 py-3 sm:px-8">
+          <p className="font-mono text-[11px] text-muted">
             {t("pageOf", { page, totalPages })}
           </p>
           <div className="flex items-center gap-2">
@@ -206,7 +234,7 @@ export function PaymentHistoryTable({
               type="button"
               disabled={page <= 1}
               onClick={() => onPageChange(page - 1)}
-              className="flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-[#515f74] hover:bg-gray-50 disabled:opacity-50"
+              className="inline-flex min-h-11 items-center gap-1 rounded-md border border-ink/15 bg-card px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider text-ink-soft hover:bg-bg-3 disabled:opacity-50 transition-colors sm:min-h-0"
             >
               <ChevronLeft className="h-4 w-4" />
               {t("previous")}
@@ -215,7 +243,7 @@ export function PaymentHistoryTable({
               type="button"
               disabled={page >= totalPages}
               onClick={() => onPageChange(page + 1)}
-              className="flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-[#515f74] hover:bg-gray-50 disabled:opacity-50"
+              className="inline-flex min-h-11 items-center gap-1 rounded-md border border-ink/15 bg-card px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider text-ink-soft hover:bg-bg-3 disabled:opacity-50 transition-colors sm:min-h-0"
             >
               {t("next")}
               <ChevronRight className="h-4 w-4" />

@@ -77,6 +77,7 @@ export async function importCharges(rows: ImportRow[]): Promise<ImportResult> {
       entityId: "bulk-import",
       action: "CREATE",
       userId,
+      buildingId,
       newValue: { importedCount: result.count, errorCount: errors.length },
     });
 
@@ -173,6 +174,7 @@ export async function importAccounts(rows: ImportRow[]): Promise<ImportResult> {
       entityId: "bulk-import",
       action: "CREATE",
       userId,
+      buildingId,
       newValue: { importedCount: createdAccounts.length, errorCount: errors.length },
     });
 

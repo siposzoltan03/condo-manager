@@ -3,9 +3,80 @@ import { requireBuildingContext } from "@/lib/auth";
 import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
 import { hasMinimumRole } from "@/lib/rbac";
 import { createAuditLog } from "@/lib/audit";
-import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { parseCsv } from "@/lib/finance/csv-import";
+import {
+  findAccountInBuilding,
+  findUncategorizedAccountInBuilding,
+  findFirstAccountOfTypeInBuilding,
+  createLedgerEntriesBulk,
+} from "@/lib/finance-dal";
+
+const MAX_CSV_BYTES = 2 * 1024 * 1024;
+
+async function resolveDefaultAccounts(opts: {
+  buildingId: string;
+  debitAccountId: string | null | undefined;
+  creditAccountId: string | null | undefined;
+}): Promise<
+  | { ok: true; debitId: string; creditId: string }
+  | { ok: false; error: string }
+> {
+  let defaultDebitId = opts.debitAccountId ?? null;
+  let defaultCreditId = opts.creditAccountId ?? null;
+
+  if (!defaultDebitId || !defaultCreditId) {
+    const uncategorized = await findUncategorizedAccountInBuilding(
+      opts.buildingId,
+    );
+    if (!defaultDebitId) {
+      if (uncategorized) {
+        defaultDebitId = uncategorized.id;
+      } else {
+        const fallback = await findFirstAccountOfTypeInBuilding(
+          opts.buildingId,
+          "EXPENSE",
+        );
+        if (!fallback)
+          return {
+            ok: false,
+            error: "No EXPENSE account found for default debit mapping",
+          };
+        defaultDebitId = fallback.id;
+      }
+    }
+    if (!defaultCreditId) {
+      if (uncategorized && uncategorized.id !== defaultDebitId) {
+        defaultCreditId = uncategorized.id;
+      } else {
+        const fallback = await findFirstAccountOfTypeInBuilding(
+          opts.buildingId,
+          "ASSET",
+        );
+        if (!fallback)
+          return {
+            ok: false,
+            error: "No ASSET account found for default credit mapping",
+          };
+        defaultCreditId = fallback.id;
+      }
+    }
+  }
+
+  if (defaultDebitId === defaultCreditId) {
+    return { ok: false, error: "Debit and credit accounts must be different" };
+  }
+
+  const [debit, credit] = await Promise.all([
+    findAccountInBuilding(defaultDebitId, opts.buildingId),
+    findAccountInBuilding(defaultCreditId, opts.buildingId),
+  ]);
+  if (!debit) return { ok: false, error: "Specified debit account not found" };
+  if (!credit)
+    return { ok: false, error: "Specified credit account not found" };
+
+  return { ok: true, debitId: defaultDebitId, creditId: defaultCreditId };
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,7 +86,10 @@ export async function POST(request: NextRequest) {
       await requireFeature(buildingId, "finance");
     } catch (err) {
       if (err instanceof FeatureGateError) {
-        return NextResponse.json({ error: err.message, upgrade: true }, { status: 403 });
+        return NextResponse.json(
+          { error: err.message, upgrade: true },
+          { status: 403 },
+        );
       }
       throw err;
     }
@@ -30,143 +104,66 @@ export async function POST(request: NextRequest) {
     if (!csv || typeof csv !== "string") {
       return NextResponse.json(
         { error: "Missing required field: csv (string)" },
-        { status: 400 }
+        { status: 400 },
       );
     }
-
-    if (Buffer.byteLength(csv, "utf8") > 2 * 1024 * 1024) {
+    if (Buffer.byteLength(csv, "utf8") > MAX_CSV_BYTES) {
       return NextResponse.json(
         { error: "CSV payload too large (max 2 MB)" },
-        { status: 413 }
+        { status: 413 },
       );
     }
 
     const { validRows, errors } = parseCsv(csv);
-
     if (validRows.length === 0) {
       return NextResponse.json(
-        { created: 0, errors: errors.length > 0 ? errors : ["No valid rows found"] },
-        { status: 200 }
+        {
+          created: 0,
+          errors: errors.length > 0 ? errors : ["No valid rows found"],
+        },
+        { status: 200 },
       );
     }
 
-    // Resolve default accounts for debit/credit
-    // If user specifies account IDs, use those. Otherwise find "Uncategorized" or first available.
-    let defaultDebitId = debitAccountId ?? null;
-    let defaultCreditId = creditAccountId ?? null;
-
-    if (!defaultDebitId || !defaultCreditId) {
-      // Try to find an "Uncategorized" account for unspecified side
-      const uncategorized = await prisma.account.findFirst({
-        where: { name: { contains: "uncategorized", mode: "insensitive" }, buildingId },
-      });
-
-      if (!defaultDebitId) {
-        if (uncategorized) {
-          defaultDebitId = uncategorized.id;
-        } else {
-          // Fall back to first EXPENSE account
-          const fallback = await prisma.account.findFirst({
-            where: { type: "EXPENSE", buildingId },
-            orderBy: { name: "asc" },
-          });
-          if (!fallback) {
-            return NextResponse.json(
-              { error: "No EXPENSE account found for default debit mapping" },
-              { status: 400 }
-            );
-          }
-          defaultDebitId = fallback.id;
-        }
-      }
-
-      if (!defaultCreditId) {
-        if (uncategorized && uncategorized.id !== defaultDebitId) {
-          defaultCreditId = uncategorized.id;
-        } else {
-          // Fall back to first ASSET account
-          const fallback = await prisma.account.findFirst({
-            where: { type: "ASSET", buildingId },
-            orderBy: { name: "asc" },
-          });
-          if (!fallback) {
-            return NextResponse.json(
-              { error: "No ASSET account found for default credit mapping" },
-              { status: 400 }
-            );
-          }
-          defaultCreditId = fallback.id;
-        }
-      }
+    const resolved = await resolveDefaultAccounts({
+      buildingId,
+      debitAccountId,
+      creditAccountId,
+    });
+    if (!resolved.ok) {
+      return NextResponse.json({ error: resolved.error }, { status: 400 });
     }
 
-    // Validate debit and credit accounts are different
-    if (defaultDebitId === defaultCreditId) {
-      return NextResponse.json(
-        { error: "Debit and credit accounts must be different" },
-        { status: 400 }
-      );
-    }
-
-    // Verify both default accounts exist
-    const [debitAcct, creditAcct] = await Promise.all([
-      prisma.account.findUnique({ where: { id: defaultDebitId } }),
-      prisma.account.findUnique({ where: { id: defaultCreditId } }),
-    ]);
-
-    if (!debitAcct || debitAcct.buildingId !== buildingId) {
-      return NextResponse.json(
-        { error: "Specified debit account not found" },
-        { status: 400 }
-      );
-    }
-    if (!creditAcct || creditAcct.buildingId !== buildingId) {
-      return NextResponse.json(
-        { error: "Specified credit account not found" },
-        { status: 400 }
-      );
-    }
-
-    // Create ledger entries in a transaction
     const entries = validRows.map((row) => {
-      // If row has debit amount: debit goes to default debit account, credit from default credit account
-      // If row has credit amount: reversed — debit the credit account, credit the debit account
       const amount = row.debit ?? row.credit!;
       const isDebit = row.debit !== null && row.debit > 0;
-
       return {
         date: new Date(row.date),
-        debitAccountId: isDebit ? defaultDebitId : defaultCreditId,
-        creditAccountId: isDebit ? defaultCreditId : defaultDebitId,
+        debitAccountId: isDebit ? resolved.debitId : resolved.creditId,
+        creditAccountId: isDebit ? resolved.creditId : resolved.debitId,
         amount: new Prisma.Decimal(amount),
         description: row.description,
         createdById: userId,
       };
     });
 
-    const result = await prisma.$transaction(
-      entries.map((entry) =>
-        prisma.ledgerEntry.create({ data: entry })
-      )
-    );
+    const result = await createLedgerEntriesBulk(entries);
 
     await createAuditLog({
       entityType: "LedgerEntry",
       entityId: "csv-import",
       action: "CREATE",
       userId,
+      buildingId,
       newValue: { importedCount: result.length, rowErrors: errors.length },
     });
 
-    return NextResponse.json({
-      created: result.length,
-      errors,
-    });
+    return NextResponse.json({ created: result.length, errors });
   } catch (error) {
     console.error("Failed to import CSV:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

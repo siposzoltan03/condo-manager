@@ -2,8 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
 import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
 import { hasMinimumRole } from "@/lib/rbac";
-import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import {
+  findUnitInBuilding,
+  findFirstUserUnitId,
+  getChargeSummaryForUnit,
+} from "@/lib/finance-dal";
+
+const EMPTY_SUMMARY = {
+  currentBalance: 0,
+  nextDue: null,
+  lastPayment: null,
+} as const;
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,7 +23,10 @@ export async function GET(request: NextRequest) {
       await requireFeature(buildingId, "finance");
     } catch (err) {
       if (err instanceof FeatureGateError) {
-        return NextResponse.json({ error: err.message, upgrade: true }, { status: 403 });
+        return NextResponse.json(
+          { error: err.message, upgrade: true },
+          { status: 403 },
+        );
       }
       throw err;
     }
@@ -22,65 +35,30 @@ export async function GET(request: NextRequest) {
     const unitIdParam = searchParams.get("unitId") ?? undefined;
     const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
 
-    // Determine which unit to query
+    // Resolve target unit. Board can scope by unitId; residents fall
+    // back to their own first unit in the active building.
     let targetUnitId: string;
     if (isBoardPlus && unitIdParam) {
-      // Verify unit belongs to this building
-      const unit = await prisma.unit.findUnique({ where: { id: unitIdParam }, select: { buildingId: true } });
-      if (!unit || unit.buildingId !== buildingId) {
-        return NextResponse.json({ currentBalance: 0, nextDue: null, lastPayment: null });
-      }
-      targetUnitId = unitIdParam;
+      const unit = await findUnitInBuilding(unitIdParam, buildingId);
+      if (!unit) return NextResponse.json(EMPTY_SUMMARY);
+      targetUnitId = unit.id;
     } else {
-      // Resident: get their first unit in this building
-      const userUnit = await prisma.unitUser.findFirst({
-        where: { userId, unit: { buildingId } },
-        select: { unitId: true },
-      });
-      if (!userUnit) {
-        return NextResponse.json({ currentBalance: 0, nextDue: null, lastPayment: null });
-      }
-      targetUnitId = userUnit.unitId;
+      const ownUnitId = await findFirstUserUnitId(userId, buildingId);
+      if (!ownUnitId) return NextResponse.json(EMPTY_SUMMARY);
+      targetUnitId = ownUnitId;
     }
 
-    // Current balance: sum of UNPAID + OVERDUE amounts
-    const unpaidCharges = await prisma.monthlyCharge.findMany({
-      where: {
-        unitId: targetUnitId,
-        status: { in: ["UNPAID", "OVERDUE"] },
-      },
-      select: { amount: true },
-    });
-
-    const currentBalance = unpaidCharges.reduce(
+    const { unpaid, nextDue, lastPayment } =
+      await getChargeSummaryForUnit(targetUnitId);
+    const currentBalance = unpaid.reduce(
       (sum, c) => sum.add(c.amount),
-      new Prisma.Decimal(0)
+      new Prisma.Decimal(0),
     );
-
-    // Next due: earliest unpaid/overdue charge by month
-    const nextDueCharge = await prisma.monthlyCharge.findFirst({
-      where: {
-        unitId: targetUnitId,
-        status: { in: ["UNPAID", "OVERDUE"] },
-      },
-      orderBy: { month: "asc" },
-      select: { amount: true, month: true },
-    });
-
-    // Last payment: most recent paid charge
-    const lastPayment = await prisma.monthlyCharge.findFirst({
-      where: {
-        unitId: targetUnitId,
-        status: "PAID",
-      },
-      orderBy: { paidAt: "desc" },
-      select: { amount: true, paidAt: true },
-    });
 
     return NextResponse.json({
       currentBalance,
-      nextDue: nextDueCharge
-        ? { amount: nextDueCharge.amount, month: nextDueCharge.month }
+      nextDue: nextDue
+        ? { amount: nextDue.amount, month: nextDue.month }
         : null,
       lastPayment: lastPayment
         ? { amount: lastPayment.amount, paidAt: lastPayment.paidAt }
@@ -90,7 +68,7 @@ export async function GET(request: NextRequest) {
     console.error("Failed to fetch charge summary:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
