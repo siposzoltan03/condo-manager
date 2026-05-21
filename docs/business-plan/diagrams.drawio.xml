@@ -1,0 +1,462 @@
+<mxfile host="app.diagrams.net" agent="Claude Code" version="26.0.0">
+  <!-- ============================================================ -->
+  <!-- LAP 1: Árazási struktúra                                     -->
+  <!-- ============================================================ -->
+  <diagram id="pricing-tiers" name="Árazási struktúra">
+    <mxGraphModel dx="1422" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Title -->
+        <mxCell id="title" value="&lt;b&gt;Condo Manager — Árazási struktúra&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;fontSize=18;fontColor=#002045;" vertex="1" parent="1">
+          <mxGeometry x="284" y="20" width="600" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- Free tier bar -->
+        <mxCell id="free_bar" value="&lt;b&gt;LAKÓI PORTÁL — INGYENES&lt;/b&gt;&lt;br&gt;Szavazás mobilról · Befizetések · Karbantartási kérelmek · Dokumentumok · Chat · Hirdetőtábla" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#002045;fontColor=#ffffff;strokeColor=none;fontSize=12;align=center;" vertex="1" parent="1">
+          <mxGeometry x="100" y="80" width="960" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="free_note" value="A lakók NEM fizetnek → maximális adoptáció" style="text;html=1;align=center;fontSize=10;fontColor=#515f74;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="334" y="145" width="500" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- Tier 1: Alap -->
+        <mxCell id="t1_header" value="&lt;b&gt;ALAP&lt;/b&gt;" style="rounded=0;fillColor=#6c8ebf;fontColor=#ffffff;strokeColor=none;fontSize=16;align=center;" vertex="1" parent="1">
+          <mxGeometry x="100" y="190" width="290" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="t1_price" value="&lt;span style='font-size:32px;font-weight:bold;'&gt;79&lt;/span&gt;&lt;br&gt;Ft/lakás/hó + ÁFA" style="rounded=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="100" y="230" width="290" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="t1_features" value="&lt;div style='text-align:left;padding:10px;line-height:1.8;'&gt;✓ Könyvelés (egyszeres)&lt;br&gt;✓ Kommunikáció (hirdetőtábla)&lt;br&gt;✓ Dokumentumkezelés&lt;br&gt;✓ Karbantartási kérelmek&lt;br&gt;✓ Mérőállás kezelés&lt;br&gt;✓ Lakói portál&lt;br&gt;✓ Email értesítések&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=11;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="100" y="300" width="290" height="210" as="geometry"/>
+        </mxCell>
+        <mxCell id="t1_target" value="&lt;i&gt;Kis társasházak,&lt;br&gt;önkezelő IB-k&lt;/i&gt;" style="text;html=1;align=center;fontSize=10;fontColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="160" y="515" width="170" height="35" as="geometry"/>
+        </mxCell>
+
+        <!-- Tier 2: Profi (highlighted) -->
+        <mxCell id="t2_badge" value="★ LEGNÉPSZERŰBB" style="rounded=1;fillColor=#82b366;fontColor=#ffffff;strokeColor=none;fontSize=10;fontStyle=1;align=center;" vertex="1" parent="1">
+          <mxGeometry x="470" y="175" width="140" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="t2_header" value="&lt;b&gt;PROFI&lt;/b&gt;" style="rounded=0;fillColor=#82b366;fontColor=#ffffff;strokeColor=none;fontSize=16;align=center;" vertex="1" parent="1">
+          <mxGeometry x="430" y="190" width="310" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="t2_price" value="&lt;span style='font-size:32px;font-weight:bold;'&gt;119&lt;/span&gt;&lt;br&gt;Ft/lakás/hó + ÁFA" style="rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;align=center;verticalAlign=middle;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="430" y="230" width="310" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="t2_features" value="&lt;div style='text-align:left;padding:10px;line-height:1.8;'&gt;✓ Minden az Alapban, plusz:&lt;br&gt;&lt;b&gt;✓ Szavazási modul (5 típus)&lt;/b&gt;&lt;br&gt;&lt;b&gt;✓ Közgyűlés-kezelés&lt;/b&gt;&lt;br&gt;&lt;b&gt;✓ Jelenléti ív (határozatképesség)&lt;/b&gt;&lt;br&gt;&lt;b&gt;✓ Megismételt közgyűlés&lt;/b&gt;&lt;br&gt;✓ Titkos szavazás&lt;br&gt;✓ Proxy kezelés&lt;br&gt;✓ Jegyzőkönyv alap&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=11;align=left;verticalAlign=top;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="430" y="300" width="310" height="210" as="geometry"/>
+        </mxCell>
+        <mxCell id="t2_target" value="&lt;i&gt;Közös képviselők,&lt;br&gt;közepes társasházak&lt;/i&gt;" style="text;html=1;align=center;fontSize=10;fontColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="500" y="515" width="170" height="35" as="geometry"/>
+        </mxCell>
+
+        <!-- Tier 3: Prémium -->
+        <mxCell id="t3_header" value="&lt;b&gt;PRÉMIUM&lt;/b&gt;" style="rounded=0;fillColor=#d6b656;fontColor=#ffffff;strokeColor=none;fontSize=16;align=center;" vertex="1" parent="1">
+          <mxGeometry x="780" y="190" width="280" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="t3_price" value="&lt;span style='font-size:32px;font-weight:bold;'&gt;169&lt;/span&gt;&lt;br&gt;Ft/lakás/hó + ÁFA" style="rounded=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="780" y="230" width="280" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="t3_features" value="&lt;div style='text-align:left;padding:10px;line-height:1.8;'&gt;✓ Minden a Profiban, plusz:&lt;br&gt;&lt;b&gt;✓ PSD2 bank szinkron&lt;/b&gt;&lt;br&gt;&lt;b&gt;✓ NAV bejövő számlák&lt;/b&gt;&lt;br&gt;&lt;b&gt;✓ Automatikus párosítás&lt;/b&gt;&lt;br&gt;✓ Emelt prioritás támogatás&lt;br&gt;✓ API hozzáférés&lt;br&gt;✓ Egyedi riportok&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=11;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="780" y="300" width="280" height="210" as="geometry"/>
+        </mxCell>
+        <mxCell id="t3_target" value="&lt;i&gt;Kezelő cégek,&lt;br&gt;nagy társasházak&lt;/i&gt;" style="text;html=1;align=center;fontSize=10;fontColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="835" y="515" width="170" height="35" as="geometry"/>
+        </mxCell>
+
+        <!-- Example calculation -->
+        <mxCell id="example" value="&lt;b&gt;Példa:&lt;/b&gt; 40 lakásos társasház, Profi csomag = 40 × 119 = &lt;b&gt;4 760 Ft/hó&lt;/b&gt; (~119 Ft/lakó/hó a közös költségben — egy zsemle ára)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999;fontSize=11;align=center;" vertex="1" parent="1">
+          <mxGeometry x="200" y="580" width="760" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- Kezelő cég example -->
+        <mxCell id="example2" value="&lt;b&gt;Kezelő cég (20 épület, 800 lakás):&lt;/b&gt; 800 × 119 Ft = &lt;b&gt;95 200 Ft/hó&lt;/b&gt; — ROI ha havi 20 óra admin munkát spórol meg" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;align=center;" vertex="1" parent="1">
+          <mxGeometry x="200" y="630" width="760" height="40" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <!-- ============================================================ -->
+  <!-- LAP 2: Fizetési flow                                         -->
+  <!-- ============================================================ -->
+  <diagram id="payment-flow" name="Fizetési flow">
+    <mxGraphModel dx="1422" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Title -->
+        <mxCell id="title" value="&lt;b&gt;Ki fizet? — Fizetési és döntési flow&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;fontSize=18;fontColor=#002045;" vertex="1" parent="1">
+          <mxGeometry x="284" y="20" width="600" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- Condo Manager -->
+        <mxCell id="cm" value="&lt;b&gt;CONDO MANAGER&lt;/b&gt;&lt;br&gt;SaaS platform" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#002045;fontColor=#ffffff;strokeColor=none;fontSize=13;align=center;" vertex="1" parent="1">
+          <mxGeometry x="460" y="80" width="240" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- Arrow: subscription -->
+        <mxCell id="a1" value="Havi előfizetés&lt;br&gt;(bankkártya / átutalás)" style="endArrow=block;endFill=1;strokeColor=#82b366;strokeWidth=2;fontSize=10;fontColor=#82b366;verticalAlign=bottom;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="580" y="200" as="sourcePoint"/>
+            <mxPoint x="580" y="140" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Közös képviselő -->
+        <mxCell id="kk" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="340" y="200" width="480" height="150" as="geometry"/>
+        </mxCell>
+        <mxCell id="kk_icon" value="👤" style="text;html=1;fontSize=30;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="360" y="215" width="50" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="kk_title" value="&lt;b&gt;Közös képviselő / Kezelő cég&lt;/b&gt;" style="text;html=1;fontSize=14;fontColor=#2d7600;align=left;" vertex="1" parent="1">
+          <mxGeometry x="410" y="215" width="380" height="25" as="geometry"/>
+        </mxCell>
+        <mxCell id="kk_role" value="&lt;b&gt;Szerepe:&lt;/b&gt; Döntéshozó + Fizető + Fő felhasználó" style="text;html=1;fontSize=11;align=left;" vertex="1" parent="1">
+          <mxGeometry x="410" y="245" width="380" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="kk_detail" value="• Regisztrál, kiválasztja a csomagot&lt;br&gt;• Havonta fizet lakásszám × ár alapján&lt;br&gt;• A költséget beépíti a kezelési díjba&lt;br&gt;• Nem kell közgyűlési jóváhagyás a szoftverköltséghez" style="text;html=1;fontSize=10;align=left;fontColor=#515f74;" vertex="1" parent="1">
+          <mxGeometry x="410" y="270" width="390" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- Arrow: kezelési díj -->
+        <mxCell id="a2" value="Kezelési díj&lt;br&gt;(tartalmazza a szoftver költségét)" style="endArrow=block;endFill=1;strokeColor=#6c8ebf;strokeWidth=2;fontSize=10;fontColor=#6c8ebf;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="580" y="430" as="sourcePoint"/>
+            <mxPoint x="580" y="370" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Társasház -->
+        <mxCell id="th" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="340" y="430" width="480" height="130" as="geometry"/>
+        </mxCell>
+        <mxCell id="th_icon" value="🏢" style="text;html=1;fontSize=30;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="360" y="445" width="50" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="th_title" value="&lt;b&gt;Társasház (közös költség)&lt;/b&gt;" style="text;html=1;fontSize=14;fontColor=#336699;align=left;" vertex="1" parent="1">
+          <mxGeometry x="410" y="445" width="380" height="25" as="geometry"/>
+        </mxCell>
+        <mxCell id="th_detail" value="• A közgyűlés jóváhagyja a kezelési díjat&lt;br&gt;• A szoftver költsége benne van a díjban&lt;br&gt;• 40 lakás × 119 Ft = 4 760 Ft/hó extra&lt;br&gt;• Ez az összeg a közös költségből megy" style="text;html=1;fontSize=10;align=left;fontColor=#515f74;" vertex="1" parent="1">
+          <mxGeometry x="410" y="475" width="390" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- Arrow: közös költség -->
+        <mxCell id="a3" value="Közös költség befizetés&lt;br&gt;(havi átutalás)" style="endArrow=block;endFill=1;strokeColor=#515f74;strokeWidth=2;fontSize=10;fontColor=#515f74;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="580" y="640" as="sourcePoint"/>
+            <mxPoint x="580" y="580" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Lakók -->
+        <mxCell id="lakok" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="340" y="640" width="480" height="130" as="geometry"/>
+        </mxCell>
+        <mxCell id="lakok_icon" value="👥" style="text;html=1;fontSize=30;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="360" y="655" width="50" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="lakok_title" value="&lt;b&gt;Lakók (tulajdonosok)&lt;/b&gt;" style="text;html=1;fontSize=14;fontColor=#515f74;align=left;" vertex="1" parent="1">
+          <mxGeometry x="410" y="655" width="380" height="25" as="geometry"/>
+        </mxCell>
+        <mxCell id="lakok_detail" value="• &lt;b&gt;NEM fizetnek közvetlenül&lt;/b&gt; a Condo Manager-ért&lt;br&gt;• A portált INGYEN használják&lt;br&gt;• Közvetett költség: ~119 Ft/hó a közös költségben&lt;br&gt;• Egy kávé árának a fele havonta" style="text;html=1;fontSize=10;align=left;fontColor=#515f74;" vertex="1" parent="1">
+          <mxGeometry x="410" y="685" width="390" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- Free badge -->
+        <mxCell id="free_badge" value="&lt;b&gt;INGYENES&lt;/b&gt;&lt;br&gt;portál" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;fontSize=11;fontColor=#2d7600;align=center;" vertex="1" parent="1">
+          <mxGeometry x="870" y="670" width="90" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- Why free callout -->
+        <mxCell id="why_free" value="&lt;b&gt;Miért ingyen a lakóknak?&lt;/b&gt;&lt;br&gt;&lt;br&gt;1. Maximális adoptáció → szavazási quórum&lt;br&gt;2. A lakói bázis a moat (váltási költség)&lt;br&gt;3. Piaci standard (eHÁZ, OnlineHáz is így)&lt;br&gt;4. Egyéni döntés helyett 1 döntés/épület" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;align=left;spacingLeft=10;verticalAlign=top;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="60" y="500" width="250" height="130" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <!-- ============================================================ -->
+  <!-- LAP 3: Bevételi előrejelzés                                  -->
+  <!-- ============================================================ -->
+  <diagram id="revenue-forecast" name="Bevételi előrejelzés">
+    <mxGraphModel dx="1422" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Title -->
+        <mxCell id="title" value="&lt;b&gt;Bevételi előrejelzés — 36 hónap&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;fontSize=18;fontColor=#002045;" vertex="1" parent="1">
+          <mxGeometry x="284" y="20" width="600" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- Timeline bar -->
+        <mxCell id="tl_bg" value="" style="rounded=0;fillColor=#f5f5f5;strokeColor=#e0e0e0;" vertex="1" parent="1">
+          <mxGeometry x="100" y="80" width="960" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="tl_f1" value="&lt;b&gt;Fázis 1: Validáció&lt;/b&gt;" style="rounded=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="100" y="80" width="160" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="tl_f2" value="&lt;b&gt;Fázis 2: Növekedés&lt;/b&gt;" style="rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="260" y="80" width="320" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="tl_f3" value="&lt;b&gt;Fázis 3: Skálázás&lt;/b&gt;" style="rounded=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="580" y="80" width="480" height="30" as="geometry"/>
+        </mxCell>
+
+        <!-- Month markers -->
+        <mxCell id="m0" value="Hó 0" style="text;html=1;fontSize=9;fontColor=#999;align=center;" vertex="1" parent="1">
+          <mxGeometry x="90" y="112" width="40" height="15" as="geometry"/>
+        </mxCell>
+        <mxCell id="m6" value="Hó 6" style="text;html=1;fontSize=9;fontColor=#999;align=center;" vertex="1" parent="1">
+          <mxGeometry x="240" y="112" width="40" height="15" as="geometry"/>
+        </mxCell>
+        <mxCell id="m12" value="Hó 12" style="text;html=1;fontSize=9;fontColor=#999;align=center;" vertex="1" parent="1">
+          <mxGeometry x="410" y="112" width="40" height="15" as="geometry"/>
+        </mxCell>
+        <mxCell id="m24" value="Hó 24" style="text;html=1;fontSize=9;fontColor=#999;align=center;" vertex="1" parent="1">
+          <mxGeometry x="740" y="112" width="40" height="15" as="geometry"/>
+        </mxCell>
+        <mxCell id="m36" value="Hó 36" style="text;html=1;fontSize=9;fontColor=#999;align=center;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="112" width="40" height="15" as="geometry"/>
+        </mxCell>
+
+        <!-- Konzervatív szcenárió table -->
+        <mxCell id="con_title" value="&lt;b&gt;Konzervatív szcenárió&lt;/b&gt;" style="text;html=1;fontSize=13;fontColor=#6c8ebf;align=left;" vertex="1" parent="1">
+          <mxGeometry x="100" y="150" width="300" height="25" as="geometry"/>
+        </mxCell>
+
+        <!-- Headers -->
+        <mxCell id="ch1" value="" style="rounded=0;fillColor=#6c8ebf;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="100" y="180" width="180" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="ch2" value="&lt;b&gt;Hó 6&lt;/b&gt;" style="rounded=0;fillColor=#6c8ebf;fontColor=#fff;strokeColor=none;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="280" y="180" width="120" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="ch3" value="&lt;b&gt;Hó 12&lt;/b&gt;" style="rounded=0;fillColor=#6c8ebf;fontColor=#fff;strokeColor=none;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="400" y="180" width="120" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="ch4" value="&lt;b&gt;Hó 24&lt;/b&gt;" style="rounded=0;fillColor=#6c8ebf;fontColor=#fff;strokeColor=none;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="520" y="180" width="120" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="ch5" value="&lt;b&gt;Hó 36&lt;/b&gt;" style="rounded=0;fillColor=#6c8ebf;fontColor=#fff;strokeColor=none;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="640" y="180" width="120" height="28" as="geometry"/>
+        </mxCell>
+
+        <!-- Rows -->
+        <mxCell id="cr1a" value="Épületek" style="rounded=0;fillColor=#f5f5f5;strokeColor=#e0e0e0;fontSize=10;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="100" y="208" width="180" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="cr1b" value="20" style="rounded=0;fillColor=#f5f5f5;strokeColor=#e0e0e0;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="280" y="208" width="120" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="cr1c" value="60" style="rounded=0;fillColor=#f5f5f5;strokeColor=#e0e0e0;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="400" y="208" width="120" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="cr1d" value="200" style="rounded=0;fillColor=#f5f5f5;strokeColor=#e0e0e0;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="520" y="208" width="120" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="cr1e" value="400" style="rounded=0;fillColor=#f5f5f5;strokeColor=#e0e0e0;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="640" y="208" width="120" height="26" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="cr2a" value="Lakások" style="rounded=0;fillColor=#fff;strokeColor=#e0e0e0;fontSize=10;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="100" y="234" width="180" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="cr2b" value="800" style="rounded=0;fillColor=#fff;strokeColor=#e0e0e0;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="280" y="234" width="120" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="cr2c" value="2 400" style="rounded=0;fillColor=#fff;strokeColor=#e0e0e0;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="400" y="234" width="120" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="cr2d" value="8 000" style="rounded=0;fillColor=#fff;strokeColor=#e0e0e0;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="520" y="234" width="120" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="cr2e" value="16 000" style="rounded=0;fillColor=#fff;strokeColor=#e0e0e0;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="640" y="234" width="120" height="26" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="cr3a" value="&lt;b&gt;MRR (EUR)&lt;/b&gt;" style="rounded=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="100" y="260" width="180" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="cr3b" value="&lt;b&gt;~120&lt;/b&gt;" style="rounded=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="280" y="260" width="120" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="cr3c" value="&lt;b&gt;~420&lt;/b&gt;" style="rounded=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="400" y="260" width="120" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="cr3d" value="&lt;b&gt;~1 600&lt;/b&gt;" style="rounded=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="520" y="260" width="120" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="cr3e" value="&lt;b&gt;~3 400&lt;/b&gt;" style="rounded=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="640" y="260" width="120" height="26" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="cr4a" value="&lt;b&gt;Profit (EUR)&lt;/b&gt;" style="rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="100" y="286" width="180" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="cr4b" value="&lt;b&gt;~60&lt;/b&gt;" style="rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="280" y="286" width="120" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="cr4c" value="&lt;b&gt;~310&lt;/b&gt;" style="rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="400" y="286" width="120" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="cr4d" value="&lt;b&gt;~1 030&lt;/b&gt;" style="rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="520" y="286" width="120" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="cr4e" value="&lt;b&gt;~2 490&lt;/b&gt;" style="rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="640" y="286" width="120" height="26" as="geometry"/>
+        </mxCell>
+
+        <!-- Break-even marker -->
+        <mxCell id="be_line" value="" style="endArrow=none;strokeColor=#b85450;strokeWidth=2;dashed=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="370" y="175" as="sourcePoint"/>
+            <mxPoint x="370" y="320" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="be_label" value="&lt;b&gt;Break-even&lt;/b&gt;&lt;br&gt;~35 épület" style="text;html=1;fontSize=9;fontColor=#b85450;align=center;" vertex="1" parent="1">
+          <mxGeometry x="340" y="320" width="80" height="30" as="geometry"/>
+        </mxCell>
+
+        <!-- Optimista szcenárió table -->
+        <mxCell id="opt_title" value="&lt;b&gt;Optimista szcenárió&lt;/b&gt;" style="text;html=1;fontSize=13;fontColor=#82b366;align=left;" vertex="1" parent="1">
+          <mxGeometry x="100" y="380" width="300" height="25" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="oh1" value="" style="rounded=0;fillColor=#82b366;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="100" y="410" width="180" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="oh2" value="&lt;b&gt;Hó 6&lt;/b&gt;" style="rounded=0;fillColor=#82b366;fontColor=#fff;strokeColor=none;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="280" y="410" width="120" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="oh3" value="&lt;b&gt;Hó 12&lt;/b&gt;" style="rounded=0;fillColor=#82b366;fontColor=#fff;strokeColor=none;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="400" y="410" width="120" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="oh4" value="&lt;b&gt;Hó 24&lt;/b&gt;" style="rounded=0;fillColor=#82b366;fontColor=#fff;strokeColor=none;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="520" y="410" width="120" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="oh5" value="&lt;b&gt;Hó 36&lt;/b&gt;" style="rounded=0;fillColor=#82b366;fontColor=#fff;strokeColor=none;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="640" y="410" width="120" height="28" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="or1a" value="Épületek" style="rounded=0;fillColor=#f5f5f5;strokeColor=#e0e0e0;fontSize=10;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="100" y="438" width="180" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="or1b" value="50" style="rounded=0;fillColor=#f5f5f5;strokeColor=#e0e0e0;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="280" y="438" width="120" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="or1c" value="150" style="rounded=0;fillColor=#f5f5f5;strokeColor=#e0e0e0;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="400" y="438" width="120" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="or1d" value="500" style="rounded=0;fillColor=#f5f5f5;strokeColor=#e0e0e0;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="520" y="438" width="120" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="or1e" value="1 000" style="rounded=0;fillColor=#f5f5f5;strokeColor=#e0e0e0;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="640" y="438" width="120" height="26" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="or3a" value="&lt;b&gt;MRR (EUR)&lt;/b&gt;" style="rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="100" y="464" width="180" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="or3b" value="&lt;b&gt;~350&lt;/b&gt;" style="rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="280" y="464" width="120" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="or3c" value="&lt;b&gt;~1 200&lt;/b&gt;" style="rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="400" y="464" width="120" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="or3d" value="&lt;b&gt;~4 500&lt;/b&gt;" style="rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="520" y="464" width="120" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="or3e" value="&lt;b&gt;~9 500&lt;/b&gt;" style="rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="640" y="464" width="120" height="26" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="or4a" value="&lt;b&gt;ARR (EUR)&lt;/b&gt;" style="rounded=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="100" y="490" width="180" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="or4b" value="&lt;b&gt;~4 200&lt;/b&gt;" style="rounded=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="280" y="490" width="120" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="or4c" value="&lt;b&gt;~14 400&lt;/b&gt;" style="rounded=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="400" y="490" width="120" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="or4d" value="&lt;b&gt;~54 000&lt;/b&gt;" style="rounded=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="520" y="490" width="120" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="or4e" value="&lt;b&gt;~114 000&lt;/b&gt;" style="rounded=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;align=center;fontColor=#996600;" vertex="1" parent="1">
+          <mxGeometry x="640" y="490" width="120" height="26" as="geometry"/>
+        </mxCell>
+
+        <!-- Key metrics callout -->
+        <mxCell id="metrics" value="&lt;b&gt;Kulcs metrikák&lt;/b&gt;&lt;br&gt;&lt;br&gt;Break-even: ~35 épület (1 400 lakás)&lt;br&gt;Gross margin: 76-82%&lt;br&gt;CAC cél: &lt; EUR 50/épület&lt;br&gt;LTV cél: EUR 700+/épület (36 hó)&lt;br&gt;Churn cél: &lt; 5%/hó" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;align=left;spacingLeft=10;verticalAlign=top;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="820" y="380" width="230" height="140" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <!-- ============================================================ -->
+  <!-- LAP 4: Go-to-market fázisok                                  -->
+  <!-- ============================================================ -->
+  <diagram id="gtm" name="Go-to-market fázisok">
+    <mxGraphModel dx="1422" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Title -->
+        <mxCell id="title" value="&lt;b&gt;Go-to-Market — 3 fázis&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;fontSize=18;fontColor=#002045;" vertex="1" parent="1">
+          <mxGeometry x="284" y="20" width="600" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- Phase 1 -->
+        <mxCell id="p1_hdr" value="&lt;b&gt;FÁZIS 1: Validáció&lt;/b&gt;&lt;br&gt;Hó 1-6" style="rounded=0;fillColor=#6c8ebf;fontColor=#ffffff;strokeColor=none;fontSize=14;align=center;" vertex="1" parent="1">
+          <mxGeometry x="60" y="80" width="330" height="45" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1_body" value="&lt;div style='text-align:left;padding:12px;line-height:1.9;'&gt;&lt;b&gt;Cél:&lt;/b&gt; 20 épület, product-market fit&lt;br&gt;&lt;br&gt;&lt;b&gt;Akciók:&lt;/b&gt;&lt;br&gt;• 5 pilot társasház (személyes network)&lt;br&gt;• Landing page (condomanager.hu)&lt;br&gt;• Facebook csoport marketing&lt;br&gt;• MITOE kapcsolatfelvétel&lt;br&gt;&lt;br&gt;&lt;b&gt;Termék fókusz:&lt;/b&gt;&lt;br&gt;• Szavazási modul (USP!)&lt;br&gt;• Alap könyvelés&lt;br&gt;• CSV bank import&lt;br&gt;&lt;br&gt;&lt;b&gt;Ár:&lt;/b&gt; Ingyenes (pilot)&lt;br&gt;&lt;b&gt;KPI:&lt;/b&gt; 1 sikeres közgyűlés a rendszeren&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="60" y="125" width="330" height="340" as="geometry"/>
+        </mxCell>
+
+        <!-- Phase 2 -->
+        <mxCell id="p2_hdr" value="&lt;b&gt;FÁZIS 2: Növekedés&lt;/b&gt;&lt;br&gt;Hó 7-18" style="rounded=0;fillColor=#82b366;fontColor=#ffffff;strokeColor=none;fontSize=14;align=center;" vertex="1" parent="1">
+          <mxGeometry x="420" y="80" width="330" height="45" as="geometry"/>
+        </mxCell>
+        <mxCell id="p2_body" value="&lt;div style='text-align:left;padding:12px;line-height:1.9;'&gt;&lt;b&gt;Cél:&lt;/b&gt; 60-150 épület, bevétel indítás&lt;br&gt;&lt;br&gt;&lt;b&gt;Akciók:&lt;/b&gt;&lt;br&gt;• Fizetős csomagok bevezetése&lt;br&gt;• Referencia program (1 ház = 1 hó ingyen)&lt;br&gt;• Top 50 kezelő cég megkeresése (BP)&lt;br&gt;• SEO + tartalom marketing&lt;br&gt;• YouTube demo videók&lt;br&gt;&lt;br&gt;&lt;b&gt;Termék fókusz:&lt;/b&gt;&lt;br&gt;• Profi csomag véglegesítése&lt;br&gt;• Jegyzőkönyv generálás&lt;br&gt;• Mobil optimalizálás&lt;br&gt;&lt;br&gt;&lt;b&gt;Ár:&lt;/b&gt; 79-119 Ft/lakás/hó&lt;br&gt;&lt;b&gt;KPI:&lt;/b&gt; EUR 600+ MRR, &lt;5% churn&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="420" y="125" width="330" height="340" as="geometry"/>
+        </mxCell>
+
+        <!-- Phase 3 -->
+        <mxCell id="p3_hdr" value="&lt;b&gt;FÁZIS 3: Skálázás&lt;/b&gt;&lt;br&gt;Hó 19-36" style="rounded=0;fillColor=#d6b656;fontColor=#ffffff;strokeColor=none;fontSize=14;align=center;" vertex="1" parent="1">
+          <mxGeometry x="780" y="80" width="330" height="45" as="geometry"/>
+        </mxCell>
+        <mxCell id="p3_body" value="&lt;div style='text-align:left;padding:12px;line-height:1.9;'&gt;&lt;b&gt;Cél:&lt;/b&gt; 200-1000 épület, profitabilitás&lt;br&gt;&lt;br&gt;&lt;b&gt;Akciók:&lt;/b&gt;&lt;br&gt;• Prémium csomag (bank szinkron, NAV)&lt;br&gt;• Kezelő cég partnerségek&lt;br&gt;• Vidéki terjeszkedés&lt;br&gt;• Esetleg: CEE (SK, RO)&lt;br&gt;&lt;br&gt;&lt;b&gt;Termék fókusz:&lt;/b&gt;&lt;br&gt;• PSD2 bank szinkron (finAPI/Salt Edge)&lt;br&gt;• NAV bejövő számla lekérdezés&lt;br&gt;• Hibrid közgyűlés&lt;br&gt;• API harmadik feleknek&lt;br&gt;&lt;br&gt;&lt;b&gt;Ár:&lt;/b&gt; 79-169 Ft/lakás/hó&lt;br&gt;&lt;b&gt;KPI:&lt;/b&gt; EUR 5 200+ MRR, 82% margin&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="780" y="125" width="330" height="340" as="geometry"/>
+        </mxCell>
+
+        <!-- Arrows -->
+        <mxCell id="arr1" value="" style="endArrow=block;endFill=1;strokeColor=#515f74;strokeWidth=3;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="395" y="290" as="sourcePoint"/>
+            <mxPoint x="415" y="290" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arr2" value="" style="endArrow=block;endFill=1;strokeColor=#515f74;strokeWidth=3;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="755" y="290" as="sourcePoint"/>
+            <mxPoint x="775" y="290" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Key message -->
+        <mxCell id="key_msg" value="&lt;b&gt;Fő üzenet minden fázisban:&lt;/b&gt; „Az egyetlen társasházkezelő, ami ismeri a magyar jogot."" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#002045;fontColor=#ffffff;strokeColor=none;fontSize=12;align=center;" vertex="1" parent="1">
+          <mxGeometry x="200" y="500" width="760" height="40" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

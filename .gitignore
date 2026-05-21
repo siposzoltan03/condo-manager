@@ -53,3 +53,7 @@ next-env.d.ts
 nginx/certs/
 .claude/worktrees/
 .idea/
+
+# Slidev build output for the pitch deck — regenerate with `npm run build`
+# inside docs/pitch/ rather than checking compiled bundles into the repo.
+docs/pitch/dist/

@@ -1,0 +1,1831 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table Plan {
+  id String [pk]
+  name String [not null]
+  slug String [unique, not null]
+  stripePriceId String
+  maxBuildings Int [not null]
+  maxUnitsPerBuilding Int [not null]
+  features Json [not null, default: '[]']
+  priceMonthly Decimal [not null]
+  priceYearly Decimal [not null]
+  trialDays Int [not null, default: 14]
+  isActive Boolean [not null, default: true]
+  createdAt DateTime [default: `now()`, not null]
+  subscriptions Subscription [not null]
+}
+
+Table Subscription {
+  id String [pk]
+  name String [not null]
+  email String [not null]
+  stripeCustomerId String [unique]
+  stripeSubscriptionId String [unique]
+  planId String [not null]
+  plan Plan [not null]
+  trialEndsAt DateTime
+  readOnlyAt DateTime
+  archivedAt DateTime
+  subscriptionStatus SubscriptionStatus [not null, default: 'TRIALING']
+  ownerId String [not null]
+  owner User [not null]
+  buildings Building [not null]
+  invitations Invitation [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table Invitation {
+  id String [pk]
+  email String [not null]
+  tokenHash String [unique, not null]
+  type InvitationType [not null]
+  role BuildingRole
+  unitId String
+  unit Unit
+  relationship UnitRelationship
+  buildingId String
+  building Building
+  subscriptionId String
+  subscription Subscription
+  invitedById String
+  invitedBy User
+  expiresAt DateTime [not null]
+  acceptedAt DateTime
+  status InvitationStatus [not null, default: 'PENDING']
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table Building {
+  id String [pk]
+  name String [not null]
+  address String [not null]
+  city String [not null]
+  zipCode String [not null]
+  subscriptionId String
+  subscription Subscription
+  invitationExpiryHours Int [not null, default: 168]
+  isFrozen Boolean [not null, default: false]
+  totalUnits Int [not null, default: 0]
+  annualCashflowHUF BigInt [not null, default: 0]
+  requiresAuditCommittee Boolean [not null, default: false]
+  requiresExternalAuditor Boolean [not null, default: false]
+  requiresProfessionalManager Boolean [not null, default: false]
+  szmszRequired Boolean [not null, default: false]
+  representativeRegisteredAt DateTime
+  representativeRegistryDeadline DateTime [not null]
+  arrearsDisclosureMode ArrearsDisclosureMode [not null, default: 'INTERNAL_ONLY', note: 'Phase 5 — NAIH guidance forbids posting arrears + names publicly.
+Default INTERNAL_ONLY means the data is visible only at közgyűlés
+or to the named owner. CLOSED_DELIVERY allows sealed-envelope
+distribution. No PUBLIC option exists — that\'s illegal under NAIH.']
+  units Unit [not null]
+  userBuildings UserBuilding [not null]
+  auditorMemberships AuditorMembership [not null, note: 'Phase 2 — Tht. § 27(3), § 51/A: audit committee members + external auditor.']
+  cameras BuildingCamera [not null, note: 'Phase 5 — Tht. § 25 building cameras + NAIH 15-day retention.']
+  channels Channel [not null]
+  complaints Complaint [not null]
+  complaintCategories ComplaintCategory [not null]
+  accounts Account [not null]
+  maintenanceTickets MaintenanceTicket [not null]
+  scheduledMaintenance ScheduledMaintenance [not null]
+  meetings Meeting [not null]
+  votes Vote [not null]
+  documentCategories DocumentCategory [not null]
+  invitations Invitation [not null]
+  tasks Task [not null]
+  pendingAgendaItems PendingAgendaItem [not null]
+  auditLogs AuditLog [not null]
+  generatedReports GeneratedReport [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table UserBuilding {
+  id String [pk]
+  user User [not null]
+  userId String [not null]
+  building Building [not null]
+  buildingId String [not null]
+  role BuildingRole [not null, default: 'OWNER']
+  isActive Boolean [not null, default: true]
+  isChair Boolean [not null, default: false, note: 'Phase 1 — Tht. § 27(2)–(3); marks the sole közös képviselő or the
+chair of the intézőbizottság. At most one per building (enforced
+by a partial unique index in migration SQL).']
+  isProfessional Boolean [not null, default: false, note: 'Phase 1 — Tht. § 52, § 54; marks a professional/business manager
+(üzletszerű kezelő). Tracked, not enforced, until Phase 4 banners
+flag buildings >6 units that compelled professional management.']
+  accreditationDocumentId String [note: 'Optional pointer to a Document holding accreditation evidence (OKJ
+szakképesítés). Only meaningful when isProfessional = true.']
+  accreditationVerifiedAt DateTime [note: 'Set by ADMIN when accreditation evidence is reviewed.']
+  accreditationVerifiedById String
+  accreditationVerifiedBy User
+  permissions UserBuildingPermission [not null]
+  resignations BoardResignation [not null]
+  createdAt DateTime [default: `now()`, not null]
+
+  indexes {
+    (userId, buildingId) [unique]
+  }
+}
+
+Table AuditorMembership {
+  id String [pk]
+  user User [not null]
+  userId String [not null]
+  building Building [not null]
+  buildingId String [not null]
+  kind AuditorKind [not null]
+  startedAt DateTime [default: `now()`, not null]
+  endedAt DateTime
+  createdAt DateTime [default: `now()`, not null]
+
+  Note: 'Phase 2 — Tht. § 27(3) audit committee + § 51/A external auditor.
+
+Separate from UserBuilding so a building keeps a history of past
+auditors (endedAt) and one user can serve in different capacities
+across multiple buildings. Members of the FB must be tulajdonostárs
+— enforced at the application layer (POST endpoint validates that
+the user has a UnitUser{ relationship: OWNER } for the building when
+kind is COMMITTEE_MEMBER or COMMITTEE_CHAIR). REGISTERED_AUDITOR
+need not be an owner.'
+}
+
+Table AnnouncementDelivery {
+  id String [pk]
+  message ChannelMessage [not null]
+  messageId String [not null]
+  user User
+  userId String
+  channel AnnouncementChannel [not null]
+  externalId String [note: 'External provider message-id (mail server, push receipt, SMS gateway).']
+  status DeliveryStatus [not null, default: 'QUEUED']
+  deliveredAt DateTime
+  errorMessage String
+  createdAt DateTime [default: `now()`, not null]
+
+  Note: 'Phase 5 — Tht. § 33/A, § 40(3), § 43/A: delivery proof for announcements.
+
+One row per (announcement, recipient, channel). The plan\'s original
+schema referenced a non-existent `Announcement` model; in this app
+announcements live as `ChannelMessage` rows inside per-building
+ANNOUNCEMENT channels, so this row links to `ChannelMessage`.
+
+For PHYSICAL_BOARD, one row per announcement signed by the képviselő
+(no userId — captures the timestamped fact of posting). For EMAIL /
+PUSH / SMS, one row per recipient with the external message ID.
+
+Compliance rules:
+- § 33/A — email is legally equivalent when at least one DELIVERED
+EMAIL row exists for a recipient whose email is on file.
+- § 40(3) — eight-day deadline: a worker flags messages with no
+DELIVERED rows after 8 days.'
+}
+
+Table BuildingCamera {
+  id String [pk]
+  building Building [not null]
+  buildingId String [not null]
+  location String [not null, note: 'Human-readable location. Tht. § 25 — must not face apartment doors
+or sanitary spaces. Verified at install time, not enforced by schema.']
+  installedByVoteId String [note: 'Pointer to the Vote that authorised the install. Null only for
+pre-Phase-5 backfill rows (none in seed).']
+  installedAt DateTime [default: `now()`, not null]
+  retentionDays Int [not null, default: 15, note: 'NAIH guidance: maximum 15 days for ordinary buildings.']
+  isActive Boolean [not null, default: true]
+  accessLogs CameraAccessLog [not null]
+
+  Note: 'Phase 5 — Tht. § 25 building camera install + NAIH 15-day retention.
+
+Install requires a passed TWO_THIRDS vote against *total* shares
+AND a privacy notice document on file. Enforced at the install API
+(separate route work).'
+}
+
+Table CameraAccessLog {
+  id String [pk]
+  camera BuildingCamera [not null]
+  cameraId String [not null]
+  reviewer User [not null]
+  reviewerId String [not null]
+  reason String [not null, note: 'Required — Tht. § 25 mandates the purpose for every review.']
+  reviewedAt DateTime [default: `now()`, not null]
+
+  Note: 'Phase 5 — every camera review must log reviewer + purpose
+(Tht. § 25 + NAIH). The footage storage purge driver lives in
+src/lib/camera-retention.ts; this table is the audit trail.'
+}
+
+Table BoardPermission {
+  id String [pk]
+  key String [unique, not null, note: 'Stable key like "financial_full" — used by code paths.']
+  labelKey String [not null, note: 'i18n key for display label (lookup in the UI).']
+  descriptionKey String [note: 'Optional i18n key for the description small print.']
+  sortOrder Int [not null, default: 0, note: 'Display sort order.']
+  grants UserBuildingPermission [not null]
+  createdAt DateTime [default: `now()`, not null]
+
+  Note: 'Catalog of permission keys that board members can hold. Seeded with a
+fixed set; new keys added via migration only.'
+}
+
+Table UserBuildingPermission {
+  id String [pk]
+  userBuilding UserBuilding [not null]
+  userBuildingId String [not null]
+  permission BoardPermission [not null]
+  permissionId String [not null]
+  grantedAt DateTime [default: `now()`, not null, note: 'When the grant was given (may differ from userBuilding.createdAt).']
+
+  indexes {
+    (userBuildingId, permissionId) [unique]
+  }
+
+  Note: 'Per-user-per-building grant of a board permission.'
+}
+
+Table BoardResignation {
+  id String [pk]
+  userBuilding UserBuilding [not null]
+  userBuildingId String [not null]
+  status ResignationStatus [not null, default: 'PENDING']
+  reason String [note: 'Free-text reason from the resigning board member (optional).']
+  pendingAgenda PendingAgendaItem [note: 'Pending-agenda link — the resignation surfaces as a mandatory
+agenda item on the next közgyűlés. The attached meeting (if any)
+lives on PendingAgendaItem.']
+  acknowledgedAt DateTime
+  acknowledgedById String
+  submittedAt DateTime [default: `now()`, not null]
+
+  Note: 'Board member resignation submitted on the profile page. Goes into the
+PENDING state and surfaces as an obligatory agenda item on the next
+scheduled meeting. Role demotion happens when a board member acknowledges.'
+}
+
+Table UnitUser {
+  id String [pk]
+  user User [not null]
+  userId String [not null]
+  unit Unit [not null]
+  unitId String [not null]
+  relationship UnitRelationship [not null, default: 'OWNER']
+  isPrimaryContact Boolean [not null, default: false]
+  livesAtUnit Boolean [not null, default: false, note: 'Phase 3a — UX hint only. Tht. has no "rezidens" vs "távoli
+tulajdonos" legal distinction (§ 16, § 38); we use this flag to
+decide which UI defaults to show, never to gate privileges.']
+  contactConsentAt DateTime [note: 'Phase 5 — Tht. § 22(2) + GDPR Art. 6. Tenants (bérlő) must
+affirmatively consent to share phone/email beyond the bare-minimum
+name + presence the statute requires. Null = no consent on file;
+SaaS must retain only name and unit presence for that user.']
+  contactConsentMode String [note: 'Audit trail for the consent basis: "explicit" (user opt-in) or
+"legitimate-interest" (rare, only when a building has a documented
+legitimate-interest assessment). Used for GDPR Art. 5(2) records.']
+  createdAt DateTime [default: `now()`, not null]
+
+  indexes {
+    (userId, unitId) [unique]
+  }
+}
+
+Table Unit {
+  id String [pk]
+  number String [not null]
+  floor Int [not null]
+  stairwell String [note: 'Stairwell label (e.g. "A", "B"). Null for single-stairwell buildings.']
+  positionOnFloor Int [note: 'Position within the floor (1-based, left-to-right). Null = unspecified.']
+  ownershipShare Decimal [not null]
+  size Decimal [not null]
+  building Building [not null]
+  buildingId String [not null]
+  unitUsers UnitUser [not null]
+  monthlyCharges MonthlyCharge [not null]
+  ballots Ballot [not null]
+  attendances MeetingAttendance [not null]
+  invitations Invitation [not null]
+  complaintsAgainst Complaint [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+
+  indexes {
+    (buildingId, number) [unique]
+  }
+}
+
+Table User {
+  id String [pk]
+  email String [unique, not null]
+  passwordHash String [not null]
+  name String [not null]
+  language String [not null, default: 'hu']
+  notificationPreferences Json [not null, default: '{}']
+  isActive Boolean [not null, default: true]
+  emailVerifiedAt DateTime
+  phone String [note: 'Optional contact phone number.']
+  secondaryEmail String [note: 'Optional secondary email (e.g. work address). Verification flow optional.']
+  secondaryEmailVerifiedAt DateTime
+  birthDate DateTime [note: 'Optional birth date (date-only stored as DateTime).']
+  permanentAddress String [note: 'Optional permanent address (free text, single line).']
+  mailingAddress String [note: 'Optional mailing address. Null = same as permanentAddress.']
+  deletedAt DateTime [note: 'Soft-delete tombstone — populated when the user requests account erasure.']
+  anonymizedAt DateTime [note: 'Set when PII fields were anonymized (independent of deletedAt for audit).']
+  totpSecret String [note: 'TOTP secret (base32). Stored at-rest; consider field-level encryption if
+the threat model warrants it.']
+  totpEnrolledAt DateTime [note: 'When the user successfully enrolled in 2FA. Required = totpSecret present.']
+  backupCodes BackupCode [not null]
+  sessions UserSession [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  auditLogs AuditLog [not null]
+  notifications Notification [not null]
+  passwordResetTokens PasswordResetToken [not null]
+  emailVerificationTokens EmailVerificationToken [not null]
+  tasksCreated Task [not null]
+  tasksAssigned Task [not null]
+  channelsCreated Channel [not null]
+  channelMemberships ChannelMember [not null]
+  channelMessages ChannelMessage [not null]
+  messageReads MessageRead [not null]
+  pollVotes PollVote [not null]
+  messageReactions MessageReaction [not null]
+  messageMentions MessageMention [not null]
+  complaints Complaint [not null]
+  complaintNotes ComplaintNote [not null]
+  complaintStatusEvents ComplaintStatusEvent [not null]
+  pendingAgendaItems PendingAgendaItem [not null]
+  pendingAgendaResolved PendingAgendaItem [not null]
+  ledgerEntries LedgerEntry [not null]
+  maintenanceTickets MaintenanceTicket [not null]
+  ticketComments TicketComment [not null]
+  contractorRatings ContractorRating [not null]
+  meetingsCreated Meeting [not null]
+  minutesEdited Meeting [not null]
+  meetingRsvps MeetingRsvp [not null]
+  votesCreated Vote [not null]
+  ballots Ballot [not null]
+  ballotsCastOnBehalf Ballot [not null]
+  proxiesGranted ProxyAssignment [not null]
+  proxiesReceived ProxyAssignment [not null]
+  documents Document [not null]
+  documentVersions DocumentVersion [not null]
+  userBuildings UserBuilding [not null]
+  accreditationVerifications UserBuilding [not null, note: 'Phase 1 — Tht. § 52: ADMIN-reviewed accreditation evidence approvals.']
+  auditorMemberships AuditorMembership [not null, note: 'Phase 2 — Tht. § 27(3), § 51/A: this user\'s audit-committee /
+external-auditor memberships across all buildings.']
+  announcementDeliveries AnnouncementDelivery [not null, note: 'Phase 5 — Tht. § 33/A delivery rows where this user is the recipient.']
+  cameraReviews CameraAccessLog [not null, note: 'Phase 5 — Tht. § 25 NAIH-required camera access audit trail.']
+  unitUsers UnitUser [not null]
+  pushSubscriptions PushSubscription [not null]
+  ownedSubscriptions Subscription [not null]
+  invitationsSent Invitation [not null]
+  generatedReports GeneratedReport [not null]
+  minutesSignatures MeetingMinutesSignature [not null]
+  marketplacePublications MarketplacePublication [not null]
+}
+
+Table AuditLog {
+  id String [pk]
+  entityType String [not null]
+  entityId String [not null]
+  action String [not null]
+  user User [not null]
+  userId String [not null]
+  building Building [note: 'Building scope. Null for system-level events that aren\'t tied to a
+specific building. The audit-log GET filters to (caller\'s active
+building OR null) so admins can\'t see cross-building rows.']
+  buildingId String
+  oldValue Json
+  newValue Json
+  reason String
+  createdAt DateTime [default: `now()`, not null]
+}
+
+Table Notification {
+  id String [pk]
+  user User [note: 'Condo-side recipient. Exactly one of `userId` / `contractorUserId`
+is set, enforced in app code.']
+  userId String
+  contractorUser ContractorUser [note: 'Contractor-side recipient. Lives in the parallel auth tree, so we
+need a discrete FK rather than reusing `User`.']
+  contractorUserId String
+  type String [not null]
+  title String [not null]
+  body String [not null]
+  isRead Boolean [not null, default: false]
+  entityType String
+  entityId String
+  createdAt DateTime [default: `now()`, not null]
+}
+
+Table PasswordResetToken {
+  id String [pk]
+  token String [unique, not null]
+  user User [not null]
+  userId String [not null]
+  expiresAt DateTime [not null]
+  usedAt DateTime
+  createdAt DateTime [default: `now()`, not null]
+}
+
+Table Task {
+  id String [pk]
+  building Building [not null]
+  buildingId String [not null]
+  title String [not null]
+  body String
+  dueDate DateTime
+  priority TaskPriority [not null, default: 'NORMAL']
+  status TaskStatus [not null, default: 'OPEN']
+  assignee User
+  assigneeId String
+  createdBy User [not null]
+  createdById String [not null]
+  sourceEntityType String [note: 'Optional reference to the source entity (e.g. "MaintenanceTicket"+id).
+Lets the UI deep-link from a task back to its source module item.']
+  sourceEntityId String
+  completedAt DateTime
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+
+  Note: 'Explicit follow-up reminders attached to a building. The dashboard\'s
+"Teendőim" panel UNIONs these rows with derived signals from other modules
+(overdue charges, unassigned tickets, etc.) — see lib/followups.ts.'
+}
+
+Table EmailVerificationToken {
+  id String [pk]
+  user User [not null]
+  userId String [not null]
+  tokenHash String [unique, not null]
+  expiresAt DateTime [not null]
+  consumedAt DateTime
+  createdAt DateTime [default: `now()`, not null]
+}
+
+Table UserSession {
+  id String [pk]
+  user User [not null]
+  userId String [not null]
+  tokenId String [unique, not null, note: 'Random opaque token-id; matched against the JWT\'s `tokenId` claim.']
+  userAgent String [note: 'Raw User-Agent string. Capped at 512 chars on insert.']
+  ipMasked String [note: 'IP truncated to /24 (v4) or /48 (v6) for privacy + audit balance.']
+  deviceLabel String [note: 'Best-guess device label, e.g. "MacBook Pro · Chrome 128 · macOS".']
+  city String [note: 'Optional geo (city/country) — populated only if a lookup is available.']
+  country String
+  createdAt DateTime [default: `now()`, not null]
+  lastActiveAt DateTime [default: `now()`, not null]
+  revokedAt DateTime [note: 'Set when the session is revoked (user clicks Lezárás or signs out).']
+
+  Note: 'Per-device session row backing JWT cookies. The cookie carries `tokenId`
+in its JWT payload; the auth `jwt` callback validates the row exists and
+is not revoked on every request, allowing remote logout.'
+}
+
+Table BackupCode {
+  id String [pk]
+  user User [not null]
+  userId String [not null]
+  codeHash String [unique, not null, note: 'SHA-256 hash of the user-facing code.']
+  usedAt DateTime
+  createdAt DateTime [default: `now()`, not null]
+
+  Note: 'Single-use recovery codes generated at 2FA enrollment. Stored hashed.
+Each row\'s usedAt flips to a timestamp the moment its code is redeemed,
+so the same code cannot be re-used.'
+}
+
+Table Channel {
+  id String [pk]
+  building Building [not null]
+  buildingId String [not null]
+  kind ChannelKind [not null]
+  name String [note: 'Display name. Null for ANNOUNCEMENT (always "Hirdetőtábla") and DMs.']
+  description String
+  isPrivate Boolean [not null, default: false, note: 'True when membership is restricted (board-only, partner channels).']
+  isOfficial Boolean [not null, default: false, note: 'Officially-sanctioned channel — emoji marker / restrictions in UI.']
+  createdBy User
+  createdById String
+  members ChannelMember [not null]
+  messages ChannelMessage [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+
+  Note: 'A unified communication channel: announcements, Q&A, DMs, board chat,
+partner threads. Replaces the old ForumCategory / Conversation models;
+announcement broadcasts live as messages inside the per-building
+ANNOUNCEMENT channel.'
+}
+
+Table ChannelMember {
+  id String [pk]
+  channel Channel [not null]
+  channelId String [not null]
+  user User [not null]
+  userId String [not null]
+  lastReadMessageId String [note: 'Read pointer — most recent messageId the user has seen.']
+  isAdmin Boolean [not null, default: false, note: 'True when this user is a moderator / channel admin.']
+  joinedAt DateTime [default: `now()`, not null, note: 'Timestamp the user joined the channel.']
+
+  indexes {
+    (channelId, userId) [unique]
+  }
+}
+
+Table ChannelMessage {
+  id String [pk]
+  channel Channel [not null]
+  channelId String [not null]
+  author User [not null]
+  authorId String [not null]
+  kind MessageKind [not null, default: 'CHAT']
+  title String [note: 'Title for POST messages.']
+  body String [note: 'Markdown body (POST/CHAT).']
+  audience Json [note: 'Audience targeting for posts: { type: "all" | "board" | "stairwell:A" }.']
+  isPinned Boolean [not null, default: false, note: 'Pinned to the top of its channel.']
+  isUrgent Boolean [not null, default: false, note: 'True for "vészriasztás" — fires SMS in addition to push, regardless of prefs.']
+  parent ChannelMessage [note: 'Reply chain (for chat replies + forum-style nested topics).']
+  parentId String
+  replies ChannelMessage [not null]
+  attachments MessageAttachment [not null]
+  reads MessageRead [not null]
+  poll Poll
+  reactions MessageReaction [not null]
+  mentions MessageMention [not null]
+  deliveries AnnouncementDelivery [not null, note: 'Phase 5 — Tht. § 33/A delivery proof rows (one per recipient per channel).']
+  editedAt DateTime [note: 'Set when the message is edited.']
+  deletedAt DateTime [note: 'Soft-delete tombstone.']
+  createdAt DateTime [default: `now()`, not null]
+}
+
+Table MessageRead {
+  id String [pk]
+  message ChannelMessage [not null]
+  messageId String [not null]
+  user User [not null]
+  userId String [not null]
+  readAt DateTime [default: `now()`, not null]
+
+  indexes {
+    (messageId, userId) [unique]
+  }
+
+  Note: 'Per-user read receipt for a single message. Used for the read-receipt
+grid on broadcast posts.'
+}
+
+Table MessageAttachment {
+  id String [pk]
+  message ChannelMessage [not null]
+  messageId String [not null]
+  fileUrl String [not null]
+  fileName String [not null]
+  fileSize Int [not null]
+  mimeType String [not null]
+  createdAt DateTime [default: `now()`, not null]
+}
+
+Table Poll {
+  id String [pk]
+  message ChannelMessage [not null]
+  messageId String [unique, not null]
+  question String [not null]
+  allowMultiple Boolean [not null, default: false, note: 'Allow voters to pick more than one option.']
+  closesAt DateTime [note: 'Auto-close at this date/time. Null = open until manually closed.']
+  closedAt DateTime [note: 'Manually closed by the author or a board member.']
+  options PollOption [not null]
+  votes PollVote [not null]
+  createdAt DateTime [default: `now()`, not null]
+
+  Note: 'Inline poll attached to a ChannelMessage (kind=POLL). One poll per message.'
+}
+
+Table PollOption {
+  id String [pk]
+  poll Poll [not null]
+  pollId String [not null]
+  label String [not null, note: 'Display label.']
+  position Int [not null, default: 0, note: 'Display order.']
+  votes PollVote [not null]
+}
+
+Table PollVote {
+  id String [pk]
+  poll Poll [not null]
+  pollId String [not null]
+  option PollOption [not null]
+  optionId String [not null]
+  user User [not null]
+  userId String [not null]
+  createdAt DateTime [default: `now()`, not null]
+
+  indexes {
+    (pollId, optionId, userId) [unique]
+  }
+}
+
+Table MessageReaction {
+  id String [pk]
+  message ChannelMessage [not null]
+  messageId String [not null]
+  user User [not null]
+  userId String [not null]
+  emoji String [not null]
+  createdAt DateTime [default: `now()`, not null]
+
+  indexes {
+    (messageId, userId) [unique]
+  }
+
+  Note: 'Emoji reaction on a single message. One row per user per message.
+Reactions are upserted: re-clicking the same emoji removes it; clicking
+a different emoji replaces.'
+}
+
+Table MessageMention {
+  id String [pk]
+  message ChannelMessage [not null]
+  messageId String [not null]
+  user User [not null]
+  userId String [not null]
+  createdAt DateTime [default: `now()`, not null]
+
+  indexes {
+    (messageId, userId) [unique]
+  }
+
+  Note: '@-mention of a user inside a ChannelMessage. One row per mentioned user.
+Created on send by parsing the body against channel members.'
+}
+
+Table Complaint {
+  id String [pk]
+  author User [not null]
+  authorId String [not null]
+  title String [note: 'Optional title — resident-supplied. Body lives in description.']
+  description String [not null]
+  category ComplaintCategory [not null]
+  categoryId String [not null]
+  respondentUnit Unit [note: 'Optional unit being complained about.']
+  respondentUnitId String
+  pendingAgenda PendingAgendaItem [note: 'Pending-agenda link (set when status=ESCALATED). Source-of-truth for
+the meeting attachment lives on PendingAgendaItem.']
+  photos Json [not null, default: '[]']
+  isPrivate Boolean [not null, default: true]
+  trackingNumber String [unique, not null]
+  status ComplaintStatus [not null, default: 'REPORTED']
+  building Building [not null]
+  buildingId String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  notes ComplaintNote [not null]
+  statusEvents ComplaintStatusEvent [not null]
+}
+
+Table ComplaintCategory {
+  id String [pk]
+  building Building [not null]
+  buildingId String [not null]
+  slug String [not null, note: 'Stable identifier for default categories ("noise", "parking", …).
+Custom categories use a generated slug.']
+  name String [not null]
+  icon String [note: 'Optional emoji icon shown next to the category name.']
+  sortOrder Int [not null, default: 0]
+  isDefault Boolean [not null, default: false, note: 'True for built-in defaults (cannot be deleted, can be renamed).']
+  isActive Boolean [not null, default: true, note: 'Soft-toggle to hide a category without breaking historical rows.']
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  complaints Complaint [not null]
+
+  indexes {
+    (buildingId, slug) [unique]
+  }
+
+  Note: 'Per-building, board-managed taxonomy. Default rows have isDefault=true
+and cannot be deleted (only renamed or hidden via isActive=false).'
+}
+
+Table ComplaintStatusEvent {
+  id String [pk]
+  complaint Complaint [not null]
+  complaintId String [not null]
+  fromStatus ComplaintStatus
+  toStatus ComplaintStatus [not null]
+  actor User [not null, note: 'Who triggered the transition.']
+  actorId String [not null]
+  note String [note: 'Optional free-text note for the transition (e.g. warning letter contents).']
+  createdAt DateTime [default: `now()`, not null]
+
+  Note: 'Status-transition log for the mediation timeline. Auto-recorded on
+every complaint.status change.'
+}
+
+Table PendingAgendaItem {
+  id String [pk]
+  building Building [not null]
+  buildingId String [not null]
+  kind PendingAgendaKind [not null]
+  title String [not null, note: 'Display title rendered in the meeting agenda + the pending inbox.']
+  description String
+  complaint Complaint [note: 'Polymorphic source.']
+  complaintId String [unique]
+  resignation BoardResignation
+  resignationId String [unique]
+  createdBy User [not null]
+  createdById String [not null]
+  attachedMeeting Meeting [note: 'Null = still queued. Set when the board attaches it to a meeting.']
+  attachedMeetingId String
+  resolutionNote String [note: 'Free-text resolution captured when the board explicitly checks the
+item off (typically after the meeting).']
+  resolvedAt DateTime
+  resolvedBy User
+  resolvedById String
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+
+  Note: 'Cross-cutting "needs to be tabled at közgyűlés" queue.
+
+Polymorphic source — exactly one of complaintId / resignationId is set
+per kind. Items start with attachedMeetingId=null; the board picks them
+off the queue when scheduling / editing a meeting. After the meeting,
+the board explicitly marks each item resolved with an optional note.'
+}
+
+Table ComplaintNote {
+  id String [pk]
+  complaint Complaint [not null]
+  complaintId String [not null]
+  author User [not null]
+  authorId String [not null]
+  body String [not null]
+  isInternal Boolean [not null, default: false]
+  createdAt DateTime [default: `now()`, not null]
+}
+
+Table MaintenanceTicket {
+  id String [pk]
+  reporterId String [not null]
+  reporter User [not null]
+  title String [not null]
+  description String [not null]
+  category MaintenanceCategory [not null]
+  location String
+  urgency Urgency [not null]
+  status TicketStatus [not null, default: 'SUBMITTED']
+  slaHours Int [note: 'Hours until SLA breach, set at creation. null = no SLA tracking.']
+  trackingNumber String [unique, not null]
+  assignedContractorId String
+  assignedContractor Contractor
+  awardedContractorId String [note: 'New marketplace-awarded contractor (separate from the legacy
+`assignedContractor` directory FK, which we keep for historical rows).']
+  awardedContractor ContractorOrg
+  publication MarketplacePublication
+  building Building [not null]
+  buildingId String [not null]
+  scheduledMaintenance ScheduledMaintenance [note: 'Set when this ticket was auto-materialized from a scheduled entry.']
+  scheduledMaintenanceId String
+  comments TicketComment [not null]
+  attachments TicketAttachment [not null]
+  ratings ContractorRating [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table TicketComment {
+  id String [pk]
+  ticketId String [not null]
+  ticket MaintenanceTicket [not null]
+  authorId String [not null]
+  author User [not null]
+  body String [not null]
+  isInternal Boolean [not null, default: false]
+  createdAt DateTime [default: `now()`, not null]
+}
+
+Table TicketAttachment {
+  id String [pk]
+  ticketId String [not null]
+  ticket MaintenanceTicket [not null]
+  fileUrl String [not null]
+  fileName String [not null]
+  createdAt DateTime [default: `now()`, not null]
+}
+
+Table Contractor {
+  id String [pk]
+  name String [not null]
+  specialty String [not null]
+  contactInfo String [not null]
+  taxId String
+  tickets MaintenanceTicket [not null]
+  ratings ContractorRating [not null]
+  contractorOrg ContractorOrg [note: 'Back-link if this directory row has been claimed by a registered
+`ContractorOrg`. Null = legacy unclaimed.']
+  dataProcessingAgreementDocumentId String [note: 'Phase 5 — GDPR Art. 28. Pointer to the Data Processing Agreement
+(adatfeldolgozói szerződés) stored as a Document. Ticket assignment
+is blocked for contractors with no DPA on file.']
+  dataProcessingAgreementDocument Document
+  createdAt DateTime [default: `now()`, not null]
+}
+
+Table ContractorOrg {
+  id String [pk]
+  name String [not null]
+  taxId String [unique, not null, note: 'HU tax id (adószám), validated at onboarding.']
+  navConfirmedAt DateTime [note: 'Filled when the NAV adószám-validation API confirms registration.']
+  specialties Json [not null, default: '[]', note: 'JSON list of specialty slugs ("plumbing", "electrical", "elevator", ...).']
+  regions Json [not null, default: '[]', note: 'JSON list of HU county / Budapest district codes the org will travel to.']
+  description String
+  websiteUrl String
+  logoUrl String
+  documents ContractorDocument [not null]
+  stripeCustomerId String [unique, note: 'Stripe customer for contractor-side billing.']
+  stripeSubscriptionId String [unique, note: 'Stripe subscription id when org is on PRO or PREMIUM.']
+  plan ContractorPlan [not null, default: 'FREE']
+  planStatus String [not null, default: 'ACTIVE', note: '"TRIALING" | "ACTIVE" | "PAST_DUE" | "CANCELLED".']
+  trialEndsAt DateTime [note: 'When the current Pro trial ends. After this we lazily downgrade to FREE.']
+  currentPeriodEndsAt DateTime [note: 'Current Stripe billing period end — surfaced in the billing UI.']
+  status ContractorOrgStatus [not null, default: 'PENDING_VERIFICATION']
+  users ContractorUser [not null]
+  bids MarketplaceBid [not null]
+  awardedTickets MaintenanceTicket [not null]
+  ratings ContractorRating [not null]
+  messages MarketplaceMessage [not null]
+  legacyContractorId String [unique, note: 'One-to-one back-link to the legacy `Contractor` directory row when
+a board has worked with this contractor before signing up.']
+  legacyContractor Contractor
+  dpaSignedAt DateTime [note: 'Marker the user accepted the DPA + ToS during onboarding.']
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+
+  Note: 'A vendor business signing up to bid on `MaintenanceTicket`s published
+to the marketplace. Independent of `UserBuilding` — orgs operate
+across many condos.'
+}
+
+Table ContractorUser {
+  id String [pk]
+  org ContractorOrg [not null]
+  orgId String [not null]
+  email String [unique, not null]
+  passwordHash String [not null]
+  name String [not null]
+  phone String
+  role ContractorUserRole [not null, default: 'OWNER']
+  emailVerifiedAt DateTime
+  isActive Boolean [not null, default: true]
+  notificationPreferences Json [not null, default: '{}']
+  notifications Notification [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+
+  Note: 'Login identity scoped to a contractor org. Lives in a parallel auth
+tree from `User` — one email belongs to either tree, never both.'
+}
+
+Table ContractorDocument {
+  id String [pk]
+  org ContractorOrg [not null]
+  orgId String [not null]
+  kind String [not null, note: '"insurance" | "license" | "reference" | "other".']
+  storageKey String [not null]
+  fileName String [not null]
+  validUntil DateTime [note: 'Optional expiry — surfaced to condos as "valid through".']
+  createdAt DateTime [default: `now()`, not null]
+
+  Note: 'Insurance / license / reference docs uploaded by the contractor.'
+}
+
+Table MarketplacePublication {
+  id String [pk]
+  ticket MaintenanceTicket [not null]
+  ticketId String [unique, not null]
+  status MarketplacePublishStatus [not null, default: 'OPEN']
+  scrubbedTitle String [not null, note: 'Frozen at publish time — the listing service does NOT re-read.']
+  scrubbedDescription String [not null]
+  category String [not null]
+  urgency String [not null]
+  city String [not null]
+  zip String [not null]
+  budgetBand String [note: '"<100K", "100K-500K", "500K-2M", "2M+", or null.']
+  deadlineAt DateTime
+  specialties Json [not null, default: '[]', note: 'JSON list of specialty slugs this publication accepts bids for.']
+  revealAddressOnAward Boolean [not null, default: true, note: 'Per-publisher privacy toggles, decided at publish time.']
+  revealUnitOnAward Boolean [not null, default: false]
+  revealOwnerPhoneOnAward Boolean [not null, default: false]
+  boardContactEmail String [not null, note: 'Board contact surfaced to the winning bidder.']
+  boardContactPhone String
+  publishedAt DateTime [default: `now()`, not null]
+  publishedById String [not null]
+  publishedBy User [not null]
+  bids MarketplaceBid [not null]
+  messages MarketplaceMessage [not null]
+  fitScores MarketplaceFitScore [not null]
+  awardedBidId String [unique, note: 'Awarded counterpart (set when status becomes AWARDED).']
+  awardedBid MarketplaceBid
+  awardedAt DateTime
+  closedAt DateTime
+  closeReason String
+  publisherDisplayName String [not null, note: 'Per-publication snapshot of (publisher\'s display name, building city)
+so historical aggregates remain meaningful after a publisher leaves
+the board or a building renames itself.']
+
+  Note: 'Scrubbed projection of a `MaintenanceTicket` exposed to the
+marketplace. The contractor side ONLY reads this row — never the
+underlying ticket — so PII can\'t leak by accident.'
+}
+
+Table MarketplaceBid {
+  id String [pk]
+  publication MarketplacePublication [not null]
+  publicationId String [not null]
+  bidder ContractorOrg [not null]
+  bidderId String [not null]
+  amount Decimal [not null, note: 'Net Ft amount.']
+  etaDays Int [not null, note: 'Estimated days to completion from award.']
+  notes String [note: 'Plain-text bidder narrative — capped at 800 chars in the route.']
+  status MarketplaceBidStatus [not null, default: 'SUBMITTED']
+  decidedAt DateTime
+  decidedById String
+  decisionReason String [note: 'Free-text reason; required per P2B Art. 4 on rejection.']
+  awardedFor MarketplacePublication
+  fitScore MarketplaceFitScore
+  invoice MarketplaceInvoice
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+
+  indexes {
+    (publicationId, bidderId) [unique]
+  }
+}
+
+Table MarketplaceInvoice {
+  id String [pk]
+  bid MarketplaceBid [not null]
+  bidId String [unique, not null]
+  invoiceNumber String [not null]
+  grossAmount Decimal [not null, note: 'Gross (VAT-included) Ft amount as written on the invoice.']
+  issuedAt DateTime [not null]
+  dueAt DateTime [not null]
+  storageKey String [note: 'Optional PDF; rest of the metadata is mandatory.']
+  fileName String
+  status MarketplaceInvoiceStatus [not null, default: 'PENDING']
+  paidAt DateTime
+  paidById String
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+
+  Note: 'One-to-one invoice attached to a WON bid. Contractor submits;
+board flips PENDING → PAID, which is what advances the linked
+ticket from COMPLETED → VERIFIED.'
+}
+
+Table MarketplaceMessage {
+  id String [pk]
+  publication MarketplacePublication [not null]
+  publicationId String [not null]
+  bidder ContractorOrg [not null]
+  bidderId String [not null]
+  senderSide String [not null, note: '"BOARD" or "CONTRACTOR".']
+  senderId String [not null, note: 'userId on the condo side OR contractorUserId on the contractor side.']
+  body String [not null]
+  readAt DateTime
+  createdAt DateTime [default: `now()`, not null]
+
+  Note: 'Anonymous board ↔ contractor thread scoped to one (publication, bidder)
+pair. Plain-text only.'
+}
+
+Table MarketplaceFitScore {
+  id String [pk]
+  publication MarketplacePublication [not null]
+  publicationId String [not null]
+  bid MarketplaceBid [not null]
+  bidId String [unique, not null]
+  score Int [not null, note: '0–100 composite.']
+  rationale String [not null, note: 'Templated Hungarian sentence shown under the bid card.']
+  weightsVersion String [not null, note: 'Versioned scoring weights id, e.g. "v1.0.0".']
+  factorsJson Json [not null, note: 'Frozen factor values used to compute this score.']
+  computedAt DateTime [default: `now()`, not null]
+
+  Note: 'Best-fit score cached per (publication, bid). Rule-based — no LLM.
+`weightsVersion` + `factorsJson` make the rationale reproducible.'
+}
+
+Table ContractorRating {
+  id String [pk]
+  contractorId String [note: 'Legacy contractor directory rating. Mutually exclusive with
+`contractorOrgId` — exactly one is set, enforced in app code.']
+  contractor Contractor
+  contractorOrgId String [note: 'Marketplace contractor rating, set on COMPLETED tickets that
+were awarded via `MarketplacePublication`.']
+  contractorOrg ContractorOrg
+  ticketId String [not null]
+  ticket MaintenanceTicket [not null]
+  raterId String [not null]
+  rater User [not null]
+  rating Int [not null]
+  notes String
+  createdAt DateTime [default: `now()`, not null]
+}
+
+Table ScheduledMaintenance {
+  id String [pk]
+  title String [not null]
+  description String
+  date DateTime [not null, note: 'Next due date. For recurring entries, advanced after each materialization.']
+  isRecurring Boolean [not null, default: false]
+  recurrenceMonths Int [note: 'Months between occurrences when recurring (e.g. 1=monthly, 12=yearly).']
+  leadTimeDays Int [not null, default: 7, note: 'Days before `date` to materialize a ticket. Default 7.']
+  materializedAt DateTime [note: 'When the most recent ticket was materialized from this entry.']
+  building Building [not null]
+  buildingId String [not null]
+  tickets MaintenanceTicket [not null, note: 'Tickets generated from this scheduled entry.']
+  createdAt DateTime [default: `now()`, not null]
+}
+
+Table Account {
+  id String [pk]
+  name String [not null]
+  type AccountType [not null]
+  parentId String
+  parent Account
+  children Account [not null]
+  building Building [not null]
+  buildingId String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  debitEntries LedgerEntry [not null]
+  creditEntries LedgerEntry [not null]
+  budgets Budget [not null]
+}
+
+Table LedgerEntry {
+  id String [pk]
+  date DateTime [not null]
+  debitAccountId String [not null]
+  debitAccount Account [not null]
+  creditAccountId String [not null]
+  creditAccount Account [not null]
+  amount Decimal [not null]
+  description String [not null]
+  receiptUrl String
+  createdById String [not null]
+  createdBy User [not null]
+  createdAt DateTime [default: `now()`, not null]
+}
+
+Table MonthlyCharge {
+  id String [pk]
+  unitId String [not null]
+  unit Unit [not null]
+  month String [not null]
+  amount Decimal [not null]
+  status ChargeStatus [not null, default: 'UNPAID']
+  paidAt DateTime
+  createdAt DateTime [default: `now()`, not null]
+
+  indexes {
+    (unitId, month) [unique]
+  }
+}
+
+Table Budget {
+  id String [pk]
+  year Int [not null]
+  accountId String [not null]
+  account Account [not null]
+  plannedAmount Decimal [not null]
+
+  indexes {
+    (year, accountId) [unique]
+  }
+}
+
+Table Meeting {
+  id String [pk]
+  title String [not null]
+  description String
+  date DateTime [not null]
+  time String [not null]
+  location String
+  agenda Json [not null, default: '[]']
+  minutes String
+  minutesUpdatedAt DateTime
+  minutesUpdatedBy User
+  minutesUpdatedById String
+  createdBy User [not null]
+  createdById String [not null]
+  building Building [not null]
+  buildingId String [not null]
+  isRepeated Boolean [not null, default: false]
+  rsvps MeetingRsvp [not null]
+  attendances MeetingAttendance [not null]
+  votes Vote [not null]
+  pendingAgenda PendingAgendaItem [not null, note: 'Pending agenda items (resignations + escalated complaints) attached
+to this meeting. Source-of-truth for meeting agenda integration.']
+  minutesSignatures MeetingMinutesSignature [not null, note: 'Chair + two-authenticator signatures on the jegyzőkönyv.']
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table MeetingRsvp {
+  id String [pk]
+  meeting Meeting [not null]
+  meetingId String [not null]
+  user User [not null]
+  userId String [not null]
+  status RsvpStatus [not null]
+  createdAt DateTime [default: `now()`, not null]
+
+  indexes {
+    (meetingId, userId) [unique]
+  }
+}
+
+Table MeetingAttendance {
+  id String [pk]
+  meeting Meeting [not null]
+  meetingId String [not null]
+  unit Unit [not null]
+  unitId String [not null]
+  checkedIn Boolean [not null, default: true]
+  checkedInAt DateTime [default: `now()`, not null]
+  checkedOutAt DateTime
+  createdAt DateTime [default: `now()`, not null]
+
+  indexes {
+    (meetingId, unitId) [unique]
+  }
+}
+
+Table Vote {
+  id String [pk]
+  title String [not null]
+  description String
+  voteType VoteType [not null, default: 'YES_NO']
+  status VoteStatus [not null, default: 'DRAFT']
+  isSecret Boolean [not null, default: false]
+  majorityType MajorityType [not null, default: 'SIMPLE_MAJORITY']
+  quorumRequired Decimal [not null]
+  deadline DateTime [not null]
+  building Building [not null]
+  buildingId String [not null]
+  meeting Meeting
+  meetingId String
+  createdBy User [not null]
+  createdById String [not null]
+  options VoteOption [not null]
+  ballots Ballot [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table VoteOption {
+  id String [pk]
+  vote Vote [not null]
+  voteId String [not null]
+  label String [not null]
+  sortOrder Int [not null, default: 0]
+  ballots Ballot [not null]
+}
+
+Table Ballot {
+  id String [pk]
+  vote Vote [not null]
+  voteId String [not null]
+  option VoteOption [not null]
+  optionId String [not null]
+  unit Unit [not null]
+  unitId String [not null]
+  user User
+  userId String
+  castBy User
+  castById String
+  weight Decimal [not null]
+  receiptHash String
+  createdAt DateTime [default: `now()`, not null]
+
+  indexes {
+    (voteId, unitId) [unique]
+  }
+}
+
+Table ProxyAssignment {
+  id String [pk]
+  grantor User [not null]
+  grantorId String [not null]
+  grantee User [not null]
+  granteeId String [not null]
+  voteId String
+  validFrom DateTime [default: `now()`, not null]
+  validUntil DateTime
+  createdAt DateTime [default: `now()`, not null]
+}
+
+Table DocumentCategory {
+  id String [pk]
+  name String [not null]
+  icon String
+  parentId String
+  parent DocumentCategory
+  children DocumentCategory [not null]
+  sortOrder Int [not null, default: 0]
+  building Building [not null]
+  buildingId String [not null]
+  documents Document [not null]
+  createdAt DateTime [default: `now()`, not null]
+}
+
+Table Document {
+  id String [pk]
+  title String [not null]
+  description String
+  category DocumentCategory [not null]
+  categoryId String [not null]
+  visibility DocumentVisibility [not null, default: 'PUBLIC']
+  tags Json [not null, default: '[]']
+  isArchived Boolean [not null, default: false]
+  isPinned Boolean [not null, default: false, note: 'Pinned to the top of its category as a featured document.']
+  expiresAt DateTime [note: 'Expiry date for contracts / licenses. Null means no expiry.']
+  viewCount Int [not null, default: 0, note: 'Audit counters (incremented when the version panel opens / a download fires).']
+  downloadCount Int [not null, default: 0]
+  lastAccessedAt DateTime
+  uploadedBy User [not null]
+  uploadedById String [not null]
+  versions DocumentVersion [not null]
+  contractorDpas Contractor [not null, note: 'Phase 5 — back-relation for Contractor DPA pointers (GDPR Art. 28).']
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table DocumentVersion {
+  id String [pk]
+  document Document [not null]
+  documentId String [not null]
+  versionNumber Int [not null]
+  fileUrl String [not null]
+  fileName String [not null]
+  fileSize Int [not null]
+  mimeType String [not null]
+  extractedText String
+  uploadedBy User [not null]
+  uploadedById String [not null]
+  uploadedAt DateTime [default: `now()`, not null]
+
+  indexes {
+    (documentId, versionNumber) [unique]
+  }
+}
+
+Table PushSubscription {
+  id String [pk]
+  user User [not null]
+  userId String [not null]
+  endpoint String [unique, not null]
+  p256dh String [not null]
+  auth String [not null]
+  createdAt DateTime [default: `now()`, not null]
+}
+
+Table MeetingMinutesSignature {
+  id String [pk]
+  meeting Meeting [not null]
+  meetingId String [not null]
+  signer User [not null]
+  signerId String [not null]
+  role MinutesSignatureRole [not null]
+  signedAt DateTime [default: `now()`, not null]
+  ipAddress String [note: 'Best-effort IP capture for after-the-fact dispute resolution.
+Null when the request didn\'t expose one.']
+
+  indexes {
+    (meetingId, role) [unique]
+  }
+
+  Note: 'Tht. § 39 mandates that a meeting\'s jegyzőkönyv carries the
+chair\'s signature and two authenticators (hitelesítők). One row per
+(meeting, role); the unique constraint enforces "exactly three slots".
+Once all three are present the minutes are "executed" and the latest
+jegyzőkönyv PDF is the legally-binding copy.'
+}
+
+Table GeneratedReport {
+  id String [pk]
+  building Building [not null]
+  buildingId String [not null]
+  kind String [not null]
+  period String [not null, note: 'Opaque identifier per kind, e.g. "vote-{voteId}" or "meeting-{meetingId}".']
+  contentHash String [not null, note: 'SHA-256 over the input data used to render the PDF — drives dedupe.']
+  status ReportStatus [not null, default: 'PENDING']
+  storageKey String [note: 'Storage key under the configured driver (null until READY).']
+  fileSize Int [note: 'Bytes of the rendered PDF (null until READY). Surfaced in download UI.']
+  errorMessage String [note: 'Last failure message (set when status=FAILED).']
+  generatedBy User [not null]
+  generatedById String [not null]
+  generatedAt DateTime [default: `now()`, not null]
+  finishedAt DateTime
+  isDraft Boolean [not null, default: false]
+  retainUntil DateTime [note: 'Retention horizon — null means forever (legal-mandated reports).']
+
+  indexes {
+    (buildingId, kind, period, contentHash) [unique]
+  }
+
+  Note: 'Cached server-rendered PDF reports.
+
+Dedup is keyed on `(buildingId, kind, period, contentHash)`: if a row
+exists with status=READY, callers reuse it. PENDING/RUNNING rows act as
+in-flight markers so concurrent generate-requests share a single job.'
+}
+
+Enum ComplaintStatus {
+  REPORTED
+  ACKNOWLEDGED
+  WARNING_SENT
+  MEDIATION
+  RESOLVED
+  ESCALATED
+}
+
+Enum MaintenanceCategory {
+  PLUMBING
+  ELECTRICAL
+  STRUCTURAL
+  COMMON_AREA
+  ELEVATOR
+  HEATING
+  OTHER
+}
+
+Enum Urgency {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+Enum TicketStatus {
+  SUBMITTED
+  ACKNOWLEDGED
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  VERIFIED
+}
+
+Enum AccountType {
+  ASSET
+  LIABILITY
+  INCOME
+  EXPENSE
+}
+
+Enum ChargeStatus {
+  PAID
+  UNPAID
+  OVERDUE
+}
+
+Enum VoteType {
+  YES_NO
+  MULTIPLE_CHOICE
+  RANKED_CHOICE
+}
+
+Enum VoteStatus {
+  DRAFT
+  OPEN
+  CLOSED
+}
+
+Enum RsvpStatus {
+  ATTENDING
+  NOT_ATTENDING
+  PROXY
+}
+
+Enum MajorityType {
+  SIMPLE_MAJORITY
+  TWO_THIRDS
+  FOUR_FIFTHS
+  UNANIMOUS
+  PLURALITY
+}
+
+Enum DocumentVisibility {
+  PUBLIC
+  BOARD_ONLY
+  ADMIN_ONLY
+}
+
+Enum BuildingRole {
+  SUPER_ADMIN
+  ADMIN
+  BOARD_MEMBER
+  AUDITOR
+  OWNER
+  TENANT
+}
+
+Enum AuditorKind {
+  COMMITTEE_MEMBER
+  COMMITTEE_CHAIR
+  REGISTERED_AUDITOR
+}
+
+Enum AnnouncementChannel {
+  EMAIL
+  PUSH
+  PHYSICAL_BOARD
+  SMS
+}
+
+Enum DeliveryStatus {
+  QUEUED
+  DELIVERED
+  FAILED
+  ACK_REQUIRED
+}
+
+Enum ArrearsDisclosureMode {
+  INTERNAL_ONLY
+  CLOSED_DELIVERY
+}
+
+Enum UnitRelationship {
+  OWNER
+  TENANT
+}
+
+Enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  EXPIRED
+}
+
+Enum InvitationType {
+  ADMIN_SETUP
+  USER_INVITE
+}
+
+Enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
+Enum ResignationStatus {
+  PENDING
+  ACKNOWLEDGED
+  WITHDRAWN
+}
+
+Enum TaskStatus {
+  OPEN
+  DONE
+  ARCHIVED
+}
+
+Enum TaskPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+Enum ChannelKind {
+  ANNOUNCEMENT
+  TOPIC
+  DM
+  GROUP_DM
+  BOARD
+  PARTNER
+}
+
+Enum MessageKind {
+  POST
+  CHAT
+  POLL
+  SYSTEM
+}
+
+Enum PendingAgendaKind {
+  COMPLAINT_ESCALATION
+  BOARD_RESIGNATION
+}
+
+Enum ContractorPlan {
+  FREE
+  PRO
+  PREMIUM
+}
+
+Enum ContractorOrgStatus {
+  PENDING_VERIFICATION
+  ACTIVE
+  SUSPENDED
+  DELISTED
+}
+
+Enum ContractorUserRole {
+  OWNER
+  STAFF
+}
+
+Enum MarketplacePublishStatus {
+  DRAFT
+  OPEN
+  AWARDED
+  CLOSED
+}
+
+Enum MarketplaceBidStatus {
+  SUBMITTED
+  WITHDRAWN
+  REJECTED
+  WON
+}
+
+Enum MarketplaceInvoiceStatus {
+  PENDING
+  PAID
+}
+
+Enum ReportStatus {
+  PENDING
+  RUNNING
+  READY
+  FAILED
+}
+
+Enum MinutesSignatureRole {
+  CHAIR
+  AUTHENTICATOR_1
+  AUTHENTICATOR_2
+}
+
+Ref: Subscription.planId > Plan.id
+
+Ref: Subscription.ownerId > User.id
+
+Ref: Invitation.unitId > Unit.id
+
+Ref: Invitation.buildingId > Building.id
+
+Ref: Invitation.subscriptionId > Subscription.id
+
+Ref: Invitation.invitedById > User.id
+
+Ref: Building.subscriptionId > Subscription.id
+
+Ref: UserBuilding.userId > User.id
+
+Ref: UserBuilding.buildingId > Building.id
+
+Ref: UserBuilding.accreditationVerifiedById > User.id
+
+Ref: AuditorMembership.userId > User.id
+
+Ref: AuditorMembership.buildingId > Building.id
+
+Ref: AnnouncementDelivery.messageId > ChannelMessage.id [delete: Cascade]
+
+Ref: AnnouncementDelivery.userId > User.id
+
+Ref: BuildingCamera.buildingId > Building.id
+
+Ref: CameraAccessLog.cameraId > BuildingCamera.id
+
+Ref: CameraAccessLog.reviewerId > User.id
+
+Ref: UserBuildingPermission.userBuildingId > UserBuilding.id [delete: Cascade]
+
+Ref: UserBuildingPermission.permissionId > BoardPermission.id
+
+Ref: BoardResignation.userBuildingId > UserBuilding.id
+
+Ref: UnitUser.userId > User.id
+
+Ref: UnitUser.unitId > Unit.id
+
+Ref: Unit.buildingId > Building.id
+
+Ref: AuditLog.userId > User.id
+
+Ref: AuditLog.buildingId > Building.id
+
+Ref: Notification.userId > User.id
+
+Ref: Notification.contractorUserId > ContractorUser.id
+
+Ref: PasswordResetToken.userId > User.id
+
+Ref: Task.buildingId > Building.id
+
+Ref: Task.assigneeId > User.id
+
+Ref: Task.createdById > User.id
+
+Ref: EmailVerificationToken.userId > User.id [delete: Cascade]
+
+Ref: UserSession.userId > User.id [delete: Cascade]
+
+Ref: BackupCode.userId > User.id [delete: Cascade]
+
+Ref: Channel.buildingId > Building.id
+
+Ref: Channel.createdById > User.id
+
+Ref: ChannelMember.channelId > Channel.id [delete: Cascade]
+
+Ref: ChannelMember.userId > User.id
+
+Ref: ChannelMessage.channelId > Channel.id [delete: Cascade]
+
+Ref: ChannelMessage.authorId > User.id
+
+Ref: ChannelMessage.parentId - ChannelMessage.id
+
+Ref: MessageRead.messageId > ChannelMessage.id [delete: Cascade]
+
+Ref: MessageRead.userId > User.id
+
+Ref: MessageAttachment.messageId > ChannelMessage.id [delete: Cascade]
+
+Ref: Poll.messageId - ChannelMessage.id [delete: Cascade]
+
+Ref: PollOption.pollId > Poll.id [delete: Cascade]
+
+Ref: PollVote.pollId > Poll.id [delete: Cascade]
+
+Ref: PollVote.optionId > PollOption.id [delete: Cascade]
+
+Ref: PollVote.userId > User.id
+
+Ref: MessageReaction.messageId > ChannelMessage.id [delete: Cascade]
+
+Ref: MessageReaction.userId > User.id
+
+Ref: MessageMention.messageId > ChannelMessage.id [delete: Cascade]
+
+Ref: MessageMention.userId > User.id
+
+Ref: Complaint.authorId > User.id
+
+Ref: Complaint.categoryId > ComplaintCategory.id
+
+Ref: Complaint.respondentUnitId > Unit.id
+
+Ref: Complaint.buildingId > Building.id
+
+Ref: ComplaintCategory.buildingId > Building.id
+
+Ref: ComplaintStatusEvent.complaintId > Complaint.id [delete: Cascade]
+
+Ref: ComplaintStatusEvent.actorId > User.id
+
+Ref: PendingAgendaItem.buildingId > Building.id
+
+Ref: PendingAgendaItem.complaintId - Complaint.id [delete: Cascade]
+
+Ref: PendingAgendaItem.resignationId - BoardResignation.id [delete: Cascade]
+
+Ref: PendingAgendaItem.createdById > User.id
+
+Ref: PendingAgendaItem.attachedMeetingId > Meeting.id
+
+Ref: PendingAgendaItem.resolvedById > User.id
+
+Ref: ComplaintNote.complaintId > Complaint.id [delete: Cascade]
+
+Ref: ComplaintNote.authorId > User.id
+
+Ref: MaintenanceTicket.reporterId > User.id
+
+Ref: MaintenanceTicket.assignedContractorId > Contractor.id
+
+Ref: MaintenanceTicket.awardedContractorId > ContractorOrg.id
+
+Ref: MaintenanceTicket.buildingId > Building.id
+
+Ref: MaintenanceTicket.scheduledMaintenanceId > ScheduledMaintenance.id
+
+Ref: TicketComment.ticketId > MaintenanceTicket.id [delete: Cascade]
+
+Ref: TicketComment.authorId > User.id
+
+Ref: TicketAttachment.ticketId > MaintenanceTicket.id [delete: Cascade]
+
+Ref: Contractor.dataProcessingAgreementDocumentId > Document.id
+
+Ref: ContractorOrg.legacyContractorId - Contractor.id
+
+Ref: ContractorUser.orgId > ContractorOrg.id [delete: Cascade]
+
+Ref: ContractorDocument.orgId > ContractorOrg.id [delete: Cascade]
+
+Ref: MarketplacePublication.ticketId - MaintenanceTicket.id [delete: Cascade]
+
+Ref: MarketplacePublication.publishedById > User.id
+
+Ref: MarketplacePublication.awardedBidId - MarketplaceBid.id
+
+Ref: MarketplaceBid.publicationId > MarketplacePublication.id [delete: Cascade]
+
+Ref: MarketplaceBid.bidderId > ContractorOrg.id
+
+Ref: MarketplaceInvoice.bidId - MarketplaceBid.id [delete: Cascade]
+
+Ref: MarketplaceMessage.publicationId > MarketplacePublication.id [delete: Cascade]
+
+Ref: MarketplaceMessage.bidderId > ContractorOrg.id
+
+Ref: MarketplaceFitScore.publicationId > MarketplacePublication.id [delete: Cascade]
+
+Ref: MarketplaceFitScore.bidId - MarketplaceBid.id [delete: Cascade]
+
+Ref: ContractorRating.contractorId > Contractor.id
+
+Ref: ContractorRating.contractorOrgId > ContractorOrg.id
+
+Ref: ContractorRating.ticketId > MaintenanceTicket.id
+
+Ref: ContractorRating.raterId > User.id
+
+Ref: ScheduledMaintenance.buildingId > Building.id
+
+Ref: Account.parentId - Account.id
+
+Ref: Account.buildingId > Building.id
+
+Ref: LedgerEntry.debitAccountId > Account.id
+
+Ref: LedgerEntry.creditAccountId > Account.id
+
+Ref: LedgerEntry.createdById > User.id
+
+Ref: MonthlyCharge.unitId > Unit.id
+
+Ref: Budget.accountId > Account.id
+
+Ref: Meeting.minutesUpdatedById > User.id
+
+Ref: Meeting.createdById > User.id
+
+Ref: Meeting.buildingId > Building.id
+
+Ref: MeetingRsvp.meetingId > Meeting.id [delete: Cascade]
+
+Ref: MeetingRsvp.userId > User.id
+
+Ref: MeetingAttendance.meetingId > Meeting.id [delete: Cascade]
+
+Ref: MeetingAttendance.unitId > Unit.id
+
+Ref: Vote.buildingId > Building.id
+
+Ref: Vote.meetingId > Meeting.id
+
+Ref: Vote.createdById > User.id
+
+Ref: VoteOption.voteId > Vote.id [delete: Cascade]
+
+Ref: Ballot.voteId > Vote.id [delete: Cascade]
+
+Ref: Ballot.optionId > VoteOption.id
+
+Ref: Ballot.unitId > Unit.id
+
+Ref: Ballot.userId > User.id
+
+Ref: Ballot.castById > User.id
+
+Ref: ProxyAssignment.grantorId > User.id
+
+Ref: ProxyAssignment.granteeId > User.id
+
+Ref: DocumentCategory.parentId - DocumentCategory.id
+
+Ref: DocumentCategory.buildingId > Building.id
+
+Ref: Document.categoryId > DocumentCategory.id
+
+Ref: Document.uploadedById > User.id
+
+Ref: DocumentVersion.documentId > Document.id [delete: Cascade]
+
+Ref: DocumentVersion.uploadedById > User.id
+
+Ref: PushSubscription.userId > User.id [delete: Cascade]
+
+Ref: MeetingMinutesSignature.meetingId > Meeting.id [delete: Cascade]
+
+Ref: MeetingMinutesSignature.signerId > User.id
+
+Ref: GeneratedReport.buildingId > Building.id
+
+Ref: GeneratedReport.generatedById > User.id

@@ -1,0 +1,806 @@
+<mxfile host="app.diagrams.net" agent="Claude Code" version="26.0.0">
+  <!-- ============================================================ -->
+  <!-- LAP 1: Magyar piac — Pozicionálás (2x2 mátrix)              -->
+  <!-- ============================================================ -->
+  <diagram id="market-positioning" name="Magyar piac — Pozicionálás">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Title -->
+        <mxCell id="title1" value="&lt;b&gt;Magyar társasházkezelő szoftverek — Pozícionálási térkép&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=18;fontColor=#002045;" vertex="1" parent="1">
+          <mxGeometry x="184" y="20" width="800" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- Axes -->
+        <!-- Y axis: Funkció-lefedettség -->
+        <mxCell id="yaxis" value="" style="endArrow=block;endFill=1;strokeWidth=2;strokeColor=#515f74;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="180" y="720" as="sourcePoint"/>
+            <mxPoint x="180" y="80" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ylabel" value="&lt;b&gt;Funkció-lefedettség&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;rotation=-90;fontSize=12;fontColor=#515f74;" vertex="1" parent="1">
+          <mxGeometry x="80" y="370" width="160" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="ylow" value="Alacsony" style="text;html=1;align=center;fontSize=10;fontColor=#999;" vertex="1" parent="1">
+          <mxGeometry x="120" y="690" width="60" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="yhigh" value="Magas" style="text;html=1;align=center;fontSize=10;fontColor=#999;" vertex="1" parent="1">
+          <mxGeometry x="120" y="90" width="60" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- X axis: Szavazási képességek -->
+        <mxCell id="xaxis" value="" style="endArrow=block;endFill=1;strokeWidth=2;strokeColor=#515f74;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="180" y="720" as="sourcePoint"/>
+            <mxPoint x="1080" y="720" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="xlabel" value="&lt;b&gt;Szavazási képességek&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;fontSize=12;fontColor=#515f74;" vertex="1" parent="1">
+          <mxGeometry x="530" y="740" width="160" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="xlow" value="Nincs" style="text;html=1;align=center;fontSize=10;fontColor=#999;" vertex="1" parent="1">
+          <mxGeometry x="190" y="740" width="50" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="xhigh" value="Teljes" style="text;html=1;align=center;fontSize=10;fontColor=#999;" vertex="1" parent="1">
+          <mxGeometry x="1030" y="740" width="50" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- Quadrant labels -->
+        <mxCell id="q1" value="Könyvelés-óriások" style="text;html=1;align=center;fontSize=11;fontColor=#aaa;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="250" y="100" width="180" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="q2" value="All-in-one cél" style="text;html=1;align=center;fontSize=11;fontColor=#aaa;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="800" y="100" width="180" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="q3" value="Niche szavazás" style="text;html=1;align=center;fontSize=11;fontColor=#aaa;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="800" y="580" width="180" height="30" as="geometry"/>
+        </mxCell>
+
+        <!-- Companies -->
+        <!-- eHÁZ: High function, no voting -->
+        <mxCell id="ehaz" value="&lt;b&gt;eHÁZ&lt;/b&gt;&lt;br&gt;13 000 társasház&lt;br&gt;60-125 Ft/lakás/hó" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="240" y="140" width="160" height="90" as="geometry"/>
+        </mxCell>
+
+        <!-- OnlineHáz: Medium function, no voting -->
+        <mxCell id="onlinehaz" value="&lt;b&gt;OnlineHáz&lt;/b&gt;&lt;br&gt;3 000 társasház&lt;br&gt;49 Ft/lakás/hó" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="280" y="280" width="150" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- Társasház App: Medium function, some voting -->
+        <mxCell id="tarsashazapp" value="&lt;b&gt;Társasház App&lt;/b&gt;&lt;br&gt;Részleges szavazás&lt;br&gt;39 Ft/lakás/hó" style="ellipse;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="500" y="300" width="160" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- Érték Rendszerház: Medium function, minimal voting -->
+        <mxCell id="ertek" value="&lt;b&gt;Érték Rh.&lt;/b&gt;&lt;br&gt;5 900+ Ft/hó fix" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="310" y="400" width="120" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- WHM Cloud: Low-medium function, some voting -->
+        <mxCell id="whm" value="&lt;b&gt;WHM Cloud&lt;/b&gt;&lt;br&gt;Online szavazás&lt;br&gt;2003 óta" style="ellipse;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="550" y="460" width="140" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- Honline: Low function, dedicated voting -->
+        <mxCell id="honline" value="&lt;b&gt;Honline&lt;/b&gt;&lt;br&gt;Online közgyűlés&lt;br&gt;Niche" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="770" y="520" width="130" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- eKözgyűlés: Low function, dedicated voting -->
+        <mxCell id="ekozgyules" value="&lt;b&gt;eKözgyűlés&lt;/b&gt;&lt;br&gt;Szavazás +&lt;br&gt;jegyzőkönyv" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="820" y="620" width="130" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- CONDO MANAGER: High function, full voting — TARGET -->
+        <mxCell id="condomanager" value="&lt;b&gt;CONDO MANAGER&lt;/b&gt;&lt;br&gt;&lt;br&gt;All-in-one +&lt;br&gt;Magyar jog-kompatibilis&lt;br&gt;szavazás" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;fontStyle=1;strokeWidth=3;" vertex="1" parent="1">
+          <mxGeometry x="800" y="140" width="200" height="120" as="geometry"/>
+        </mxCell>
+
+        <!-- Arrow from current gap to target -->
+        <mxCell id="arrow1" value="&lt;i&gt;Piaci rés&lt;/i&gt;" style="endArrow=block;endFill=1;dashed=1;strokeWidth=2;strokeColor=#82b366;fontColor=#82b366;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="660" y="310" as="sourcePoint"/>
+            <mxPoint x="800" y="220" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <!-- ============================================================ -->
+  <!-- LAP 2: Funkció-összehasonlítás (radar-szerű)                -->
+  <!-- ============================================================ -->
+  <diagram id="feature-comparison" name="Funkció-összehasonlítás">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Title -->
+        <mxCell id="title2" value="&lt;b&gt;Funkció-összehasonlítás — Versenytársak vs. Condo Manager&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=18;fontColor=#002045;" vertex="1" parent="1">
+          <mxGeometry x="184" y="20" width="800" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- Legend -->
+        <mxCell id="leg_green" value="" style="rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="200" y="75" width="16" height="16" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg_green_t" value="Condo Manager" style="text;html=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="220" y="72" width="100" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg_blue" value="" style="rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="340" y="75" width="16" height="16" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg_blue_t" value="eHÁZ" style="text;html=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="360" y="72" width="50" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg_yellow" value="" style="rounded=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="420" y="75" width="16" height="16" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg_yellow_t" value="Társasház App" style="text;html=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="440" y="72" width="100" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg_red" value="" style="rounded=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="560" y="75" width="16" height="16" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg_red_t" value="Honline" style="text;html=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="580" y="72" width="60" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg_purple" value="" style="rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="660" y="75" width="16" height="16" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg_purple_t" value="Condo Control (int'l)" style="text;html=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="680" y="72" width="130" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- Table headers -->
+        <mxCell id="hdr_func" value="&lt;b&gt;Funkció&lt;/b&gt;" style="rounded=0;fillColor=#002045;fontColor=#ffffff;strokeColor=none;fontSize=11;align=left;" vertex="1" parent="1">
+          <mxGeometry x="60" y="110" width="220" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="hdr_cm" value="&lt;b&gt;Condo Mgr&lt;/b&gt;" style="rounded=0;fillColor=#82b366;fontColor=#ffffff;strokeColor=none;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="280" y="110" width="90" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="hdr_ehaz" value="&lt;b&gt;eHÁZ&lt;/b&gt;" style="rounded=0;fillColor=#6c8ebf;fontColor=#ffffff;strokeColor=none;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="370" y="110" width="90" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="hdr_ta" value="&lt;b&gt;Társasház App&lt;/b&gt;" style="rounded=0;fillColor=#d6b656;fontColor=#ffffff;strokeColor=none;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="460" y="110" width="90" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="hdr_hon" value="&lt;b&gt;Honline&lt;/b&gt;" style="rounded=0;fillColor=#b85450;fontColor=#ffffff;strokeColor=none;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="550" y="110" width="90" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="hdr_cc" value="&lt;b&gt;Condo Ctrl&lt;/b&gt;" style="rounded=0;fillColor=#9673a6;fontColor=#ffffff;strokeColor=none;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="640" y="110" width="90" height="30" as="geometry"/>
+        </mxCell>
+
+        <!-- Row template: alternating colors -->
+        <!-- Row 1: Könyvelés -->
+        <mxCell id="r1f" value="Könyvelés" style="rounded=0;fillColor=#f5f5f5;strokeColor=#e0e0e0;fontSize=10;align=left;" vertex="1" parent="1">
+          <mxGeometry x="60" y="140" width="220" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r1cm" value="+++" style="rounded=0;fillColor=#f5f5f5;strokeColor=#e0e0e0;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="280" y="140" width="90" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r1eh" value="+++" style="rounded=0;fillColor=#f5f5f5;strokeColor=#e0e0e0;fontSize=10;align=center;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="370" y="140" width="90" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r1ta" value="++" style="rounded=0;fillColor=#f5f5f5;strokeColor=#e0e0e0;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="460" y="140" width="90" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r1ho" value="—" style="rounded=0;fillColor=#f5f5f5;strokeColor=#e0e0e0;fontSize=10;align=center;fontColor=#ccc;" vertex="1" parent="1">
+          <mxGeometry x="550" y="140" width="90" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r1cc" value="++" style="rounded=0;fillColor=#f5f5f5;strokeColor=#e0e0e0;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="640" y="140" width="90" height="28" as="geometry"/>
+        </mxCell>
+
+        <!-- Row 2: Online szavazás -->
+        <mxCell id="r2f" value="Online szavazás" style="rounded=0;fillColor=#ffffff;strokeColor=#e0e0e0;fontSize=10;align=left;" vertex="1" parent="1">
+          <mxGeometry x="60" y="168" width="220" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r2cm" value="+++" style="rounded=0;fillColor=#ffffff;strokeColor=#e0e0e0;fontSize=10;align=center;fontStyle=1;fontColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="280" y="168" width="90" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r2eh" value="—" style="rounded=0;fillColor=#ffffff;strokeColor=#e0e0e0;fontSize=10;align=center;fontColor=#ccc;" vertex="1" parent="1">
+          <mxGeometry x="370" y="168" width="90" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r2ta" value="+" style="rounded=0;fillColor=#ffffff;strokeColor=#e0e0e0;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="460" y="168" width="90" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r2ho" value="++" style="rounded=0;fillColor=#ffffff;strokeColor=#e0e0e0;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="550" y="168" width="90" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r2cc" value="++" style="rounded=0;fillColor=#ffffff;strokeColor=#e0e0e0;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="640" y="168" width="90" height="28" as="geometry"/>
+        </mxCell>
+
+        <!-- Row 3: Határozatképesség (jelenlét) -->
+        <mxCell id="r3f" value="&lt;b&gt;Határozatképesség (jelenlét)&lt;/b&gt;" style="rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=left;" vertex="1" parent="1">
+          <mxGeometry x="60" y="196" width="220" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r3cm" value="+++" style="rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;align=center;fontStyle=1;fontColor=#2d7600;" vertex="1" parent="1">
+          <mxGeometry x="280" y="196" width="90" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r3eh" value="—" style="rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=center;fontColor=#ccc;" vertex="1" parent="1">
+          <mxGeometry x="370" y="196" width="90" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r3ta" value="—" style="rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=center;fontColor=#ccc;" vertex="1" parent="1">
+          <mxGeometry x="460" y="196" width="90" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r3ho" value="—" style="rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=center;fontColor=#ccc;" vertex="1" parent="1">
+          <mxGeometry x="550" y="196" width="90" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r3cc" value="—" style="rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=center;fontColor=#ccc;" vertex="1" parent="1">
+          <mxGeometry x="640" y="196" width="90" height="28" as="geometry"/>
+        </mxCell>
+
+        <!-- Row 4: Megismételt közgyűlés -->
+        <mxCell id="r4f" value="&lt;b&gt;Megismételt közgyűlés&lt;/b&gt;" style="rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=left;" vertex="1" parent="1">
+          <mxGeometry x="60" y="224" width="220" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r4cm" value="+++" style="rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;align=center;fontStyle=1;fontColor=#2d7600;" vertex="1" parent="1">
+          <mxGeometry x="280" y="224" width="90" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r4eh" value="—" style="rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=center;fontColor=#ccc;" vertex="1" parent="1">
+          <mxGeometry x="370" y="224" width="90" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r4ta" value="—" style="rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=center;fontColor=#ccc;" vertex="1" parent="1">
+          <mxGeometry x="460" y="224" width="90" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r4ho" value="—" style="rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=center;fontColor=#ccc;" vertex="1" parent="1">
+          <mxGeometry x="550" y="224" width="90" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r4cc" value="—" style="rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=center;fontColor=#ccc;" vertex="1" parent="1">
+          <mxGeometry x="640" y="224" width="90" height="28" as="geometry"/>
+        </mxCell>
+
+        <!-- Row 5: Minősített többség -->
+        <mxCell id="r5f" value="&lt;b&gt;Minősített többség (2/3, 4/5, 100%)&lt;/b&gt;" style="rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=left;" vertex="1" parent="1">
+          <mxGeometry x="60" y="252" width="220" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r5cm" value="+++" style="rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;align=center;fontStyle=1;fontColor=#2d7600;" vertex="1" parent="1">
+          <mxGeometry x="280" y="252" width="90" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r5eh" value="—" style="rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=center;fontColor=#ccc;" vertex="1" parent="1">
+          <mxGeometry x="370" y="252" width="90" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r5ta" value="—" style="rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=center;fontColor=#ccc;" vertex="1" parent="1">
+          <mxGeometry x="460" y="252" width="90" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r5ho" value="—" style="rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=center;fontColor=#ccc;" vertex="1" parent="1">
+          <mxGeometry x="550" y="252" width="90" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r5cc" value="—" style="rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=center;fontColor=#ccc;" vertex="1" parent="1">
+          <mxGeometry x="640" y="252" width="90" height="28" as="geometry"/>
+        </mxCell>
+
+        <!-- Row 6: Tartózkodás kezelése -->
+        <mxCell id="r6f" value="&lt;b&gt;Tartózkodás kezelése&lt;/b&gt;" style="rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=left;" vertex="1" parent="1">
+          <mxGeometry x="60" y="280" width="220" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r6cm" value="+++" style="rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;align=center;fontStyle=1;fontColor=#2d7600;" vertex="1" parent="1">
+          <mxGeometry x="280" y="280" width="90" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r6eh" value="—" style="rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=center;fontColor=#ccc;" vertex="1" parent="1">
+          <mxGeometry x="370" y="280" width="90" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r6ta" value="—" style="rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=center;fontColor=#ccc;" vertex="1" parent="1">
+          <mxGeometry x="460" y="280" width="90" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r6ho" value="—" style="rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=center;fontColor=#ccc;" vertex="1" parent="1">
+          <mxGeometry x="550" y="280" width="90" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r6cc" value="—" style="rounded=0;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=center;fontColor=#ccc;" vertex="1" parent="1">
+          <mxGeometry x="640" y="280" width="90" height="28" as="geometry"/>
+        </mxCell>
+
+        <!-- Row 7: Kommunikáció -->
+        <mxCell id="r7f" value="Kommunikáció (fórum, chat)" style="rounded=0;fillColor=#f5f5f5;strokeColor=#e0e0e0;fontSize=10;align=left;" vertex="1" parent="1">
+          <mxGeometry x="60" y="308" width="220" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r7cm" value="++" style="rounded=0;fillColor=#f5f5f5;strokeColor=#e0e0e0;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="280" y="308" width="90" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r7eh" value="—" style="rounded=0;fillColor=#f5f5f5;strokeColor=#e0e0e0;fontSize=10;align=center;fontColor=#ccc;" vertex="1" parent="1">
+          <mxGeometry x="370" y="308" width="90" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r7ta" value="+" style="rounded=0;fillColor=#f5f5f5;strokeColor=#e0e0e0;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="460" y="308" width="90" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r7ho" value="+" style="rounded=0;fillColor=#f5f5f5;strokeColor=#e0e0e0;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="550" y="308" width="90" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r7cc" value="++" style="rounded=0;fillColor=#f5f5f5;strokeColor=#e0e0e0;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="640" y="308" width="90" height="28" as="geometry"/>
+        </mxCell>
+
+        <!-- Row 8: Mobil app -->
+        <mxCell id="r8f" value="Mobil app" style="rounded=0;fillColor=#ffffff;strokeColor=#e0e0e0;fontSize=10;align=left;" vertex="1" parent="1">
+          <mxGeometry x="60" y="336" width="220" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r8cm" value="++" style="rounded=0;fillColor=#ffffff;strokeColor=#e0e0e0;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="280" y="336" width="90" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r8eh" value="++" style="rounded=0;fillColor=#ffffff;strokeColor=#e0e0e0;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="370" y="336" width="90" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r8ta" value="++" style="rounded=0;fillColor=#ffffff;strokeColor=#e0e0e0;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="460" y="336" width="90" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r8ho" value="+" style="rounded=0;fillColor=#ffffff;strokeColor=#e0e0e0;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="550" y="336" width="90" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="r8cc" value="++" style="rounded=0;fillColor=#ffffff;strokeColor=#e0e0e0;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="640" y="336" width="90" height="28" as="geometry"/>
+        </mxCell>
+
+        <!-- Callout -->
+        <mxCell id="callout1" value="&lt;b&gt;A zöld sorok a Condo Manager egyedi versenyelőnyét jelzik&lt;/b&gt;&lt;br&gt;— Egyik versenytárs sem rendelkezik ezekkel a funkciókkal —" style="shape=callout;whiteSpace=wrap;html=1;perimeter=calloutPerimeter;size=20;position=0.25;base=20;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;align=center;" vertex="1" parent="1">
+          <mxGeometry x="280" y="400" width="450" height="80" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <!-- ============================================================ -->
+  <!-- LAP 3: Szavazási logika — Döntési fa                        -->
+  <!-- ============================================================ -->
+  <diagram id="voting-flowchart" name="Szavazási logika — Döntési fa">
+    <mxGraphModel dx="1422" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Title -->
+        <mxCell id="title3" value="&lt;b&gt;Közgyűlési szavazás — Döntési fa&lt;/b&gt;&lt;br&gt;2003. évi CXXXIII. törvény alapján" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=16;fontColor=#002045;" vertex="1" parent="1">
+          <mxGeometry x="334" y="10" width="500" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- Start -->
+        <mxCell id="start" value="&lt;b&gt;Közgyűlés megnyitása&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#002045;fontColor=#ffffff;strokeColor=none;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="454" y="70" width="260" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- Jelenléti ív -->
+        <mxCell id="jelenleti" value="&lt;b&gt;Jelenléti ív kitöltése&lt;/b&gt;&lt;br&gt;(érkeztetés lakásonként)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="454" y="140" width="260" height="45" as="geometry"/>
+        </mxCell>
+
+        <!-- Arrow -->
+        <mxCell id="a1" style="endArrow=block;endFill=1;strokeColor=#515f74;" edge="1" parent="1" source="start" target="jelenleti">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Decision: Megismételt? -->
+        <mxCell id="d_repeated" value="Megismételt&lt;br&gt;közgyűlés?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="504" y="215" width="160" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="a2" style="endArrow=block;endFill=1;strokeColor=#515f74;" edge="1" parent="1" source="jelenleti" target="d_repeated">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- YES: Always quorate -->
+        <mxCell id="always_quorate" value="&lt;b&gt;HATÁROZATKÉPES&lt;/b&gt;&lt;br&gt;(létszámtól függetlenül)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="750" y="225" width="200" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="a3" value="Igen" style="endArrow=block;endFill=1;strokeColor=#82b366;fontColor=#82b366;fontSize=10;" edge="1" parent="1" source="d_repeated" target="always_quorate">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- NO: Check quorum -->
+        <mxCell id="d_quorum" value="Jelenlévők tul.&lt;br&gt;hányada &gt; 50%?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="504" y="330" width="160" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="a4" value="Nem" style="endArrow=block;endFill=1;strokeColor=#b85450;fontColor=#b85450;fontSize=10;" edge="1" parent="1" source="d_repeated" target="d_quorum">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Quorum met -->
+        <mxCell id="quorate" value="&lt;b&gt;HATÁROZATKÉPES&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="750" y="340" width="200" height="45" as="geometry"/>
+        </mxCell>
+        <mxCell id="a5" value="Igen" style="endArrow=block;endFill=1;strokeColor=#82b366;fontColor=#82b366;fontSize=10;" edge="1" parent="1" source="d_quorum" target="quorate">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Quorum NOT met -->
+        <mxCell id="not_quorate" value="&lt;b&gt;NEM HATÁROZATKÉPES&lt;/b&gt;&lt;br&gt;→ Megismételt közgyűlés&lt;br&gt;kiírása (15 napon belül)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="190" y="330" width="230" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="a6" value="Nem" style="endArrow=block;endFill=1;strokeColor=#b85450;fontColor=#b85450;fontSize=10;" edge="1" parent="1" source="d_quorum" target="not_quorate">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Merge: proceed to vote type -->
+        <mxCell id="vote_type" value="&lt;b&gt;Szavazás típusa?&lt;/b&gt;" style="rhombus;whiteSpace=wrap;html=1;fillColor=#002045;fontColor=#ffffff;strokeColor=none;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="504" y="450" width="160" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="a7" style="endArrow=block;endFill=1;strokeColor=#515f74;" edge="1" parent="1" source="quorate" target="vote_type">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a7b" style="endArrow=block;endFill=1;strokeColor=#515f74;" edge="1" parent="1" source="always_quorate" target="vote_type">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="850" y="420"/>
+              <mxPoint x="584" y="420"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Branch: Egyszerű többség -->
+        <mxCell id="simple" value="&lt;b&gt;Egyszerű többség&lt;/b&gt;&lt;br&gt;&gt;50% a jelenlévők&lt;br&gt;szavazataiból&lt;br&gt;(tartózkodás nélkül)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="100" y="570" width="170" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="a8" value="Egyszerű" style="endArrow=block;endFill=1;strokeColor=#6c8ebf;fontColor=#6c8ebf;fontSize=9;" edge="1" parent="1" source="vote_type" target="simple">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Branch: 2/3 -->
+        <mxCell id="twothirds" value="&lt;b&gt;Minősített 2/3&lt;/b&gt;&lt;br&gt;≥66,67% az ÖSSZES&lt;br&gt;tulajdoni hányadból" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="310" y="570" width="170" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="a9" value="2/3" style="endArrow=block;endFill=1;strokeColor=#d6b656;fontColor=#d6b656;fontSize=9;" edge="1" parent="1" source="vote_type" target="twothirds">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Branch: 4/5 -->
+        <mxCell id="fourfifths" value="&lt;b&gt;Minősített 4/5&lt;/b&gt;&lt;br&gt;≥80% az ÖSSZES&lt;br&gt;tulajdoni hányadból" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="520" y="570" width="170" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="a10" value="4/5" style="endArrow=block;endFill=1;strokeColor=#d6b656;fontColor=#d6b656;fontSize=9;" edge="1" parent="1" source="vote_type" target="fourfifths">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Branch: Egyhangú -->
+        <mxCell id="unanimous" value="&lt;b&gt;Egyhangúság&lt;/b&gt;&lt;br&gt;100% — minden&lt;br&gt;tulajdonos igen" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="730" y="570" width="170" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="a11" value="100%" style="endArrow=block;endFill=1;strokeColor=#b85450;fontColor=#b85450;fontSize=9;" edge="1" parent="1" source="vote_type" target="unanimous">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Branch: Relatív -->
+        <mxCell id="plurality" value="&lt;b&gt;Relatív többség&lt;/b&gt;&lt;br&gt;Legtöbb szavazat nyer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="940" y="570" width="160" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="a12" value="Relatív" style="endArrow=block;endFill=1;strokeColor=#9673a6;fontColor=#9673a6;fontSize=9;" edge="1" parent="1" source="vote_type" target="plurality">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Result nodes -->
+        <mxCell id="res_simple" value="Elfogadva / Elutasítva" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="115" y="680" width="140" height="35" as="geometry"/>
+        </mxCell>
+        <mxCell id="a_rs" style="endArrow=block;endFill=1;strokeColor=#999;" edge="1" parent="1" source="simple" target="res_simple">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="res_qual" value="&lt;b&gt;FIGYELEM:&lt;/b&gt; Megismételt&lt;br&gt;közgyűlésen is kell a küszöb!" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="380" y="690" width="240" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="a_rq1" style="endArrow=block;endFill=1;strokeColor=#d6b656;dashed=1;" edge="1" parent="1" source="twothirds" target="res_qual">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a_rq2" style="endArrow=block;endFill=1;strokeColor=#d6b656;dashed=1;" edge="1" parent="1" source="fourfifths" target="res_qual">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="res_unan" value="Megismételt közgyűlésen&lt;br&gt;NEM hozható meg!" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="730" y="690" width="170" height="45" as="geometry"/>
+        </mxCell>
+        <mxCell id="a_ru" style="endArrow=block;endFill=1;strokeColor=#b85450;dashed=1;" edge="1" parent="1" source="unanimous" target="res_unan">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Note about abstention -->
+        <mxCell id="note_abstain" value="&lt;i&gt;A tartózkodás NEM számít nemnek.&lt;br&gt;Az egyszerű többségnél kizárjuk a&lt;br&gt;számítás nevezőjéből.&lt;/i&gt;" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;size=15;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="50" y="460" width="200" height="75" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <!-- ============================================================ -->
+  <!-- LAP 4: Árazási pozícionálás                                  -->
+  <!-- ============================================================ -->
+  <diagram id="pricing" name="Árazási pozícionálás">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Title -->
+        <mxCell id="title4" value="&lt;b&gt;Árazási pozícionálás — Magyar piac&lt;/b&gt;&lt;br&gt;Ft/lakás/hó + ÁFA" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=16;fontColor=#002045;" vertex="1" parent="1">
+          <mxGeometry x="334" y="20" width="500" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- Price scale (horizontal bar) -->
+        <mxCell id="scale_bg" value="" style="rounded=1;fillColor=#f5f5f5;strokeColor=#e0e0e0;" vertex="1" parent="1">
+          <mxGeometry x="100" y="120" width="960" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- Price markers -->
+        <mxCell id="p0" value="0 Ft" style="text;html=1;fontSize=10;fontColor=#999;align=center;" vertex="1" parent="1">
+          <mxGeometry x="90" y="185" width="40" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="p25" value="25 Ft" style="text;html=1;fontSize=10;fontColor=#999;align=center;" vertex="1" parent="1">
+          <mxGeometry x="210" y="185" width="40" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="p50" value="50 Ft" style="text;html=1;fontSize=10;fontColor=#999;align=center;" vertex="1" parent="1">
+          <mxGeometry x="340" y="185" width="40" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="p75" value="75 Ft" style="text;html=1;fontSize=10;fontColor=#999;align=center;" vertex="1" parent="1">
+          <mxGeometry x="470" y="185" width="40" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="p100" value="100 Ft" style="text;html=1;fontSize=10;fontColor=#999;align=center;" vertex="1" parent="1">
+          <mxGeometry x="590" y="185" width="50" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="p125" value="125 Ft" style="text;html=1;fontSize=10;fontColor=#999;align=center;" vertex="1" parent="1">
+          <mxGeometry x="720" y="185" width="50" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="p150" value="150 Ft+" style="text;html=1;fontSize=10;fontColor=#999;align=center;" vertex="1" parent="1">
+          <mxGeometry x="850" y="185" width="50" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- Competitors on scale -->
+        <mxCell id="c_tapp" value="&lt;b&gt;Társasház App&lt;/b&gt;&lt;br&gt;39 Ft" style="rounded=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="170" y="230" width="110" height="45" as="geometry"/>
+        </mxCell>
+        <mxCell id="c_tapp_line" value="" style="endArrow=none;strokeColor=#d6b656;dashed=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="225" y="230" as="sourcePoint"/>
+            <mxPoint x="225" y="180" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="c_ohaz" value="&lt;b&gt;OnlineHáz&lt;/b&gt;&lt;br&gt;49 Ft" style="rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="305" y="300" width="100" height="45" as="geometry"/>
+        </mxCell>
+        <mxCell id="c_ohaz_line" value="" style="endArrow=none;strokeColor=#6c8ebf;dashed=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="355" y="300" as="sourcePoint"/>
+            <mxPoint x="355" y="180" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="c_ehaz_lo" value="&lt;b&gt;eHÁZ START&lt;/b&gt;&lt;br&gt;60 Ft" style="rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="395" y="230" width="100" height="45" as="geometry"/>
+        </mxCell>
+        <mxCell id="c_ehaz_lo_line" value="" style="endArrow=none;strokeColor=#6c8ebf;dashed=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="440" y="230" as="sourcePoint"/>
+            <mxPoint x="440" y="180" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="c_ehaz_hi" value="&lt;b&gt;eHÁZ CLASSIC&lt;/b&gt;&lt;br&gt;125 Ft" style="rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="690" y="300" width="110" height="45" as="geometry"/>
+        </mxCell>
+        <mxCell id="c_ehaz_hi_line" value="" style="endArrow=none;strokeColor=#6c8ebf;dashed=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="745" y="300" as="sourcePoint"/>
+            <mxPoint x="745" y="180" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- CONDO MANAGER recommended range -->
+        <mxCell id="cm_range" value="" style="rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=3;opacity=40;" vertex="1" parent="1">
+          <mxGeometry x="490" y="110" width="180" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="cm_label" value="&lt;b&gt;CONDO MANAGER&lt;/b&gt;&lt;br&gt;79-99 Ft/lakás/hó&lt;br&gt;&lt;i&gt;(javasolt)&lt;/i&gt;" style="rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;align=center;strokeWidth=3;" vertex="1" parent="1">
+          <mxGeometry x="500" y="400" width="200" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="cm_arrow" value="" style="endArrow=block;endFill=1;strokeColor=#82b366;strokeWidth=2;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="580" y="400" as="sourcePoint"/>
+            <mxPoint x="580" y="195" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Value proposition callout -->
+        <mxCell id="vp" value="&lt;b&gt;Miért éri meg?&lt;/b&gt;&lt;br&gt;- Olcsóbb mint eHÁZ Classic&lt;br&gt;- De szavazási modullal is rendelkezik&lt;br&gt;- Megspórolja a külön szavazási platform díját&lt;br&gt;- All-in-one: könyvelés + szavazás + kommunikáció" style="shape=mxgraph.basic.rounded_frame;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999;fontSize=10;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="100" y="500" width="320" height="110" as="geometry"/>
+        </mxCell>
+
+        <!-- Free tier note -->
+        <mxCell id="free_note" value="&lt;b&gt;Ingyenes szint (opcionális):&lt;/b&gt;&lt;br&gt;30 lakásig ingyenes — a Társasház App&lt;br&gt;modelljéhez hasonlóan, felhasználó-&lt;br&gt;bázis építésre" style="rounded=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="100" y="130" width="260" height="70" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <!-- ============================================================ -->
+  <!-- LAP 5: Piaci rések                                           -->
+  <!-- ============================================================ -->
+  <diagram id="market-gaps" name="Piaci rések">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Title -->
+        <mxCell id="title5" value="&lt;b&gt;Piaci rések és lehetőségek&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=18;fontColor=#002045;" vertex="1" parent="1">
+          <mxGeometry x="334" y="20" width="500" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- Gap 1 -->
+        <mxCell id="g1_icon" value="1" style="ellipse;fillColor=#b85450;fontColor=#ffffff;strokeColor=none;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="90" width="40" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="g1" value="&lt;b&gt;Nincs integrált megoldás&lt;/b&gt;&lt;br&gt;A magyar piacon: vagy könyvelés (eHÁZ, OnlineHáz), vagy szavazás (Honline, eKözgyűlés).&lt;br&gt;All-in-one nem létezik." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="140" y="80" width="400" height="65" as="geometry"/>
+        </mxCell>
+        <mxCell id="g1_sol" value="→ Condo Manager: könyvelés + szavazás + kommunikáció + karbantartás" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="580" y="85" width="420" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="g1_arr" value="" style="endArrow=block;endFill=1;strokeColor=#82b366;strokeWidth=2;" edge="1" parent="1" source="g1" target="g1_sol">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Gap 2 -->
+        <mxCell id="g2_icon" value="2" style="ellipse;fillColor=#b85450;fontColor=#ffffff;strokeColor=none;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="180" width="40" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="g2" value="&lt;b&gt;Senki nem automatizálja a magyar jogot&lt;/b&gt;&lt;br&gt;Határozatképesség, megismételt közgyűlés, minősített többség —&lt;br&gt;egyik platform sem implementálja." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="140" y="165" width="400" height="65" as="geometry"/>
+        </mxCell>
+        <mxCell id="g2_sol" value="→ Condo Manager: 5 többségi típus, jelenléti ív, tartózkodás kezelés" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="580" y="175" width="420" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="g2_arr" value="" style="endArrow=block;endFill=1;strokeColor=#82b366;strokeWidth=2;" edge="1" parent="1" source="g2" target="g2_sol">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Gap 3 -->
+        <mxCell id="g3_icon" value="3" style="ellipse;fillColor=#d6b656;fontColor=#ffffff;strokeColor=none;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="270" width="40" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="g3" value="&lt;b&gt;Gyenge lakói élmény&lt;/b&gt;&lt;br&gt;A legtöbb platform kezelő-oldali. Lakók számára: alap portál, fizetés, mérőállás. Nincs fórum, nincs közösségi funkció." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="140" y="255" width="400" height="65" as="geometry"/>
+        </mxCell>
+        <mxCell id="g3_sol" value="→ Condo Manager: fórum, chat, hirdetőtábla, karbantartási kérelmek" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="580" y="265" width="420" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="g3_arr" value="" style="endArrow=block;endFill=1;strokeColor=#82b366;strokeWidth=2;" edge="1" parent="1" source="g3" target="g3_sol">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Gap 4 -->
+        <mxCell id="g4_icon" value="4" style="ellipse;fillColor=#d6b656;fontColor=#ffffff;strokeColor=none;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="360" width="40" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="g4" value="&lt;b&gt;Nincs hibrid közgyűlés támogatás&lt;/b&gt;&lt;br&gt;Személyes + online egyidejű részvétel — post-COVID igény, de egyik platform sem támogatja." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="140" y="345" width="400" height="65" as="geometry"/>
+        </mxCell>
+        <mxCell id="g4_sol" value="→ Jövőbeli lehetőség: online szavazás + jelenléti ív = hibrid alap" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="580" y="355" width="420" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="g4_arr" value="" style="endArrow=block;endFill=1;strokeColor=#9673a6;strokeWidth=2;dashed=1;" edge="1" parent="1" source="g4" target="g4_sol">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Gap 5 -->
+        <mxCell id="g5_icon" value="5" style="ellipse;fillColor=#d6b656;fontColor=#ffffff;strokeColor=none;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="450" width="40" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="g5" value="&lt;b&gt;Elavult design, nem mobil-first&lt;/b&gt;&lt;br&gt;A legtöbb magyar megoldás 2010-es évek designt használ. Mobil app ha van is, csak mellékes." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="140" y="435" width="400" height="65" as="geometry"/>
+        </mxCell>
+        <mxCell id="g5_sol" value="→ Condo Manager: Next.js, modern UI, responsive, PWA lehetőség" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="580" y="445" width="420" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="g5_arr" value="" style="endArrow=block;endFill=1;strokeColor=#82b366;strokeWidth=2;" edge="1" parent="1" source="g5" target="g5_sol">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Legend -->
+        <mxCell id="leg_crit" value="" style="rounded=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="140" y="550" width="16" height="16" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg_crit_t" value="Kritikus hiányosság (közvetlen versenyelőny)" style="text;html=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="160" y="548" width="260" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg_med" value="" style="rounded=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="140" y="575" width="16" height="16" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg_med_t" value="Közepes hiányosság (differenciáló lehetőség)" style="text;html=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="160" y="573" width="260" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg_sol_g" value="" style="rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="440" y="550" width="16" height="16" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg_sol_g_t" value="Már implementált megoldás" style="text;html=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="460" y="548" width="180" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg_sol_p" value="" style="rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="440" y="575" width="16" height="16" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg_sol_p_t" value="Jövőbeli lehetőség" style="text;html=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="460" y="573" width="140" height="20" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <!-- ============================================================ -->
+  <!-- LAP 6: SWOT                                                  -->
+  <!-- ============================================================ -->
+  <diagram id="swot" name="SWOT">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Title -->
+        <mxCell id="title6" value="&lt;b&gt;SWOT elemzés — Condo Manager&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=18;fontColor=#002045;" vertex="1" parent="1">
+          <mxGeometry x="334" y="20" width="500" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- Labels -->
+        <mxCell id="lbl_pos" value="&lt;b&gt;Pozitív&lt;/b&gt;" style="text;html=1;align=center;fontSize=12;fontColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="250" y="70" width="120" height="25" as="geometry"/>
+        </mxCell>
+        <mxCell id="lbl_neg" value="&lt;b&gt;Negatív&lt;/b&gt;" style="text;html=1;align=center;fontSize=12;fontColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="700" y="70" width="120" height="25" as="geometry"/>
+        </mxCell>
+        <mxCell id="lbl_int" value="&lt;b&gt;Belső&lt;/b&gt;" style="text;html=1;align=center;fontSize=12;fontColor=#515f74;rotation=-90;" vertex="1" parent="1">
+          <mxGeometry x="55" y="220" width="60" height="25" as="geometry"/>
+        </mxCell>
+        <mxCell id="lbl_ext" value="&lt;b&gt;Külső&lt;/b&gt;" style="text;html=1;align=center;fontSize=12;fontColor=#515f74;rotation=-90;" vertex="1" parent="1">
+          <mxGeometry x="55" y="530" width="60" height="25" as="geometry"/>
+        </mxCell>
+
+        <!-- S: Strengths -->
+        <mxCell id="s_hdr" value="&lt;b&gt;ERŐSSÉGEK (S)&lt;/b&gt;" style="rounded=0;fillColor=#82b366;fontColor=#ffffff;strokeColor=none;fontSize=13;align=center;" vertex="1" parent="1">
+          <mxGeometry x="110" y="100" width="440" height="35" as="geometry"/>
+        </mxCell>
+        <mxCell id="s_body" value="&lt;div style='text-align:left;padding:10px;'&gt;• Magyar jog-kompatibilis szavazás &lt;b&gt;(egyedülálló a piacon)&lt;/b&gt;&lt;br&gt;• 5 többségi típus + jelenléti ív + tartózkodás kezelés&lt;br&gt;• Modern tech stack (Next.js, TypeScript, Prisma)&lt;br&gt;• All-in-one platform (könyvelés + szavazás + kommunikáció)&lt;br&gt;• Mobil-first, responsive design&lt;br&gt;• Többnyelvű (HU + EN)&lt;br&gt;• Titkos szavazás SHA256 hash-sel&lt;br&gt;• Proxy szavazás támogatás&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="110" y="135" width="440" height="200" as="geometry"/>
+        </mxCell>
+
+        <!-- W: Weaknesses -->
+        <mxCell id="w_hdr" value="&lt;b&gt;GYENGESÉGEK (W)&lt;/b&gt;" style="rounded=0;fillColor=#b85450;fontColor=#ffffff;strokeColor=none;fontSize=13;align=center;" vertex="1" parent="1">
+          <mxGeometry x="590" y="100" width="440" height="35" as="geometry"/>
+        </mxCell>
+        <mxCell id="w_body" value="&lt;div style='text-align:left;padding:10px;'&gt;• Új a piacon — nincs brand ismertség&lt;br&gt;• Könyvelési modul kevésbé érett mint eHÁZ (13 000 társasház)&lt;br&gt;• Nincs még NAV Online Számla integráció&lt;br&gt;• Nincs banki PSD2 szinkron&lt;br&gt;• Kis fejlesztői csapat&lt;br&gt;• Nincs még referencia / pilot társasház&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="590" y="135" width="440" height="200" as="geometry"/>
+        </mxCell>
+
+        <!-- O: Opportunities -->
+        <mxCell id="o_hdr" value="&lt;b&gt;LEHETŐSÉGEK (O)&lt;/b&gt;" style="rounded=0;fillColor=#82b366;fontColor=#ffffff;strokeColor=none;fontSize=13;align=center;" vertex="1" parent="1">
+          <mxGeometry x="110" y="370" width="440" height="35" as="geometry"/>
+        </mxCell>
+        <mxCell id="o_body" value="&lt;div style='text-align:left;padding:10px;'&gt;• &lt;b&gt;Fragmentált piac&lt;/b&gt; — nincs domináns all-in-one&lt;br&gt;• Növekvő igény online/hibrid közgyűlésre (post-COVID)&lt;br&gt;• 2025-ös társasházi törvénymódosítások — új szabályok, amikhez alkalmazkodni kell&lt;br&gt;• Nemzetközi platformok nem lokalizáltak CEE-re&lt;br&gt;• Digitalizáció felgyorsulása a közszférában&lt;br&gt;• EU-s pályázatok digitalizációra&lt;br&gt;• Fiatal közös képviselők generációváltása&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="110" y="405" width="440" height="200" as="geometry"/>
+        </mxCell>
+
+        <!-- T: Threats -->
+        <mxCell id="t_hdr" value="&lt;b&gt;VESZÉLYEK (T)&lt;/b&gt;" style="rounded=0;fillColor=#b85450;fontColor=#ffffff;strokeColor=none;fontSize=13;align=center;" vertex="1" parent="1">
+          <mxGeometry x="590" y="370" width="440" height="35" as="geometry"/>
+        </mxCell>
+        <mxCell id="t_body" value="&lt;div style='text-align:left;padding:10px;'&gt;• &lt;b&gt;eHÁZ szavazási modult fejleszthet&lt;/b&gt; (13 000 társasházzal)&lt;br&gt;• Alacsony fizetési hajlandóság a magyar piacon&lt;br&gt;• Lassú technológia-adaptáció idős lakóknál&lt;br&gt;• Közös képviselők ragaszkodása meglévő megoldásokhoz&lt;br&gt;• Jogszabály-változások folyamatos karbantartást igényelnek&lt;br&gt;• Nemzetközi szereplő beléphet a magyar piacra&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="590" y="405" width="440" height="200" as="geometry"/>
+        </mxCell>
+
+        <!-- Divider lines -->
+        <mxCell id="div_h" value="" style="endArrow=none;strokeColor=#c4c6cf;strokeWidth=2;dashed=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="110" y="370" as="sourcePoint"/>
+            <mxPoint x="1030" y="370" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="div_v" value="" style="endArrow=none;strokeColor=#c4c6cf;strokeWidth=2;dashed=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="570" y="100" as="sourcePoint"/>
+            <mxPoint x="570" y="605" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

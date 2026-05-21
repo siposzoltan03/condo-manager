@@ -1,54 +1,80 @@
 import { chromium } from "@playwright/test";
+import { PrismaClient } from "@prisma/client";
 
 const BASE_URL = "http://localhost:3000";
 const OUTPUT_DIR = "/Users/siposzoltan/projects/condo-manager/public/screenshots";
+const LOCALE = "hu";
 
-const CREDENTIALS = { email: "superadmin@condo.local", password: "password123" };
+// Board admin works for everything: resident view, board workspace, all modules.
+const CREDENTIALS = { email: "board@condo.local", password: "password123" };
 
 async function main() {
+  // Resolve a real meeting id so we can deep-link to /voting/meetings/[id].
+  const prisma = new PrismaClient();
+  const meeting = await prisma.meeting.findFirst({
+    where: { buildingId: "seed_building_1" },
+    orderBy: { date: "desc" },
+    select: { id: true },
+  });
+  await prisma.$disconnect();
+
   const browser = await chromium.launch();
   const context = await browser.newContext({
     viewport: { width: 1440, height: 900 },
-    locale: "en-US",
+    locale: LOCALE === "hu" ? "hu-HU" : "en-US",
+    deviceScaleFactor: 2,
   });
   const page = await context.newPage();
 
-  // Login first
-  console.log("Logging in...");
-  await page.goto(`${BASE_URL}/en/login`);
+  console.log("Logging in…");
+  await page.goto(`${BASE_URL}/${LOCALE}/login`);
   await page.waitForLoadState("networkidle");
-  await page.fill('input[name="email"]', CREDENTIALS.email);
-  await page.fill('input[name="password"]', CREDENTIALS.password);
+  await page.fill('#email', CREDENTIALS.email);
+  await page.fill('#password', CREDENTIALS.password);
   await page.click('button[type="submit"]');
   await page.waitForTimeout(5000);
-  console.log("Current URL:", page.url());
+  console.log("  signed in →", page.url());
 
-  const pages = [
-    { name: "dashboard", path: "/en/dashboard" },
-    { name: "announcements", path: "/en/announcements" },
-    { name: "finance", path: "/en/finance" },
-    { name: "maintenance", path: "/en/maintenance" },
-    { name: "voting", path: "/en/voting" },
-    { name: "documents", path: "/en/documents" },
-    { name: "forum", path: "/en/forum" },
-    { name: "messages", path: "/en/messages" },
-    { name: "complaints", path: "/en/complaints" },
+  const targets = [
+    { name: "dashboard", path: `/${LOCALE}/dashboard` },
+    { name: "announcements", path: `/${LOCALE}/communication` },
+    { name: "forum", path: `/${LOCALE}/communication?channel=forum` },
+    { name: "messages", path: `/${LOCALE}/communication?channel=messages` },
+    // Resident view; board admin can still see this tab.
+    { name: "finance-self", path: `/${LOCALE}/finance?tab=sajat` },
+    // Board workspace — the deep-dive's "Finance" screenshot points here.
+    { name: "finance", path: `/${LOCALE}/finance?tab=epulet` },
+    { name: "maintenance", path: `/${LOCALE}/maintenance` },
+    { name: "complaints", path: `/${LOCALE}/complaints` },
+    { name: "documents", path: `/${LOCALE}/documents` },
+    { name: "voting", path: `/${LOCALE}/voting` },
+    ...(meeting
+      ? [{ name: "meeting-detail", path: `/${LOCALE}/voting/meetings/${meeting.id}` }]
+      : []),
   ];
 
-  for (const p of pages) {
-    console.log(`Screenshotting ${p.name}...`);
-    await page.goto(`${BASE_URL}${p.path}`);
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(2000);
-    await page.screenshot({
-      path: `${OUTPUT_DIR}/${p.name}.png`,
-      fullPage: false,
-    });
-    console.log(`  Saved ${p.name}.png`);
+  for (const t of targets) {
+    process.stdout.write(`  ${t.name.padEnd(18, " ")} ${t.path} … `);
+    try {
+      // domcontentloaded is more forgiving than networkidle when pages
+      // keep an open SSE stream (communication module, notifications).
+      await page.goto(`${BASE_URL}${t.path}`, { waitUntil: "domcontentloaded" });
+      await page.waitForTimeout(3500);
+      await page.screenshot({
+        path: `${OUTPUT_DIR}/${t.name}.png`,
+        fullPage: false,
+      });
+      console.log("ok");
+    } catch (err) {
+      console.log("FAIL:", err.message);
+    }
   }
 
   await browser.close();
-  console.log("Done!");
+  console.log("Done.");
 }
 
-main().catch(console.error);
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
