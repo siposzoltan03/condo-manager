@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { usePathname, useRouter } from "next/navigation";
-import { Building2, Menu, X, Globe } from "lucide-react";
+import { Menu, X, Globe } from "lucide-react";
 import Link from "next/link";
 
 export function PublicNav() {
@@ -23,49 +23,56 @@ export function PublicNav() {
   }
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur-sm">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
-          <Building2 className="h-7 w-7 text-[#002045]" />
-          <span className="text-xl font-extrabold tracking-tight text-[#002045]">
-            {t("common.appName")}
+    <nav
+      className="sticky top-0 z-50 border-b border-ink/8"
+      style={{ background: "color-mix(in srgb, var(--color-bg) 92%, transparent)", backdropFilter: "blur(8px)" }}
+    >
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+        <Link href="/" className="inline-flex items-center gap-2">
+          <span
+            className="w-8 h-8 rounded-md grid place-items-center font-display"
+            style={{ background: "var(--color-ink)", color: "var(--color-bg)", fontWeight: 600 }}
+          >
+            K
+          </span>
+          <span className="font-display text-lg text-ink" style={{ fontWeight: 600, letterSpacing: "-0.015em" }}>
+            Közös
           </span>
         </Link>
 
         {/* Desktop links */}
         <div className="hidden items-center gap-6 md:flex">
-          <a
+          <Link
             href="/#features"
-            className="text-sm font-medium text-slate-600 transition hover:text-[#002045]"
+            className="font-mono text-xs uppercase tracking-wider text-muted hover:text-ink transition-colors"
           >
             {t("nav.features")}
-          </a>
+          </Link>
           <Link
             href="/pricing"
-            className="text-sm font-medium text-slate-600 transition hover:text-[#002045]"
+            className="font-mono text-xs uppercase tracking-wider text-muted hover:text-ink transition-colors"
           >
             {t("nav.pricing")}
           </Link>
 
           <button
             onClick={switchLocale}
-            className="flex items-center gap-1 text-sm font-medium text-slate-500 transition hover:text-[#002045]"
+            className="inline-flex items-center gap-1 font-mono text-xs uppercase tracking-wider text-muted hover:text-ink transition-colors"
             title={locale === "hu" ? "Switch to English" : "Váltás magyarra"}
           >
-            <Globe className="h-4 w-4" />
-            {locale === "hu" ? "English" : "Magyar"}
+            <Globe className="h-3.5 w-3.5" />
+            {locale === "hu" ? "EN" : "HU"}
           </button>
 
           <Link
             href="/login"
-            className="text-sm font-semibold text-[#002045] transition hover:text-[#003060]"
+            className="font-mono text-xs uppercase tracking-wider text-ink-soft hover:text-ink transition-colors"
           >
             {t("common.login")}
           </Link>
           <Link
             href="/pricing"
-            className="rounded-lg bg-[#002045] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#003060]"
+            className="inline-flex items-center gap-2 rounded-lg bg-ink px-4 py-2 font-mono text-[11px] uppercase tracking-wider text-bg hover:opacity-90 transition-opacity"
           >
             {t("landing.startFreeTrial")}
           </Link>
@@ -74,7 +81,7 @@ export function PublicNav() {
         {/* Mobile hamburger */}
         <button
           onClick={() => setMenuOpen(!menuOpen)}
-          className="rounded-lg p-2 text-slate-600 transition hover:bg-slate-100 md:hidden"
+          className="rounded-md p-2 text-ink-soft hover:bg-bg-3 transition-colors md:hidden"
           aria-label="Toggle menu"
         >
           {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -83,31 +90,28 @@ export function PublicNav() {
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="border-t border-slate-200 bg-white px-4 pb-4 pt-2 md:hidden">
+        <div className="border-t border-ink/8 bg-bg px-6 pb-4 pt-2 md:hidden">
           <div className="flex flex-col gap-3">
-            <a
+            <Link
               href="/#features"
-              className="text-sm font-medium text-slate-600"
+              className="font-mono text-xs uppercase tracking-wider text-ink-soft"
               onClick={() => setMenuOpen(false)}
             >
               {t("nav.features")}
-            </a>
+            </Link>
             <Link
               href="/pricing"
-              className="text-sm font-medium text-slate-600"
+              className="font-mono text-xs uppercase tracking-wider text-ink-soft"
               onClick={() => setMenuOpen(false)}
             >
               {t("nav.pricing")}
             </Link>
-            <Link
-              href="/login"
-              className="text-sm font-semibold text-[#002045]"
-            >
+            <Link href="/login" className="font-mono text-xs uppercase tracking-wider text-ink">
               {t("common.login")}
             </Link>
             <Link
               href="/pricing"
-              className="rounded-lg bg-[#002045] px-4 py-2 text-center text-sm font-semibold text-white"
+              className="rounded-lg bg-ink px-4 py-2 text-center font-mono text-[11px] uppercase tracking-wider text-bg"
             >
               {t("landing.startFreeTrial")}
             </Link>
