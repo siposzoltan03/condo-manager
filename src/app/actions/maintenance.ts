@@ -20,6 +20,7 @@ interface CreateTicketInput {
   category: string;
   urgency: string;
   location?: string;
+  slaHours?: number | null;
 }
 
 export async function createTicket(input: CreateTicketInput): Promise<ActionResult> {
@@ -28,7 +29,7 @@ export async function createTicket(input: CreateTicketInput): Promise<ActionResu
     await requireFeature(buildingId, "maintenance");
     await requireNotFrozen(buildingId);
 
-    const { title, description, category, urgency, location } = input;
+    const { title, description, category, urgency, location, slaHours } = input;
 
     if (!title || !description || !category || !urgency) {
       return { error: "Missing required fields" };
@@ -40,6 +41,14 @@ export async function createTicket(input: CreateTicketInput): Promise<ActionResu
 
     if (!Object.values(Urgency).includes(urgency as Urgency)) {
       return { error: "Invalid urgency" };
+    }
+
+    let normalizedSla: number | null = null;
+    if (slaHours !== undefined && slaHours !== null) {
+      if (!Number.isInteger(slaHours) || slaHours < 1 || slaHours > 720) {
+        return { error: "slaHours must be an integer between 1 and 720" };
+      }
+      normalizedSla = slaHours;
     }
 
     // Generate tracking number with retry
@@ -73,6 +82,7 @@ export async function createTicket(input: CreateTicketInput): Promise<ActionResu
             category: category as MaintenanceCategory,
             urgency: urgency as Urgency,
             location: location || null,
+            slaHours: normalizedSla,
             reporter: { connect: { id: userId } },
             building: { connect: { id: buildingId } },
           },
@@ -99,6 +109,7 @@ export async function createTicket(input: CreateTicketInput): Promise<ActionResu
       entityId: ticket.id,
       action: "CREATE",
       userId,
+      buildingId,
       newValue: { trackingNumber: ticket.trackingNumber, title, category, urgency },
     });
 

@@ -37,18 +37,26 @@ export async function generateTrackingNumber(): Promise<string> {
 }
 
 /**
- * Valid status transitions for the maintenance ticket workflow.
+ * Linear status order:
  * SUBMITTED -> ACKNOWLEDGED -> ASSIGNED -> IN_PROGRESS -> COMPLETED -> VERIFIED
+ *
+ * The kanban view merges ACKNOWLEDGED + ASSIGNED into one column and
+ * COMPLETED + VERIFIED into another, so transitions need to be lenient enough
+ * for forward drag-and-drop. Rule: any forward move (to a later status) is
+ * allowed; backward moves and reflexive moves are rejected.
  */
-const VALID_TRANSITIONS: Record<string, string[]> = {
-  SUBMITTED: ["ACKNOWLEDGED"],
-  ACKNOWLEDGED: ["ASSIGNED"],
-  ASSIGNED: ["IN_PROGRESS"],
-  IN_PROGRESS: ["COMPLETED"],
-  COMPLETED: ["VERIFIED"],
-  VERIFIED: [],
+const STATUS_RANK: Record<string, number> = {
+  SUBMITTED: 0,
+  ACKNOWLEDGED: 1,
+  ASSIGNED: 2,
+  IN_PROGRESS: 3,
+  COMPLETED: 4,
+  VERIFIED: 5,
 };
 
 export function isValidTransition(from: string, to: string): boolean {
-  return VALID_TRANSITIONS[from]?.includes(to) ?? false;
+  const fromRank = STATUS_RANK[from];
+  const toRank = STATUS_RANK[to];
+  if (fromRank === undefined || toRank === undefined) return false;
+  return toRank > fromRank;
 }

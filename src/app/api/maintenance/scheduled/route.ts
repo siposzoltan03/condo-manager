@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { title, description, date, isRecurring, recurrenceRule } = body;
+    const { title, description, date, isRecurring, recurrenceMonths, leadTimeDays } = body;
 
     if (!title || !date) {
       return NextResponse.json(
@@ -70,13 +70,50 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid date" }, { status: 400 });
     }
 
+    let normalizedLeadTime = 7;
+    if (leadTimeDays !== undefined && leadTimeDays !== null) {
+      const n =
+        typeof leadTimeDays === "number"
+          ? leadTimeDays
+          : parseInt(String(leadTimeDays), 10);
+      if (!Number.isInteger(n) || n < 0 || n > 365) {
+        return NextResponse.json(
+          { error: "leadTimeDays must be 0..365" },
+          { status: 400 }
+        );
+      }
+      normalizedLeadTime = n;
+    }
+
+    let normalizedRecurrence: number | null = null;
+    if (isRecurring) {
+      if (recurrenceMonths === undefined || recurrenceMonths === null) {
+        return NextResponse.json(
+          { error: "Recurring entries require recurrenceMonths" },
+          { status: 400 }
+        );
+      }
+      const n =
+        typeof recurrenceMonths === "number"
+          ? recurrenceMonths
+          : parseInt(String(recurrenceMonths), 10);
+      if (!Number.isInteger(n) || n < 1 || n > 60) {
+        return NextResponse.json(
+          { error: "recurrenceMonths must be 1..60" },
+          { status: 400 }
+        );
+      }
+      normalizedRecurrence = n;
+    }
+
     const item = await prisma.scheduledMaintenance.create({
       data: {
         title,
         description: description ?? null,
         date: parsedDate,
         isRecurring: isRecurring ?? false,
-        recurrenceRule: recurrenceRule ?? null,
+        recurrenceMonths: normalizedRecurrence,
+        leadTimeDays: normalizedLeadTime,
         buildingId,
       },
     });
