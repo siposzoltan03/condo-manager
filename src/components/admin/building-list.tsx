@@ -1,18 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Building2, Plus, Pencil, Trash2, X } from "lucide-react";
-
-interface BuildingData {
-  id: string;
-  name: string;
-  address: string;
-  city: string;
-  zipCode: string;
-  unitCount: number;
-  userCount: number;
-}
+import { useConfirm } from "@/components/shared/confirm-dialog";
+import type { BuildingsData, BuildingItemData } from "@/lib/dal";
 
 interface BuildingFormData {
   name: string;
@@ -21,35 +15,21 @@ interface BuildingFormData {
   zipCode: string;
 }
 
-export function BuildingList() {
+interface BuildingListProps {
+  initialData: BuildingsData;
+}
+
+export function BuildingList({ initialData }: BuildingListProps) {
   const t = useTranslations("buildings");
   const tCommon = useTranslations("common");
-  const [buildings, setBuildings] = useState<BuildingData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const confirm = useConfirm();
+  const router = useRouter();
+  const buildings = initialData.buildings;
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingBuilding, setEditingBuilding] = useState<BuildingData | null>(null);
+  const [editingBuilding, setEditingBuilding] = useState<BuildingItemData | null>(null);
   const [formData, setFormData] = useState<BuildingFormData>({ name: "", address: "", city: "", zipCode: "" });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-
-  async function fetchBuildings() {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/buildings");
-      if (res.ok) {
-        const data = await res.json();
-        setBuildings(data.buildings ?? []);
-      }
-    } catch {
-      // best effort
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    fetchBuildings();
-  }, []);
 
   function openCreate() {
     setEditingBuilding(null);
@@ -58,7 +38,7 @@ export function BuildingList() {
     setModalOpen(true);
   }
 
-  function openEdit(building: BuildingData) {
+  function openEdit(building: BuildingItemData) {
     setEditingBuilding(building);
     setFormData({
       name: building.name,
@@ -97,8 +77,9 @@ export function BuildingList() {
         throw new Error(data.error || "Failed");
       }
 
+      toast.success(isEdit ? "Building updated successfully" : "Building created successfully");
       setModalOpen(false);
-      fetchBuildings();
+      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : tCommon("error"));
     } finally {
@@ -106,19 +87,21 @@ export function BuildingList() {
     }
   }
 
-  async function handleDelete(building: BuildingData) {
-    if (!confirm(t("confirmDelete"))) return;
+  async function handleDelete(building: BuildingItemData) {
+    const ok = await confirm({ title: t("confirmDelete"), danger: true });
+    if (!ok) return;
 
     try {
       const res = await fetch(`/api/buildings/${building.id}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json();
-        alert(data.error || "Failed to delete");
+        toast.error(data.error || "Failed to delete");
         return;
       }
-      fetchBuildings();
+      toast.success("Building deleted successfully");
+      router.refresh();
     } catch {
-      alert(tCommon("error"));
+      toast.error(tCommon("error"));
     }
   }
 
@@ -138,11 +121,7 @@ export function BuildingList() {
         </button>
       </div>
 
-      {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
-        </div>
-      ) : buildings.length === 0 ? (
+      {buildings.length === 0 ? (
         <div className="rounded-lg border border-slate-200 bg-white p-10 text-center">
           <Building2 className="mx-auto h-12 w-12 text-slate-300" />
           <p className="mt-3 text-sm text-slate-500">{t("noBuildings")}</p>

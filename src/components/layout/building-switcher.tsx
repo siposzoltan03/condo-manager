@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useBuilding } from "@/hooks/use-building";
-import { Building, ChevronDown, Check } from "lucide-react";
+import { Check } from "lucide-react";
 
 export function BuildingSwitcher() {
   const t = useTranslations("building");
@@ -18,7 +18,6 @@ export function BuildingSwitcher() {
 
   const activeBuilding = buildings.find((b) => b.id === activeBuildingId);
 
-  // Close dropdown on outside click
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -43,7 +42,6 @@ export function BuildingSwitcher() {
       });
       if (res.ok) {
         const data = await res.json();
-        // Update the JWT session with new building context
         await updateSession({
           activeBuildingId: data.buildingId,
           activeRole: data.role,
@@ -56,70 +54,153 @@ export function BuildingSwitcher() {
     }
   }
 
-  if (!activeBuilding) {
-    return null;
-  }
+  if (!activeBuilding) return null;
+
+  const initials = activeBuilding.name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
     <div ref={dropdownRef} className="relative">
       <button
         type="button"
         onClick={() => hasMultipleBuildings && setOpen(!open)}
-        className={`flex w-full items-center gap-3 px-6 py-5 text-left transition-colors ${
-          hasMultipleBuildings
-            ? "cursor-pointer hover:bg-slate-700/50"
-            : "cursor-default"
-        }`}
+        className="flex w-full items-center gap-2.5 transition-colors"
+        style={{
+          padding: "10px 12px",
+          background: "var(--color-card)",
+          border: "1px solid color-mix(in srgb, var(--color-ink) 10%, transparent)",
+          borderRadius: "10px",
+          cursor: hasMultipleBuildings ? "pointer" : "default",
+        }}
       >
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white">
-          <Building className="h-5 w-5" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-bold text-white">
+        <span
+          className="grid place-items-center flex-shrink-0"
+          style={{
+            width: "32px",
+            height: "32px",
+            borderRadius: "7px",
+            background: "var(--color-moss)",
+            color: "#f5f2e6",
+            fontFamily: "var(--font-space-grotesk), sans-serif",
+            fontWeight: 600,
+            fontSize: "13px",
+          }}
+        >
+          {initials}
+        </span>
+        <div className="flex-1 min-w-0 text-left">
+          <strong
+            className="block truncate"
+            style={{
+              fontFamily: "var(--font-space-grotesk), sans-serif",
+              fontSize: "14px",
+              fontWeight: 600,
+              letterSpacing: "-0.015em",
+            }}
+          >
             {activeBuilding.name}
-          </p>
-          <p className="truncate text-xs text-slate-400">
+          </strong>
+          <small
+            className="block font-mono"
+            style={{
+              fontSize: "10px",
+              color: "var(--color-muted)",
+              letterSpacing: "0.05em",
+              textTransform: "uppercase",
+            }}
+          >
             {t(`role_${activeBuilding.role}`)}
-          </p>
+          </small>
         </div>
         {hasMultipleBuildings && (
-          <ChevronDown
-            className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${
-              open ? "rotate-180" : ""
-            }`}
-          />
+          <span
+            className="font-mono flex-shrink-0"
+            style={{
+              fontSize: "14px",
+              color: "var(--color-muted)",
+              transform: open ? "rotate(180deg)" : undefined,
+              transition: "transform 0.15s",
+            }}
+          >
+            ⌄
+          </span>
         )}
       </button>
 
       {open && hasMultipleBuildings && (
-        <div className="absolute left-3 right-3 top-full z-50 mt-1 rounded-lg border border-slate-600 bg-slate-700 py-1 shadow-xl">
-          <p className="px-3 py-2 text-xs font-medium uppercase tracking-wider text-slate-400">
+        <div
+          className="absolute left-0 right-0 z-50 overflow-hidden"
+          style={{
+            top: "calc(100% + 4px)",
+            background: "var(--color-card)",
+            border: "1px solid color-mix(in srgb, var(--color-ink) 10%, transparent)",
+            borderRadius: "10px",
+            boxShadow:
+              "0 16px 40px -12px color-mix(in srgb, var(--color-ink) 25%, transparent)",
+          }}
+        >
+          <p
+            className="font-mono"
+            style={{
+              padding: "10px 12px 6px",
+              fontSize: "10px",
+              color: "var(--color-muted)",
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              fontWeight: 500,
+            }}
+          >
             {t("switchBuilding")}
           </p>
-          {buildings.map((building) => {
-            const isActive = building.id === activeBuildingId;
+          {buildings.map((b) => {
+            const isActive = b.id === activeBuildingId;
             return (
               <button
-                key={building.id}
+                key={b.id}
                 type="button"
-                onClick={() => handleSwitch(building.id)}
+                onClick={() => handleSwitch(b.id)}
                 disabled={switching}
-                className={`flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors ${
-                  isActive
-                    ? "bg-blue-600/20 text-white"
-                    : "text-slate-300 hover:bg-slate-600 hover:text-white"
-                } ${switching ? "opacity-50" : ""}`}
+                className="flex w-full items-center gap-2.5 transition-colors disabled:opacity-50"
+                style={{
+                  padding: "10px 12px",
+                  background: isActive
+                    ? "color-mix(in srgb, var(--color-ink) 5%, transparent)"
+                    : "transparent",
+                  textAlign: "left",
+                }}
               >
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">
-                    {building.name}
+                <div className="flex-1 min-w-0">
+                  <p
+                    className="truncate"
+                    style={{
+                      fontSize: "13px",
+                      fontWeight: 600,
+                      letterSpacing: "-0.01em",
+                    }}
+                  >
+                    {b.name}
                   </p>
-                  <p className="text-xs text-slate-400">
-                    {t(`role_${building.role}`)}
+                  <p
+                    className="font-mono"
+                    style={{
+                      fontSize: "10px",
+                      color: "var(--color-muted)",
+                      letterSpacing: "0.04em",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {t(`role_${b.role}`)}
                   </p>
                 </div>
                 {isActive && (
-                  <Check className="h-4 w-4 shrink-0 text-blue-400" />
+                  <Check
+                    className="flex-shrink-0"
+                    style={{ width: "14px", height: "14px", color: "var(--color-moss)" }}
+                  />
                 )}
               </button>
             );
