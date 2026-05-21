@@ -26,8 +26,8 @@ export function MeetingList({ meetings, onRsvpChanged }: Props) {
 
   if (meetings.length === 0) {
     return (
-      <div className="flex min-h-[20vh] items-center justify-center rounded-xl bg-white p-8 shadow-sm">
-        <p className="text-slate-500">{t("noMeetings")}</p>
+      <div className="flex min-h-[20vh] items-center justify-center rounded-xl border border-ink/8 bg-card p-8">
+        <p className="text-muted">{t("noMeetings")}</p>
       </div>
     );
   }
@@ -36,10 +36,10 @@ export function MeetingList({ meetings, onRsvpChanged }: Props) {
   const past = meetings.filter((m) => new Date(m.date) < new Date());
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {upcoming.length > 0 && (
         <div>
-          <h2 className="mb-4 text-xl font-semibold text-[#002045]">
+          <h2 className="mb-4 font-mono text-xs uppercase tracking-wider text-muted">
             {t("upcomingMeetings")}
           </h2>
           <div className="space-y-3">
@@ -55,7 +55,7 @@ export function MeetingList({ meetings, onRsvpChanged }: Props) {
       )}
       {past.length > 0 && (
         <div>
-          <h2 className="mb-4 text-xl font-semibold text-[#002045]">
+          <h2 className="mb-4 font-mono text-xs uppercase tracking-wider text-muted">
             {t("pastMeetings")}
           </h2>
           <div className="space-y-3">

@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
 import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
 import { requireRole } from "@/lib/rbac";
-import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
-import { calculateQuorum, calculateResults } from "@/lib/voting/quorum";
+import { calculateQuorum, calculateResults, calculateMeetingQuorum, calculateVoteResult } from "@/lib/voting/quorum";
+import { voteUpdated } from "@/lib/voting/events";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -28,16 +28,27 @@ export async function GET(request: NextRequest, context: RouteContext) {
       include: {
         createdBy: { select: { id: true, name: true } },
         options: { orderBy: { sortOrder: "asc" } },
-        meeting: { select: { buildingId: true } },
+        ballots: {
+          select: {
+            id: true,
+            unitId: true,
+            optionId: true,
+            castById: true,
+            weight: true,
+          },
+        },
         _count: { select: { ballots: true } },
       },
     });
 
-    if (!vote || vote.meeting?.buildingId !== buildingId) {
+    if (!vote || vote.buildingId !== buildingId) {
       return NextResponse.json({ error: "Vote not found" }, { status: 404 });
     }
 
-    const quorum = await calculateQuorum(id);
+    // Meeting quorum (attendance-based) if vote is linked to a meeting
+    const meetingQuorum = vote.meetingId
+      ? await calculateMeetingQuorum(vote.meetingId)
+      : null;
 
     // Resolve user's unit in this building
     const userUnit = await prisma.unitUser.findFirst({
@@ -64,7 +75,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     // Results only available when vote is closed
     let results = null;
     if (vote.status === "CLOSED") {
-      results = await calculateResults(id);
+      results = await calculateVoteResult(id);
     }
 
     return NextResponse.json({
@@ -74,23 +85,26 @@ export async function GET(request: NextRequest, context: RouteContext) {
       voteType: vote.voteType,
       status: vote.status,
       isSecret: vote.isSecret,
-      quorumRequired: Number(vote.quorumRequired),
+      majorityType: vote.majorityType,
+      quorumRequired: Number(vote.quorumRequired), // @deprecated
       deadline: vote.deadline,
       meetingId: vote.meetingId,
       createdBy: vote.createdBy,
       options: vote.options.map((o) => ({ id: o.id, label: o.label, sortOrder: o.sortOrder })),
       ballotCount: vote._count.ballots,
-      quorum: {
-        current: quorum.currentQuorum,
-        required: Number(vote.quorumRequired),
-        totalBallotWeight: quorum.totalBallotWeight,
-        totalOwnershipShares: quorum.totalOwnershipShares,
-      },
+      meetingQuorum,
       myBallot: myBallot
         ? { optionId: myBallot.optionId, receiptHash: myBallot.receiptHash }
         : null,
       myWeight: unit ? Number(unit.ownershipShare) : 0,
       results,
+      ballots: vote.ballots.map((b) => ({
+        id: b.id,
+        unitId: b.unitId,
+        optionId: b.optionId,
+        castById: b.castById,
+        weight: Number(b.weight),
+      })),
       createdAt: vote.createdAt,
       updatedAt: vote.updatedAt,
     });
@@ -124,9 +138,8 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     const existing = await prisma.vote.findUnique({
       where: { id },
-      include: { meeting: { select: { buildingId: true } } },
     });
-    if (!existing || existing.meeting?.buildingId !== buildingId) {
+    if (!existing || existing.buildingId !== buildingId) {
       return NextResponse.json({ error: "Vote not found" }, { status: 404 });
     }
 
@@ -144,12 +157,11 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       },
     });
 
-    await createAuditLog({
-      entityType: "Vote",
-      entityId: id,
-      action: "UPDATE",
-      userId,
-      oldValue: { status: existing.status },
+    await voteUpdated({
+      voteId: id,
+      updatedByUserId: userId,
+      buildingId,
+      oldStatus: existing.status,
       newValue: data,
     });
 

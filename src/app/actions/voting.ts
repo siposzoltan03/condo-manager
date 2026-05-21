@@ -19,7 +19,8 @@ interface CreateVoteInput {
   description?: string;
   voteType: string;
   isSecret?: boolean;
-  quorumRequired: number;
+  majorityType?: string;
+  quorumRequired?: number; // @deprecated
   deadline: string;
   meetingId?: string;
   options: { label: string }[];
@@ -31,7 +32,7 @@ export async function createVote(input: CreateVoteInput): Promise<ActionResult> 
     await requireRole(role, "BOARD_MEMBER");
     await requireFeature(buildingId, "voting");
 
-    const { title, description, voteType, isSecret, quorumRequired, deadline, meetingId, options } = input;
+    const { title, description, voteType, isSecret, majorityType, quorumRequired, deadline, meetingId, options } = input;
 
     if (!title || !deadline || !options || options.length < 2) {
       return { error: "Missing required fields: title, deadline, and at least 2 options" };
@@ -42,18 +43,17 @@ export async function createVote(input: CreateVoteInput): Promise<ActionResult> 
       return { error: "Deadline must be in the future" };
     }
 
-    if (quorumRequired < 0 || quorumRequired > 1) {
-      return { error: "Quorum must be between 0 and 1" };
-    }
-
     const vote = await prisma.vote.create({
       data: {
         title,
         description: description || null,
         voteType: voteType as never,
+        status: "OPEN",
         isSecret: isSecret ?? false,
-        quorumRequired: new Prisma.Decimal(quorumRequired),
+        majorityType: (majorityType as never) ?? "SIMPLE_MAJORITY",
+        quorumRequired: new Prisma.Decimal(quorumRequired ?? 0.51), // @deprecated
         deadline: deadlineDate,
+        building: { connect: { id: buildingId } },
         createdBy: { connect: { id: userId } },
         meeting: meetingId ? { connect: { id: meetingId } } : undefined,
         options: {
@@ -70,6 +70,7 @@ export async function createVote(input: CreateVoteInput): Promise<ActionResult> 
       entityId: vote.id,
       action: "CREATE",
       userId,
+      buildingId,
       newValue: { title, voteType, deadline, optionCount: options.length },
     });
 
@@ -130,6 +131,7 @@ export async function saveMinutes(
       entityId: meetingId,
       action: "UPDATE",
       userId,
+      buildingId,
       newValue: { minutesLength: minutes.length },
     });
 
@@ -138,5 +140,76 @@ export async function saveMinutes(
   } catch (error) {
     console.error("Failed to save minutes:", error);
     return { error: error instanceof Error ? error.message : "Internal server error" };
+  }
+}
+
+export type MinutesSignatureRoleInput =
+  | "CHAIR"
+  | "AUTHENTICATOR_1"
+  | "AUTHENTICATOR_2";
+
+/**
+ * Claim a signature slot on a meeting's jegyzőkönyv. Tht. § 39 wants
+ * three signatures (chair + two hitelesítő); each row enforces one
+ * sign-per-role. Any board member can claim any open slot, but no
+ * single user can hold more than one slot per meeting.
+ */
+export async function signMeetingMinutes(
+  meetingId: string,
+  signatureRole: MinutesSignatureRoleInput,
+): Promise<ActionResult> {
+  try {
+    const { userId, buildingId, role } = await requireBuildingContext();
+    await requireRole(role, "BOARD_MEMBER");
+    await requireFeature(buildingId, "voting");
+
+    const meeting = await prisma.meeting.findUnique({
+      where: { id: meetingId },
+      select: { id: true, buildingId: true },
+    });
+    if (!meeting || meeting.buildingId !== buildingId) {
+      return { error: "Meeting not found" };
+    }
+
+    const existingByUser = await prisma.meetingMinutesSignature.findFirst({
+      where: { meetingId, signerId: userId },
+    });
+    if (existingByUser) {
+      return { error: "Ön már aláírta a jegyzőkönyvet egy másik szerepben." };
+    }
+
+    try {
+      await prisma.meetingMinutesSignature.create({
+        data: {
+          meetingId,
+          signerId: userId,
+          role: signatureRole,
+        },
+      });
+    } catch (err) {
+      const code = (err as { code?: string }).code;
+      if (code === "P2002") {
+        return { error: "Ezt a szerepet már aláírta valaki más." };
+      }
+      throw err;
+    }
+
+    await createAuditLog({
+      entityType: "MeetingMinutesSignature",
+      entityId: meetingId,
+      action: "CREATE",
+      userId,
+      buildingId,
+      newValue: { role: signatureRole },
+    });
+
+    revalidatePath(`/voting/meetings/${meetingId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to sign minutes:", error);
+    return {
+      error:
+        error instanceof Error ? error.message : "Internal server error",
+    };
   }
 }

@@ -3,6 +3,7 @@ import { requireBuildingContext } from "@/lib/auth";
 import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
 import { prisma } from "@/lib/prisma";
 import { RsvpStatus } from "@prisma/client";
+import { meetingRsvpChanged } from "@/lib/voting/events";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -46,6 +47,28 @@ export async function POST(request: NextRequest, context: RouteContext) {
         status: status as RsvpStatus,
       },
     });
+
+    // Notify the meeting organizer (if RSVP is from someone else)
+    if (meeting.createdById !== userId) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { name: true },
+      });
+
+      const statusLabels: Record<string, string> = {
+        ATTENDING: "attending",
+        NOT_ATTENDING: "not attending",
+        PROXY: "attending by proxy",
+      };
+
+      await meetingRsvpChanged({
+        meetingId,
+        meetingTitle: meeting.title,
+        meetingCreatorUserId: meeting.createdById,
+        rsvpByUserName: user?.name ?? "Someone",
+        statusLabel: statusLabels[status] ?? status.toLowerCase(),
+      });
+    }
 
     return NextResponse.json(rsvp);
   } catch (error) {

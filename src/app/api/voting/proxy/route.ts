@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser, requireBuildingContext } from "@/lib/auth";
 import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
-import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
+import { proxyGranted, proxyRevoked } from "@/lib/voting/events";
 
 export async function POST(request: NextRequest) {
   try {
@@ -58,12 +58,11 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    await createAuditLog({
-      entityType: "ProxyAssignment",
-      entityId: proxy.id,
-      action: "CREATE",
-      userId: user.id,
-      newValue: { granteeId, voteId: voteId ?? "general" },
+    await proxyGranted({
+      proxyId: proxy.id,
+      grantorUserId: user.id,
+      granteeId,
+      voteId: voteId ?? null,
     });
 
     return NextResponse.json(proxy, { status: 201 });
@@ -104,11 +103,9 @@ export async function DELETE(request: NextRequest) {
 
     await prisma.proxyAssignment.delete({ where: { id: proxyId } });
 
-    await createAuditLog({
-      entityType: "ProxyAssignment",
-      entityId: proxyId,
-      action: "DELETE",
-      userId: user.id,
+    await proxyRevoked({
+      proxyId,
+      revokedByUserId: user.id,
     });
 
     return NextResponse.json({ success: true });

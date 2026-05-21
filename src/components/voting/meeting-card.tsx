@@ -26,6 +26,21 @@ interface Props {
   onRsvpChanged: () => void;
 }
 
+const RSVP_STYLE: Record<string, React.CSSProperties> = {
+  ATTENDING: {
+    background: "color-mix(in srgb, var(--color-good) 18%, transparent)",
+    color: "var(--color-good)",
+  },
+  NOT_ATTENDING: {
+    background: "color-mix(in srgb, var(--color-danger) 16%, transparent)",
+    color: "var(--color-danger)",
+  },
+  PROXY: {
+    background: "color-mix(in srgb, var(--color-ochre) 22%, transparent)",
+    color: "color-mix(in srgb, var(--color-ochre) 75%, var(--color-ink))",
+  },
+};
+
 export function MeetingCard({ meeting, onRsvpChanged }: Props) {
   const t = useTranslations("voting");
   const [showAgenda, setShowAgenda] = useState(false);
@@ -35,11 +50,13 @@ export function MeetingCard({ meeting, onRsvpChanged }: Props) {
   const isPast = meetingDate < new Date();
 
   return (
-    <div className="flex items-start gap-4 rounded-xl bg-white p-5 shadow-sm">
+    <div className="flex items-start gap-4 rounded-xl border border-ink/8 bg-card p-5">
       {/* Date badge */}
-      <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-lg bg-[#002045]/10 text-[#002045]">
-        <span className="text-2xl font-bold leading-none">{day}</span>
-        <span className="text-xs font-medium uppercase">{month}</span>
+      <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-lg bg-bg-3 text-ink">
+        <span className="font-display text-2xl leading-none">{day}</span>
+        <span className="mt-0.5 font-mono text-[10.5px] uppercase tracking-wider text-muted">
+          {month}
+        </span>
       </div>
 
       {/* Content */}
@@ -47,37 +64,39 @@ export function MeetingCard({ meeting, onRsvpChanged }: Props) {
         <div className="flex items-center gap-2">
           <Link
             href={`/voting/meetings/${meeting.id}`}
-            className="text-lg font-semibold text-slate-900 hover:text-[#002045] transition-colors"
+            className="font-display text-lg text-ink leading-tight hover:opacity-70 transition-opacity"
           >
             {meeting.title}
           </Link>
           {meeting.hasMinutes && (
-            <span title={t("hasMinutes")}><FileText className="h-4 w-4 text-[#515f74] shrink-0" /></span>
+            <span title={t("hasMinutes")}>
+              <FileText className="h-4 w-4 text-muted shrink-0" />
+            </span>
           )}
         </div>
 
-        <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500">
-          <div className="flex items-center gap-1">
-            <Calendar className="h-3.5 w-3.5" />
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-ink-soft">
+          <span className="inline-flex items-center gap-1.5">
+            <Calendar className="h-3.5 w-3.5 text-muted" />
             {meeting.time}
-          </div>
+          </span>
           {meeting.location && (
-            <div className="flex items-center gap-1">
-              <MapPin className="h-3.5 w-3.5" />
+            <span className="inline-flex items-center gap-1.5">
+              <MapPin className="h-3.5 w-3.5 text-muted" />
               {meeting.location}
-            </div>
+            </span>
           )}
-          <div className="flex items-center gap-1">
+          <span className="inline-flex items-center gap-1.5 text-muted">
             <Users className="h-3.5 w-3.5" />
             {t("attendeeCount", {
               attending: meeting.rsvpCounts.attending,
               total: meeting.rsvpCounts.total,
             })}
-          </div>
+          </span>
         </div>
 
         {meeting.description && (
-          <p className="mt-2 text-sm text-slate-600 line-clamp-2">
+          <p className="mt-2 text-sm text-ink-soft line-clamp-2">
             {meeting.description}
           </p>
         )}
@@ -86,31 +105,26 @@ export function MeetingCard({ meeting, onRsvpChanged }: Props) {
         {Array.isArray(meeting.agenda) && meeting.agenda.length > 0 && (
           <button
             onClick={() => setShowAgenda(true)}
-            className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-[#002045] hover:underline"
+            className="mt-2 inline-flex items-center gap-1 font-mono text-[11px] uppercase tracking-wider text-ink-soft hover:text-ink transition-colors"
           >
             <ClipboardList className="h-3.5 w-3.5" />
             {t("viewAgenda")}
           </button>
         )}
 
-        {/* RSVP status badge + View Details */}
-        <div className="mt-2 flex items-center gap-3">
+        {/* RSVP status + View Details */}
+        <div className="mt-3 flex items-center gap-3">
           {meeting.myRsvp && (
             <span
-              className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                meeting.myRsvp === "ATTENDING"
-                  ? "bg-green-100 text-green-800"
-                  : meeting.myRsvp === "NOT_ATTENDING"
-                  ? "bg-red-100 text-red-800"
-                  : "bg-amber-100 text-amber-800"
-              }`}
+              className="inline-flex items-center rounded-full px-2.5 py-0.5 font-mono text-[10.5px] uppercase tracking-wider"
+              style={RSVP_STYLE[meeting.myRsvp]}
             >
               {t(`rsvpStatus_${meeting.myRsvp}`)}
             </span>
           )}
           <Link
             href={`/voting/meetings/${meeting.id}`}
-            className="inline-flex items-center gap-1 text-xs font-medium text-[#002045] hover:underline"
+            className="inline-flex items-center gap-1 font-mono text-[11px] uppercase tracking-wider text-ink-soft hover:text-ink transition-colors"
           >
             {t("viewDetails")}
             <ArrowRight className="h-3 w-3" />

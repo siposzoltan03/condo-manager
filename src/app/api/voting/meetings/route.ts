@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
 import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
 import { requireRole } from "@/lib/rbac";
-import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
+import { meetingCreated } from "@/lib/voting/events";
 
 export async function GET(request: NextRequest) {
   try {
@@ -56,6 +56,7 @@ export async function GET(request: NextRequest) {
       time: m.time,
       location: m.location,
       agenda: m.agenda,
+      isRepeated: m.isRepeated,
       hasMinutes: !!m.minutes,
       createdBy: m.createdBy,
       rsvpCounts: {
@@ -101,13 +102,36 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { title, description, date, time, location, agenda } = body;
+    const {
+      title,
+      description,
+      date,
+      time,
+      location,
+      agenda,
+      isRepeated,
+      pendingAgendaItemIds,
+    } = body;
 
     if (!title || !date || !time) {
       return NextResponse.json(
         { error: "Missing required fields: title, date, time" },
         { status: 400 }
       );
+    }
+
+    // Validate the optional pending-agenda picks before creating the
+    // meeting — every id must belong to this building and be unattached.
+    let safeItemIds: string[] = [];
+    if (Array.isArray(pendingAgendaItemIds) && pendingAgendaItemIds.length > 0) {
+      const items = await prisma.pendingAgendaItem.findMany({
+        where: {
+          id: { in: pendingAgendaItemIds.filter((x) => typeof x === "string") },
+          buildingId,
+        },
+        select: { id: true },
+      });
+      safeItemIds = items.map((i) => i.id);
     }
 
     const meeting = await prisma.meeting.create({
@@ -118,6 +142,7 @@ export async function POST(request: NextRequest) {
         time,
         location: location ?? null,
         agenda: agenda ?? [],
+        isRepeated: isRepeated ?? false,
         createdById: userId,
         buildingId,
       },
@@ -126,12 +151,24 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    await createAuditLog({
-      entityType: "Meeting",
-      entityId: meeting.id,
-      action: "CREATE",
-      userId,
-      newValue: { title, date, time, location },
+    if (safeItemIds.length > 0) {
+      await prisma.pendingAgendaItem.updateMany({
+        where: { id: { in: safeItemIds } },
+        data: { attachedMeetingId: meeting.id },
+      });
+    }
+
+    await meetingCreated({
+      meetingId: meeting.id,
+      createdByUserId: userId,
+      buildingId,
+      newValue: {
+        title,
+        date,
+        time,
+        location,
+        attachedPendingItems: safeItemIds.length,
+      },
     });
 
     return NextResponse.json(meeting, { status: 201 });

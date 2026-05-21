@@ -2,11 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
 import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
 import { requireRole } from "@/lib/rbac";
-import { createAuditLog } from "@/lib/audit";
-import { notify, NotificationType } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
 import { VoteStatus } from "@prisma/client";
 import { votingQueue } from "@/lib/queue";
+import { voteCreated } from "@/lib/voting/events";
 
 export async function GET(request: NextRequest) {
   try {
@@ -29,8 +28,8 @@ export async function GET(request: NextRequest) {
     const limit = isNaN(rawLimit) || rawLimit < 1 ? 20 : Math.min(rawLimit, 50);
     const skip = (page - 1) * limit;
 
-    // Scope votes to this building via meeting relationship
-    const where: Record<string, unknown> = { meeting: { buildingId } };
+    // Scope votes to this building
+    const where: Record<string, unknown> = { buildingId };
     if (status) {
       if (!Object.values(VoteStatus).includes(status as VoteStatus)) {
         return NextResponse.json({ error: "Invalid status" }, { status: 400 });
@@ -81,7 +80,8 @@ export async function GET(request: NextRequest) {
       voteType: v.voteType,
       status: v.status,
       isSecret: v.isSecret,
-      quorumRequired: Number(v.quorumRequired),
+      majorityType: v.majorityType,
+      quorumRequired: Number(v.quorumRequired), // @deprecated
       deadline: v.deadline,
       meetingId: v.meetingId,
       createdBy: v.createdBy,
@@ -134,6 +134,7 @@ export async function POST(request: NextRequest) {
       description,
       voteType,
       isSecret,
+      majorityType,
       quorumRequired,
       deadline,
       meetingId,
@@ -162,8 +163,10 @@ export async function POST(request: NextRequest) {
         voteType: voteType ?? "YES_NO",
         status: "OPEN",
         isSecret: isSecret ?? false,
-        quorumRequired: quorumRequired ?? 0.51,
+        majorityType: majorityType ?? "SIMPLE_MAJORITY",
+        quorumRequired: quorumRequired ?? 0.51, // @deprecated
         deadline: deadlineDate,
+        buildingId,
         meetingId: meetingId ?? null,
         createdById: userId,
         options: {
@@ -190,30 +193,22 @@ export async function POST(request: NextRequest) {
       }
     );
 
-    await createAuditLog({
-      entityType: "Vote",
-      entityId: vote.id,
-      action: "CREATE",
-      userId,
-      newValue: { title, voteType: vote.voteType, deadline, isSecret: vote.isSecret },
-    });
-
-    // Notify users in this building about the new vote
     const buildingUsers = await prisma.userBuilding.findMany({
       where: { buildingId, userId: { not: userId } },
       select: { userId: true },
     });
 
-    if (buildingUsers.length > 0) {
-      await notify({
-        userIds: buildingUsers.map((u) => u.userId),
-        type: NotificationType.VOTE_OPEN,
-        title: `New Vote: ${title}`,
-        body: description?.substring(0, 200) ?? title,
-        entityType: "Vote",
-        entityId: vote.id,
-      });
-    }
+    await voteCreated({
+      voteId: vote.id,
+      createdByUserId: userId,
+      buildingId,
+      title,
+      voteType: vote.voteType,
+      deadline,
+      isSecret: vote.isSecret,
+      description,
+      buildingUserIds: buildingUsers.map((u) => u.userId),
+    });
 
     return NextResponse.json(vote, { status: 201 });
   } catch (error) {

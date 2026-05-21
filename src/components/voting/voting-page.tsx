@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useAuth } from "@/hooks/use-auth";
@@ -28,6 +29,7 @@ interface VoteSummary {
   voteType: string;
   status: string;
   isSecret: boolean;
+  majorityType?: string;
   quorumRequired: number;
   deadline: string;
   createdBy: { id: string; name: string };
@@ -76,9 +78,9 @@ export function VotingPage({ initialVotes }: VotingPageProps) {
         setVotes(data.votes);
       }
     } catch {
-      // silent
+      toast.error(t("somethingWentWrong"));
     }
-  }, []);
+  }, [t]);
 
   const fetchMeetings = useCallback(async () => {
     try {
@@ -88,9 +90,9 @@ export function VotingPage({ initialVotes }: VotingPageProps) {
         setMeetings(data.meetings);
       }
     } catch {
-      // silent
+      toast.error(t("somethingWentWrong"));
     }
-  }, []);
+  }, [t]);
 
   // Fetch meetings client-side (votes come from server)
   useEffect(() => {
@@ -107,25 +109,27 @@ export function VotingPage({ initialVotes }: VotingPageProps) {
   return (
     <div>
       {/* Header */}
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-4xl font-extrabold text-[#002045]">
+          <span className="font-mono text-[11px] uppercase tracking-wider text-muted">
             {t("title")}
+          </span>
+          <h1 className="mt-1 font-display text-3xl text-ink leading-tight">
+            {t("subtitle")}
           </h1>
-          <p className="mt-1 text-slate-600">{t("subtitle")}</p>
         </div>
         {isBoardPlus && (
           <div className="flex gap-2">
             <button
               onClick={() => setShowCreateVote(true)}
-              className="flex items-center gap-2 rounded-md bg-[#002045] px-4 py-2 text-sm font-medium text-white hover:bg-[#002045]/90"
+              className="inline-flex items-center gap-2 rounded-lg bg-ink px-4 py-2 font-mono text-[11px] uppercase tracking-wider text-bg hover:opacity-90 transition-opacity"
             >
               <Plus className="h-4 w-4" />
               {t("createVote")}
             </button>
             <button
               onClick={() => setShowCreateMeeting(true)}
-              className="flex items-center gap-2 rounded-md border border-[#002045] px-4 py-2 text-sm font-medium text-[#002045] hover:bg-[#002045]/5"
+              className="inline-flex items-center gap-2 rounded-lg border border-ink/20 bg-card px-4 py-2 font-mono text-[11px] uppercase tracking-wider text-ink hover:bg-bg-3 transition-colors"
             >
               <Plus className="h-4 w-4" />
               {t("createMeeting")}
@@ -135,28 +139,28 @@ export function VotingPage({ initialVotes }: VotingPageProps) {
       </div>
 
       {/* Tabs */}
-      <div className="mb-6 flex border-b border-slate-200">
+      <div className="mb-6 flex border-b border-ink/10">
         <button
           onClick={() => setActiveTab("votes")}
-          className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
+          className={`flex items-center gap-2 px-4 py-3 font-mono text-xs uppercase tracking-wider transition-colors ${
             activeTab === "votes"
-              ? "border-b-2 border-[#002045] text-[#002045]"
-              : "text-slate-500 hover:text-[#002045]"
+              ? "border-b-2 border-ink text-ink"
+              : "text-muted hover:text-ink"
           }`}
         >
           {t("tabVotes")}
           {activeVotes.length > 0 && (
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#002045] text-xs text-white">
+            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-ink px-1 font-mono text-[10.5px] text-bg">
               {activeVotes.length}
             </span>
           )}
         </button>
         <button
           onClick={() => setActiveTab("meetings")}
-          className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
+          className={`flex items-center gap-2 px-4 py-3 font-mono text-xs uppercase tracking-wider transition-colors ${
             activeTab === "meetings"
-              ? "border-b-2 border-[#002045] text-[#002045]"
-              : "text-slate-500 hover:text-[#002045]"
+              ? "border-b-2 border-ink text-ink"
+              : "text-muted hover:text-ink"
           }`}
         >
           {t("tabMeetings")}
@@ -165,7 +169,7 @@ export function VotingPage({ initialVotes }: VotingPageProps) {
 
       {loading ? (
         <div className="flex min-h-[30vh] items-center justify-center">
-          <p className="text-slate-500">{tCommon("loading")}</p>
+          <p className="text-muted">{tCommon("loading")}</p>
         </div>
       ) : activeTab === "votes" ? (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -179,21 +183,22 @@ export function VotingPage({ initialVotes }: VotingPageProps) {
                     key={vote.id}
                     vote={vote}
                     onVoted={fetchVotes}
+                    canClose={isBoardPlus}
                   />
                 ))}
               </div>
             )}
 
             {activeVotes.length === 0 && pastVotes.length === 0 && (
-              <div className="flex min-h-[20vh] items-center justify-center rounded-xl bg-white p-8 shadow-sm">
-                <p className="text-slate-500">{t("noVotes")}</p>
+              <div className="flex min-h-[20vh] items-center justify-center rounded-xl border border-ink/8 bg-card p-8">
+                <p className="text-muted">{t("noVotes")}</p>
               </div>
             )}
 
             {/* Past Votes */}
             {pastVotes.length > 0 && (
               <div>
-                <h2 className="mb-4 text-xl font-semibold text-[#002045]">
+                <h2 className="mb-4 font-mono text-xs uppercase tracking-wider text-muted">
                   {t("pastVotes")}
                 </h2>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -223,6 +228,7 @@ export function VotingPage({ initialVotes }: VotingPageProps) {
       {/* Modals */}
       {showCreateVote && (
         <CreateVoteModal
+          open
           onClose={() => setShowCreateVote(false)}
           onCreated={() => {
             setShowCreateVote(false);
@@ -232,6 +238,7 @@ export function VotingPage({ initialVotes }: VotingPageProps) {
       )}
       {showCreateMeeting && (
         <CreateMeetingModal
+          open
           onClose={() => setShowCreateMeeting(false)}
           onCreated={() => {
             setShowCreateMeeting(false);
