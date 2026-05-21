@@ -65,7 +65,7 @@ export async function POST(
         include: { building: { select: { name: true, invitationExpiryHours: true } } },
       });
       const buildingName = fullInvitation?.building?.name ?? "Condo Manager";
-      const roleName = (fullInvitation?.role ?? "RESIDENT").replace("_", " ");
+      const roleName = (fullInvitation?.role ?? "OWNER").replace("_", " ");
       const expiryHours = fullInvitation?.building?.invitationExpiryHours ?? 168;
       const { subject, html } = invitationResendEmail({
         buildingName,

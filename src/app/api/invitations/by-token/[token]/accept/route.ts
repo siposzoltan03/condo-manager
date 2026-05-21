@@ -57,7 +57,23 @@ export async function POST(
     }
 
     const body = await request.json();
-    const { name, password, buildingName, buildingAddress, buildingCity, buildingZipCode } = body;
+    const {
+      name,
+      password,
+      buildingName,
+      buildingAddress,
+      buildingCity,
+      buildingZipCode,
+      /**
+       * Phase 5 (GDPR Art. 6 + Tht. § 22(2)) — only meaningful when the
+       * invitee is being added as a TENANT. When `true`, we record an
+       * affirmative consent stamp on the UnitUser row so downstream code
+       * (resident directory, vendor anonymizer, notification fanout) can
+       * share or use the tenant's contact data beyond name + presence.
+       * Default false = retain only what § 22(2) requires.
+       */
+      contactConsent,
+    } = body;
 
     if (!name || !password) {
       return NextResponse.json(
@@ -143,17 +159,25 @@ export async function POST(
           data: {
             userId: user.id,
             buildingId: invitation.buildingId,
-            role: invitation.role ?? "RESIDENT",
+            role: invitation.role ?? "OWNER",
           },
         });
 
-        // If a unit was specified, create the unit-user assignment
+        // If a unit was specified, create the unit-user assignment.
         if (invitation.unitId) {
+          const relationship = invitation.relationship ?? "OWNER";
+          // Phase 5 — tenants must affirmatively consent before the
+          // building retains contact data beyond name + presence (GDPR
+          // Art. 6, Tht. § 22(2)). Owners aren't subject to this rule
+          // (they're members of the building under § 16).
+          const recordConsent = relationship === "TENANT" && contactConsent === true;
           await tx.unitUser.create({
             data: {
               userId: user.id,
               unitId: invitation.unitId,
-              relationship: invitation.relationship ?? "OWNER",
+              relationship,
+              contactConsentAt: recordConsent ? new Date() : null,
+              contactConsentMode: recordConsent ? "explicit" : null,
             },
           });
         }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { X, Loader2 } from "lucide-react";
 
 interface Unit {
@@ -19,7 +20,7 @@ export function InviteUserModal({ onClose, onSuccess }: Props) {
   const t = useTranslations("invitationManagement");
 
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState("RESIDENT");
+  const [role, setRole] = useState("OWNER");
   const [unitId, setUnitId] = useState("");
   const [relationship, setRelationship] = useState("OWNER");
   const [units, setUnits] = useState<Unit[]>([]);
@@ -36,7 +37,7 @@ export function InviteUserModal({ onClose, onSuccess }: Props) {
           setUnits(Array.isArray(data) ? data : []);
         }
       } catch {
-        // Units are optional, ignore errors
+        toast.error("Failed to load units");
       }
     }
     fetchUnits();
@@ -76,9 +77,11 @@ export function InviteUserModal({ onClose, onSuccess }: Props) {
       if (data.inviteLink) {
         setInviteLink(data.inviteLink);
       } else {
+        toast.success("Invitation sent successfully");
         onSuccess();
       }
     } catch {
+      toast.error("Failed to send invitation");
       setError("Failed to send invitation");
     } finally {
       setLoading(false);
@@ -180,7 +183,7 @@ export function InviteUserModal({ onClose, onSuccess }: Props) {
               >
                 <option value="ADMIN">Admin</option>
                 <option value="BOARD_MEMBER">Board Member</option>
-                <option value="RESIDENT">Resident</option>
+                <option value="OWNER">Resident</option>
                 <option value="TENANT">Tenant</option>
               </select>
             </div>

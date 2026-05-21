@@ -10,6 +10,7 @@ interface NotificationPreferences {
   maintenance?: string;
   payments?: string;
   voting?: string;
+  marketplace?: string;
   dailyDigest?: boolean;
 }
 
@@ -24,6 +25,7 @@ const EVENT_TYPE_KEYS = [
   "maintenance",
   "payments",
   "voting",
+  "marketplace",
 ] as const;
 
 type DeliveryMethod = "email" | "push" | "both" | "none";

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { User, Bell, Shield } from "lucide-react";
 import { ProfileTab } from "./profile-tab";
 import { NotificationsTab } from "./notifications-tab";
@@ -39,6 +40,7 @@ export function SettingsContent() {
       const data = await res.json();
       setProfile(data);
     } catch {
+      toast.error("Failed to load settings");
       setError("Failed to load settings");
     } finally {
       setLoading(false);
