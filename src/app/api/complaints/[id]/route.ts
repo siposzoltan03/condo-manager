@@ -1,47 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
 import { hasMinimumRole } from "@/lib/rbac";
-import { createAuditLog } from "@/lib/audit";
-import { notify, NotificationType } from "@/lib/notifications";
-import { prisma } from "@/lib/prisma";
+import {
+  updateComplaintStatus,
+  type NewMeetingInput,
+} from "@/app/actions/complaints";
+import { findComplaintForViewer } from "@/lib/complaints-dal";
 import { ComplaintStatus } from "@prisma/client";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
 };
 
-export async function GET(request: NextRequest, context: RouteContext) {
+export async function GET(_request: NextRequest, context: RouteContext) {
   try {
     const { userId, buildingId, role } = await requireBuildingContext();
 
     const { id } = await context.params;
     const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
 
-    const complaint = await prisma.complaint.findUnique({
-      where: { id },
-      include: {
-        author: {
-          select: { id: true, name: true },
-        },
-        notes: {
-          where: isBoardPlus ? {} : { isInternal: false },
-          include: {
-            author: {
-              select: { id: true, name: true },
-            },
-          },
-          orderBy: { createdAt: "asc" },
-        },
-      },
+    const complaint = await findComplaintForViewer({
+      id,
+      buildingId,
+      viewerUserId: userId,
+      isBoardPlus,
     });
 
-    if (!complaint || complaint.buildingId !== buildingId) {
-      return NextResponse.json({ error: "Complaint not found" }, { status: 404 });
-    }
-
-    // Check visibility: private complaints only visible to author + BOARD_MEMBER+
-    if (complaint.isPrivate && complaint.authorId !== userId && !isBoardPlus) {
-      return NextResponse.json({ error: "Complaint not found" }, { status: 404 });
+    if (!complaint) {
+      return NextResponse.json(
+        { error: "Complaint not found" },
+        { status: 404 },
+      );
     }
 
     return NextResponse.json(complaint);
@@ -49,82 +38,53 @@ export async function GET(request: NextRequest, context: RouteContext) {
     console.error("Failed to fetch complaint:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
-    const { userId, buildingId, role } = await requireBuildingContext();
-
-    if (!hasMinimumRole(role, "BOARD_MEMBER")) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
     const { id } = await context.params;
     const body = await request.json();
-    const { status } = body;
+    const { status, note, escalatedMeetingId, newMeeting } = body;
 
     if (!status) {
       return NextResponse.json(
         { error: "Missing required field: status" },
-        { status: 400 }
+        { status: 400 },
       );
     }
-
     if (!Object.values(ComplaintStatus).includes(status as ComplaintStatus)) {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
     }
 
-    const complaint = await prisma.complaint.findUnique({
-      where: { id },
-      select: { id: true, status: true, authorId: true, trackingNumber: true, buildingId: true },
-    });
-
-    if (!complaint || complaint.buildingId !== buildingId) {
-      return NextResponse.json({ error: "Complaint not found" }, { status: 404 });
+    const result = await updateComplaintStatus(
+      id,
+      status as ComplaintStatus,
+      typeof note === "string" ? note : undefined,
+      typeof escalatedMeetingId === "string" ? escalatedMeetingId : undefined,
+      newMeeting && typeof newMeeting === "object"
+        ? (newMeeting as NewMeetingInput)
+        : undefined,
+    );
+    if (result.error) {
+      const code =
+        result.error === "Forbidden"
+          ? 403
+          : result.error === "Complaint not found"
+            ? 404
+            : result.error.startsWith("Cannot transition")
+              ? 409
+              : 400;
+      return NextResponse.json({ error: result.error }, { status: code });
     }
-
-    const oldStatus = complaint.status;
-
-    const updated = await prisma.complaint.update({
-      where: { id },
-      data: { status: status as ComplaintStatus },
-      include: {
-        author: {
-          select: { id: true, name: true },
-        },
-      },
-    });
-
-    await createAuditLog({
-      entityType: "Complaint",
-      entityId: complaint.id,
-      action: "UPDATE",
-      userId,
-      oldValue: { status: oldStatus },
-      newValue: { status },
-    });
-
-    // Notify complaint author on status change
-    if (oldStatus !== status) {
-      await notify({
-        userIds: [complaint.authorId],
-        type: NotificationType.COMPLAINT_STATUS,
-        title: "Complaint Status Updated",
-        body: `Your complaint ${complaint.trackingNumber} status changed from ${oldStatus} to ${status}`,
-        entityType: "Complaint",
-        entityId: complaint.id,
-      });
-    }
-
-    return NextResponse.json(updated);
+    return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("Failed to update complaint:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
