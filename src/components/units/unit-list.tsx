@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Building2, Percent, Ruler, AlertTriangle } from "lucide-react";
 import { AddUnitButton, EditUnitButton } from "./unit-actions";
@@ -12,6 +15,7 @@ interface UnitListProps {
 export function UnitList({ initialData }: UnitListProps) {
   const t = useTranslations("common");
   const tUnits = useTranslations("units");
+  const [displayMode, setDisplayMode] = useState<"decimal" | "percent">("percent");
 
   const { units, totalOwnershipShare } = initialData;
 
@@ -28,6 +32,20 @@ export function UnitList({ initialData }: UnitListProps) {
     : isOwnershipOk
       ? "text-emerald-600"
       : "text-[#633f0f]";
+
+  function formatOwnership(value: number): string {
+    if (displayMode === "percent") {
+      return `${(value * 100).toFixed(2)}%`;
+    }
+    return value.toFixed(4);
+  }
+
+  function formatTotalOwnership(value: number): string {
+    if (displayMode === "percent") {
+      return `${(value * 100).toFixed(2)}%`;
+    }
+    return value.toFixed(4);
+  }
 
   return (
     <div className="space-y-6">
@@ -76,7 +94,7 @@ export function UnitList({ initialData }: UnitListProps) {
                 {tUnits("totalOwnership")}
               </p>
               <p className={`text-2xl font-extrabold ${ownershipColor}`}>
-                {totalOwnershipShare.toFixed(4)}
+                {formatTotalOwnership(totalOwnershipShare)}
               </p>
             </div>
           </div>
@@ -126,7 +144,31 @@ export function UnitList({ initialData }: UnitListProps) {
                   {tUnits("size")}
                 </th>
                 <th className="px-6 py-4 text-xs font-bold text-[#515f74] uppercase tracking-wider">
-                  {tUnits("ownershipShare")}
+                  <div className="flex items-center gap-2">
+                    <span>{tUnits("ownershipShare")}</span>
+                    <div className="inline-flex rounded-lg border border-[#c4c6cf]/40 bg-white text-[10px] font-bold">
+                      <button
+                        onClick={() => setDisplayMode("percent")}
+                        className={`rounded-l-lg px-2 py-0.5 transition-colors ${
+                          displayMode === "percent"
+                            ? "bg-[#002045] text-white"
+                            : "text-[#515f74] hover:bg-[#f2f3ff]"
+                        }`}
+                      >
+                        %
+                      </button>
+                      <button
+                        onClick={() => setDisplayMode("decimal")}
+                        className={`rounded-r-lg px-2 py-0.5 transition-colors ${
+                          displayMode === "decimal"
+                            ? "bg-[#002045] text-white"
+                            : "text-[#515f74] hover:bg-[#f2f3ff]"
+                        }`}
+                      >
+                        0.00
+                      </button>
+                    </div>
+                  </div>
                 </th>
                 <th className="px-6 py-4 text-xs font-bold text-[#515f74] uppercase tracking-wider">
                   {tUnits("primaryContact")}
@@ -166,7 +208,7 @@ export function UnitList({ initialData }: UnitListProps) {
                     <td className="px-6 py-5">
                       <div className="flex flex-col gap-1.5 min-w-[120px]">
                         <span className="text-sm font-bold text-[#002045] tabular-nums">
-                          {unit.ownershipShare.toFixed(4)}
+                          {formatOwnership(unit.ownershipShare)}
                         </span>
                         <div className="w-full h-1 rounded-full bg-[#eaedff] overflow-hidden">
                           <div

@@ -155,6 +155,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         entityId: id,
         action: "UPDATE",
         userId,
+      buildingId,
         oldValue,
         newValue,
       });
@@ -251,6 +252,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       entityId: id,
       action: "DELETE",
       userId,
+      buildingId,
       oldValue: {
         number: unit.number,
         floor: unit.floor,

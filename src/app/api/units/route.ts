@@ -136,6 +136,7 @@ export async function POST(request: NextRequest) {
         entityId: unit.id,
         action: "CREATE",
         userId,
+      buildingId,
         newValue: {
           number: unit.number,
           floor: unit.floor,
