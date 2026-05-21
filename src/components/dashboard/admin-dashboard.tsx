@@ -107,8 +107,8 @@ export function AdminDashboard({ initialData, userName }: AdminDashboardProps) {
               icon={<AlertTriangle className="h-5 w-5 text-red-600" />}
               label={t("overduePayments")}
               value={`${summary.overduePaymentsCount}`}
-              sublabel={t("openComplaints", {
-                count: summary.openComplaintsCount,
+              sublabel={t("overdueCount", {
+                count: summary.overduePaymentsCount,
               })}
               alert={summary.overduePaymentsCount > 0}
             />
