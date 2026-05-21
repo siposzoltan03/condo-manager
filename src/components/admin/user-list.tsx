@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import dynamic from "next/dynamic";
 import { Search, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
@@ -51,7 +52,7 @@ const ROLE_KEYS: Record<string, string> = {
   TENANT: "roleTenant",
 };
 
-const ALL_ROLES = ["SUPER_ADMIN", "ADMIN", "BOARD_MEMBER", "RESIDENT", "TENANT"];
+const ALL_ROLES = ["SUPER_ADMIN", "ADMIN", "BOARD_MEMBER", "OWNER", "TENANT"];
 
 interface UserListProps {
   initialData: UsersData;
@@ -92,6 +93,7 @@ export function UserList({ initialData }: UserListProps) {
       setTotal(data.total);
       setTotalPages(data.totalPages);
     } catch {
+      toast.error(t("error"));
       setError(t("error"));
     } finally {
       setLoading(false);
@@ -139,10 +141,12 @@ export function UserList({ initialData }: UserListProps) {
     try {
       const result = await toggleUserActive(user.id);
       if (result.error) throw new Error(result.error);
+      toast.success("User status updated");
       setHasInteracted(true);
       fetchUsers();
       router.refresh();
     } catch {
+      toast.error(t("error"));
       setError(t("error"));
     }
   }

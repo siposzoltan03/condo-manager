@@ -22,6 +22,9 @@ interface CreateUserInput {
   temporaryPassword: string;
   isPrimaryContact?: boolean;
   relationship?: string;
+  /// Phase 5 — Tht. § 22(2). Admins capturing a TENANT must record
+  /// explicit consent before storing phone/email. Ignored for OWNER.
+  contactConsent?: boolean;
 }
 
 interface UpdateUserInput {
@@ -37,7 +40,7 @@ export async function createUser(input: CreateUserInput): Promise<ActionResult> 
     const { userId: currentUserId, buildingId, role: activeRole } = await requireBuildingContext();
     await requireRole(activeRole, "ADMIN");
 
-    const { email, name, role, unitId, temporaryPassword, isPrimaryContact, relationship } = input;
+    const { email, name, role, unitId, temporaryPassword, isPrimaryContact, relationship, contactConsent } = input;
 
     if (!email || !name || !role || !unitId || !temporaryPassword) {
       return { error: "Missing required fields: email, name, role, unitId, temporaryPassword" };
@@ -99,12 +102,15 @@ export async function createUser(input: CreateUserInput): Promise<ActionResult> 
           ? (relationship as UnitRelationship)
           : UnitRelationship.OWNER;
 
+      const isTenant = unitRelationship === UnitRelationship.TENANT;
       await tx.unitUser.create({
         data: {
           userId: targetUser.id,
           unitId,
           relationship: unitRelationship,
           isPrimaryContact: isPrimaryContact ?? false,
+          contactConsentAt: isTenant && contactConsent ? new Date() : null,
+          contactConsentMode: isTenant && contactConsent ? "explicit" : null,
         },
       });
 

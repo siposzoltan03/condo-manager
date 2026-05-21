@@ -19,6 +19,8 @@ interface UnitInput {
   floor: number;
   size: number;
   ownershipShare: number;
+  stairwell?: string | null;
+  positionOnFloor?: number | null;
 }
 
 export async function createUnit(input: UnitInput): Promise<ActionResult> {
@@ -32,7 +34,7 @@ export async function createUnit(input: UnitInput): Promise<ActionResult> {
       return { error: `Unit limit reached (${current}/${max}). Upgrade your plan to add more units.` };
     }
 
-    const { number, floor, size, ownershipShare } = input;
+    const { number, floor, size, ownershipShare, stairwell, positionOnFloor } = input;
 
     if (!number || floor === undefined || !size || !ownershipShare) {
       return { error: "Missing required fields: number, floor, size, ownershipShare" };
@@ -47,6 +49,9 @@ export async function createUnit(input: UnitInput): Promise<ActionResult> {
         data: {
           number: String(number),
           floor: Number(floor),
+          stairwell: stairwell ?? null,
+          positionOnFloor:
+            positionOnFloor != null ? Number(positionOnFloor) : null,
           size: new Prisma.Decimal(Number(size)),
           ownershipShare: new Prisma.Decimal(ownershipShare),
           building: { connect: { id: buildingId } },
@@ -58,9 +63,12 @@ export async function createUnit(input: UnitInput): Promise<ActionResult> {
         entityId: unit.id,
         action: "CREATE",
         userId,
+      buildingId,
         newValue: {
           number: unit.number,
           floor: unit.floor,
+          stairwell: unit.stairwell,
+          positionOnFloor: unit.positionOnFloor,
           size: Number(unit.size),
           ownershipShare: Number(unit.ownershipShare),
         },
@@ -88,7 +96,16 @@ export async function updateUnit(id: string, input: Partial<UnitInput>): Promise
 
     const existing = await prisma.unit.findUnique({
       where: { id },
-      select: { id: true, number: true, floor: true, size: true, ownershipShare: true, buildingId: true },
+      select: {
+        id: true,
+        number: true,
+        floor: true,
+        stairwell: true,
+        positionOnFloor: true,
+        size: true,
+        ownershipShare: true,
+        buildingId: true,
+      },
     });
 
     if (!existing || existing.buildingId !== buildingId) {
@@ -109,6 +126,20 @@ export async function updateUnit(id: string, input: Partial<UnitInput>): Promise
       oldValue.floor = existing.floor;
       newValue.floor = Number(input.floor);
       updateData.floor = Number(input.floor);
+    }
+
+    if (input.stairwell !== undefined) {
+      oldValue.stairwell = existing.stairwell;
+      newValue.stairwell = input.stairwell ?? null;
+      updateData.stairwell = input.stairwell ?? null;
+    }
+
+    if (input.positionOnFloor !== undefined) {
+      oldValue.positionOnFloor = existing.positionOnFloor;
+      newValue.positionOnFloor =
+        input.positionOnFloor != null ? Number(input.positionOnFloor) : null;
+      updateData.positionOnFloor =
+        input.positionOnFloor != null ? Number(input.positionOnFloor) : null;
     }
 
     if (input.size !== undefined) {
@@ -138,6 +169,7 @@ export async function updateUnit(id: string, input: Partial<UnitInput>): Promise
         entityId: id,
         action: "UPDATE",
         userId,
+      buildingId,
         oldValue,
         newValue,
       });
@@ -195,6 +227,7 @@ export async function deleteUnit(id: string): Promise<ActionResult> {
       entityId: id,
       action: "DELETE",
       userId,
+      buildingId,
       oldValue: {
         number: unit.number,
         floor: unit.floor,
@@ -303,6 +336,7 @@ export async function importUnits(rows: ImportRow[]): Promise<ImportResultType> 
       entityId: "bulk-import",
       action: "CREATE",
       userId,
+      buildingId,
       newValue: {
         importedCount: created.count,
         errorCount: errors.length,

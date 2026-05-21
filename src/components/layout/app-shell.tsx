@@ -1,12 +1,14 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useSession } from "next-auth/react";
 import { Sidebar } from "./sidebar";
 import { TopBar } from "./topbar";
 
 /** Pages that render standalone (no sidebar / top bar). */
-const standalonePages = ["/login", "/forgot-password", "/reset-password"];
+const standalonePages = ["/login", "/forgot-password", "/reset-password", "/verify-email"];
+
+/** Subtree paths that render their own shell — AppShell stays out of the way. */
+const ownShellRoots = ["/contractor"];
 
 /** Public marketing pages that render without the app shell (own nav). */
 const publicPages = ["/pricing", "/checkout", "/accept-invitation"];
@@ -36,29 +38,39 @@ function isPublicPage(pathname: string): boolean {
   );
 }
 
+function isOwnShellRoot(pathname: string): boolean {
+  const p = stripLocale(pathname);
+  return ownShellRoots.some((root) => p === root || p.startsWith(root + "/"));
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { status } = useSession();
 
-  // Public and standalone pages: render children directly, no shell
-  if (isStandalonePage(pathname) || isPublicPage(pathname)) {
+  // Public + standalone pages render their own chrome. The contractor
+  // subtree has its own ContractorShell as well — AppShell stays out
+  // of the way for everything under /contractor.
+  if (
+    isStandalonePage(pathname) ||
+    isPublicPage(pathname) ||
+    isOwnShellRoot(pathname)
+  ) {
     return <>{children}</>;
   }
 
-  // For authenticated pages: always render the shell structure to avoid hydration mismatch.
-  // The sidebar/topbar handle their own loading states internally.
-  const isAuthenticated = status === "authenticated";
-
+  // Authenticated routes: always render the shell scaffold so server-rendered
+  // HTML matches the first client render (no hydration mismatch / no flash of
+  // shell-less layout while the session is loading). The Sidebar and TopBar
+  // each call useSession() internally and degrade to placeholder content
+  // while status === "loading".
   return (
-    <div className="min-h-screen bg-slate-50">
-      {isAuthenticated && (
-        <>
-          <Sidebar />
-          <TopBar />
-        </>
-      )}
-      <main className={isAuthenticated ? "lg:pl-64 pt-0" : ""}>
-        <div className={isAuthenticated ? "px-6 py-6" : ""}>{children}</div>
+    <div
+      className="min-h-screen"
+      style={{ background: "var(--color-bg)", color: "var(--color-ink)" }}
+    >
+      <Sidebar />
+      <main className="lg:pl-[244px]">
+        <TopBar />
+        <div>{children}</div>
       </main>
     </div>
   );

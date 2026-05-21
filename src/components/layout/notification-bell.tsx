@@ -1,19 +1,11 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import {
-  Bell,
-  Megaphone,
-  Mail,
-  Wrench,
-  Wallet,
-  Vote,
-  AlertTriangle,
-  X,
-} from "lucide-react";
+import { Bell, X } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
 import { formatTimeAgo } from "@/lib/format-time";
+import { NotificationTypeIcon } from "@/components/notifications/notification-type-icon";
 
 interface Notification {
   id: string;
@@ -22,27 +14,6 @@ interface Notification {
   body: string;
   isRead: boolean;
   createdAt: string;
-}
-
-function NotificationIcon({ type }: { type: string }) {
-  const iconClass = "h-4 w-4 shrink-0";
-  switch (type) {
-    case "ANNOUNCEMENT_NEW":
-      return <Megaphone className={`${iconClass} text-blue-500`} />;
-    case "MESSAGE_NEW":
-      return <Mail className={`${iconClass} text-indigo-500`} />;
-    case "MAINTENANCE_STATUS":
-      return <Wrench className={`${iconClass} text-orange-500`} />;
-    case "PAYMENT_REMINDER":
-      return <Wallet className={`${iconClass} text-green-500`} />;
-    case "VOTE_OPEN":
-    case "VOTE_CLOSING":
-      return <Vote className={`${iconClass} text-purple-500`} />;
-    case "COMPLAINT_STATUS":
-      return <AlertTriangle className={`${iconClass} text-red-500`} />;
-    default:
-      return <Bell className={`${iconClass} text-slate-400`} />;
-  }
 }
 
 export function NotificationBell() {
@@ -57,7 +28,6 @@ export function NotificationBell() {
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Fetch unread badge count (lightweight, runs on a 30s interval)
   const fetchUnread = useCallback(async () => {
     try {
       const res = await fetch("/api/notifications?limit=1");
@@ -66,11 +36,10 @@ export function NotificationBell() {
         setUnreadCount(data.unreadCount ?? 0);
       }
     } catch {
-      // silently ignore polling errors
+      // polling — silent
     }
   }, []);
 
-  // Fetch the full notification list for the dropdown
   const fetchNotifications = useCallback(async () => {
     setLoading(true);
     try {
@@ -81,27 +50,25 @@ export function NotificationBell() {
         setUnreadCount(data.unreadCount ?? 0);
       }
     } catch {
-      // ignore
+      // silent
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Polling for badge count
+  // Poll the unread badge every 30 s.
   useEffect(() => {
     fetchUnread();
     const interval = setInterval(fetchUnread, 30_000);
     return () => clearInterval(interval);
   }, [fetchUnread]);
 
-  // Load notifications when the panel opens
+  // Lazy-load the panel contents.
   useEffect(() => {
-    if (open) {
-      fetchNotifications();
-    }
+    if (open) fetchNotifications();
   }, [open, fetchNotifications]);
 
-  // Close on outside click
+  // Close on outside click.
   useEffect(() => {
     if (!open) return;
     function handleClick(e: MouseEvent) {
@@ -116,32 +83,25 @@ export function NotificationBell() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
 
-  const markAsRead = useCallback(
-    async (notificationId: string) => {
-      // Optimistically update UI
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n))
-      );
-      setUnreadCount((prev) => Math.max(0, prev - 1));
-
-      try {
-        await fetch("/api/notifications", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ notificationId }),
-        });
-      } catch {
-        // silently ignore; the next poll will reconcile
-      }
-    },
-    []
-  );
+  const markAsRead = useCallback(async (notificationId: string) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n)),
+    );
+    setUnreadCount((prev) => Math.max(0, prev - 1));
+    try {
+      await fetch("/api/notifications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notificationId }),
+      });
+    } catch {
+      // poll will reconcile
+    }
+  }, []);
 
   const markAllAsRead = useCallback(async () => {
-    // Optimistically update UI
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     setUnreadCount(0);
-
     try {
       await fetch("/api/notifications", {
         method: "PATCH",
@@ -149,35 +109,42 @@ export function NotificationBell() {
         body: JSON.stringify({ markAll: true }),
       });
     } catch {
-      // silently ignore
+      // silent
     }
   }, []);
 
   return (
     <div ref={containerRef} className="relative">
-      {/* Bell trigger */}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="relative rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+        className="relative inline-flex h-11 w-11 items-center justify-center rounded-lg text-muted transition-colors hover:bg-bg-3 hover:text-ink sm:h-9 sm:w-9"
         aria-label={tN("title")}
         aria-expanded={open}
         aria-haspopup="true"
       >
         <Bell className="h-5 w-5" />
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-xs font-bold text-white">
+          <span
+            className="absolute right-1 top-1 flex h-5 min-w-5 items-center justify-center rounded-full px-1 font-mono text-[10.5px] text-bg sm:-right-0.5 sm:-top-0.5"
+            style={{ background: "var(--color-danger)" }}
+          >
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
       </button>
 
-      {/* Dropdown panel */}
       {open && (
-        <div className="fixed right-4 top-16 mt-1 w-80 sm:w-96 rounded-xl border border-slate-200 bg-white shadow-xl z-[60] flex flex-col overflow-hidden">
+        <div
+          className="fixed right-4 top-16 mt-1 w-80 sm:w-96 rounded-xl border border-ink/10 bg-card z-[60] flex flex-col overflow-hidden"
+          style={{
+            boxShadow:
+              "0 24px 48px -16px color-mix(in srgb, var(--color-ink) 25%, transparent), 0 8px 16px -8px color-mix(in srgb, var(--color-ink) 15%, transparent)",
+          }}
+        >
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-            <h2 className="text-sm font-semibold text-slate-900">
+          <div className="flex items-center justify-between border-b border-ink/8 px-4 py-3">
+            <h2 className="font-mono text-xs uppercase tracking-wider text-ink">
               {tN("title")}
             </h2>
             <div className="flex items-center gap-2">
@@ -185,7 +152,7 @@ export function NotificationBell() {
                 <button
                   type="button"
                   onClick={markAllAsRead}
-                  className="text-xs text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                  className="font-mono text-[11px] uppercase tracking-wider text-ink-soft hover:text-ink transition-colors"
                 >
                   {tN("markAllRead")}
                 </button>
@@ -193,7 +160,7 @@ export function NotificationBell() {
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-md text-muted transition-colors hover:bg-bg-3 hover:text-ink sm:h-7 sm:w-7"
                 aria-label={t("cancel")}
               >
                 <X className="h-4 w-4" />
@@ -201,14 +168,14 @@ export function NotificationBell() {
             </div>
           </div>
 
-          {/* Notification list */}
-          <div className="max-h-96 overflow-y-auto divide-y divide-slate-50">
+          {/* List */}
+          <div className="max-h-96 overflow-y-auto divide-y divide-ink/5">
             {loading ? (
-              <div className="px-4 py-8 text-center text-sm text-slate-400">
+              <div className="px-4 py-8 text-center text-sm text-muted">
                 {t("loading")}
               </div>
             ) : notifications.length === 0 ? (
-              <div className="px-4 py-10 text-center text-sm text-slate-400">
+              <div className="px-4 py-10 text-center text-sm text-muted">
                 {tN("noNotifications")}
               </div>
             ) : (
@@ -217,41 +184,42 @@ export function NotificationBell() {
                   key={notification.id}
                   type="button"
                   onClick={() => {
-                    if (!notification.isRead) {
-                      markAsRead(notification.id);
-                    }
+                    if (!notification.isRead) markAsRead(notification.id);
                   }}
-                  className={`w-full text-left px-4 py-3 flex items-start gap-3 hover:bg-slate-50 transition-colors ${
-                    !notification.isRead ? "bg-blue-50/40" : ""
-                  }`}
+                  className="w-full text-left px-4 py-3 flex items-start gap-3 hover:bg-bg-3 transition-colors"
+                  style={
+                    !notification.isRead
+                      ? {
+                          background:
+                            "color-mix(in srgb, var(--color-blue) 6%, transparent)",
+                        }
+                      : undefined
+                  }
                 >
-                  {/* Type icon */}
                   <div className="mt-0.5">
-                    <NotificationIcon type={notification.type} />
+                    <NotificationTypeIcon type={notification.type} size="sm" withHalo />
                   </div>
-
-                  {/* Content */}
                   <div className="flex-1 min-w-0">
                     <p
                       className={`text-sm leading-snug truncate ${
-                        notification.isRead
-                          ? "font-normal text-slate-700"
-                          : "font-semibold text-slate-900"
+                        notification.isRead ? "text-ink-soft" : "text-ink"
                       }`}
+                      style={{ fontWeight: notification.isRead ? 400 : 500 }}
                     >
                       {notification.title}
                     </p>
-                    <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">
+                    <p className="mt-0.5 text-xs text-ink-soft line-clamp-2">
                       {notification.body}
                     </p>
-                    <p className="text-xs text-slate-400 mt-1">
+                    <p className="mt-1 font-mono text-[10.5px] text-muted">
                       {formatTimeAgo(notification.createdAt, locale)}
                     </p>
                   </div>
-
-                  {/* Unread dot */}
                   {!notification.isRead && (
-                    <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-blue-500" />
+                    <span
+                      className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full"
+                      style={{ background: "var(--color-blue)" }}
+                    />
                   )}
                 </button>
               ))
@@ -259,11 +227,11 @@ export function NotificationBell() {
           </div>
 
           {/* Footer */}
-          <div className="border-t border-slate-100 px-4 py-2.5 text-center">
+          <div className="border-t border-ink/8 px-4 py-2.5 text-center">
             <Link
               href="/notifications"
               onClick={() => setOpen(false)}
-              className="text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors"
+              className="font-mono text-[11px] uppercase tracking-wider text-ink-soft hover:text-ink transition-colors"
             >
               {tN("viewAll")}
             </Link>

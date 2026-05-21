@@ -46,10 +46,52 @@ export function validateEnv(): void {
     }
   }
 
-  // Validate secret strength
+  // Validate secret strength + reject the placeholder value.
+  const PLACEHOLDER_SECRETS = new Set([
+    "your-secret-key-change-in-production",
+    "change-me",
+    "secret",
+  ]);
+
   const secret = process.env.NEXTAUTH_SECRET;
   if (secret && secret.length < 32) {
     const msg = "NEXTAUTH_SECRET must be at least 32 characters. Generate with: openssl rand -base64 32";
+    if (process.env.NODE_ENV === "production") {
+      console.error(`FATAL: ${msg}`);
+      process.exit(1);
+    } else {
+      console.warn(`WARNING: ${msg}`);
+    }
+  }
+  if (secret && PLACEHOLDER_SECRETS.has(secret)) {
+    const msg =
+      "NEXTAUTH_SECRET is set to a known placeholder value. Replace it with a fresh random secret.";
+    if (process.env.NODE_ENV === "production") {
+      console.error(`FATAL: ${msg}`);
+      process.exit(1);
+    } else {
+      console.warn(`WARNING: ${msg}`);
+    }
+  }
+
+  // Same checks for BALLOT_SECRET — vote receipts are forgeable if this is
+  // weak or default.
+  const ballot = process.env.BALLOT_SECRET;
+  if (ballot && ballot.length < 32) {
+    const msg = "BALLOT_SECRET must be at least 32 characters.";
+    if (process.env.NODE_ENV === "production") {
+      console.error(`FATAL: ${msg}`);
+      process.exit(1);
+    } else {
+      console.warn(`WARNING: ${msg}`);
+    }
+  }
+  if (
+    ballot &&
+    (PLACEHOLDER_SECRETS.has(ballot) || ballot === "default-ballot-secret")
+  ) {
+    const msg =
+      "BALLOT_SECRET is a known placeholder. Vote receipts would be forgeable.";
     if (process.env.NODE_ENV === "production") {
       console.error(`FATAL: ${msg}`);
       process.exit(1);

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { X } from "lucide-react";
 import { createUser, updateUser } from "@/app/actions/users";
 
@@ -31,7 +32,7 @@ const ROLES = [
   { value: "SUPER_ADMIN", label: "Super Admin" },
   { value: "ADMIN", label: "Admin" },
   { value: "BOARD_MEMBER", label: "Board Member" },
-  { value: "RESIDENT", label: "Resident" },
+  { value: "OWNER", label: "Resident" },
   { value: "TENANT", label: "Tenant" },
 ];
 
@@ -47,10 +48,11 @@ export function UserFormModal({ user, onClose, onSuccess }: UserFormModalProps) 
   const [name, setName] = useState(user?.name ?? "");
   const [email, setEmail] = useState(user?.email ?? "");
   const [temporaryPassword, setTemporaryPassword] = useState("");
-  const [role, setRole] = useState(user?.role ?? "RESIDENT");
+  const [role, setRole] = useState(user?.role ?? "OWNER");
   const [unitId, setUnitId] = useState(user?.unitId ?? "");
   const [isPrimaryContact, setIsPrimaryContact] = useState(user?.isPrimaryContact ?? false);
   const [relationship, setRelationship] = useState(user?.relationship ?? "OWNER");
+  const [contactConsent, setContactConsent] = useState(false);
 
   const [units, setUnits] = useState<UnitOption[]>([]);
   const [loadingUnits, setLoadingUnits] = useState(true);
@@ -73,7 +75,7 @@ export function UserFormModal({ user, onClose, onSuccess }: UserFormModalProps) 
           }
         }
       } catch {
-        // Units fetch failed - user will see empty dropdown
+        toast.error("Failed to load units");
       } finally {
         setLoadingUnits(false);
       }
@@ -102,6 +104,7 @@ export function UserFormModal({ user, onClose, onSuccess }: UserFormModalProps) 
           return;
         }
 
+        toast.success("User updated successfully");
         setSuccess("User updated successfully");
         setTimeout(onSuccess, 800);
       } else {
@@ -119,6 +122,7 @@ export function UserFormModal({ user, onClose, onSuccess }: UserFormModalProps) 
           unitId,
           isPrimaryContact,
           relationship,
+          contactConsent: relationship === "TENANT" ? contactConsent : undefined,
         });
 
         if (result.error) {
@@ -127,10 +131,12 @@ export function UserFormModal({ user, onClose, onSuccess }: UserFormModalProps) 
           return;
         }
 
+        toast.success("User created successfully");
         setSuccess("User created successfully");
         setTimeout(onSuccess, 800);
       }
     } catch (err) {
+      toast.error(err instanceof Error ? err.message : "An error occurred");
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setSubmitting(false);
@@ -284,6 +290,22 @@ export function UserFormModal({ user, onClose, onSuccess }: UserFormModalProps) 
               Primary Contact
             </label>
           </div>
+
+          {/* Tenant consent — Tht. § 22(2) requires explicit opt-in
+              before the building may store a tenant's email/phone. */}
+          {!isEdit && relationship === "TENANT" && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+              <label className="flex items-start gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={contactConsent}
+                  onChange={(e) => setContactConsent(e.target.checked)}
+                  className="mt-1 h-4 w-4"
+                />
+                <span>{t("tenantConsentLabel")}</span>
+              </label>
+            </div>
+          )}
 
           {/* Error / Success */}
           {error && (

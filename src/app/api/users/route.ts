@@ -129,8 +129,22 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { email, name, role, unitId, isPrimaryContact, temporaryPassword, relationship } =
-      body;
+    const {
+      email,
+      name,
+      role,
+      unitId,
+      isPrimaryContact,
+      temporaryPassword,
+      relationship,
+      /**
+       * Phase 5 — GDPR Art. 6 + Tht. § 22(2): only meaningful when
+       * `relationship === "TENANT"`. Admin-confirmed consent that the
+       * tenant agreed to share contact data beyond name + presence.
+       * Default false (no consent on file).
+       */
+      contactConsent,
+    } = body;
 
     if (!email || !name || !role || !unitId || !temporaryPassword) {
       return NextResponse.json(
@@ -212,12 +226,18 @@ export async function POST(request: NextRequest) {
       const unitRelationship = relationship && Object.values(UnitRelationship).includes(relationship as UnitRelationship)
         ? (relationship as UnitRelationship)
         : UnitRelationship.OWNER;
+      // Phase 5 — record tenant contact consent only when affirmatively
+      // confirmed. Owners aren't subject to § 22(2)'s minimization rule.
+      const recordConsent =
+        unitRelationship === UnitRelationship.TENANT && contactConsent === true;
       await tx.unitUser.create({
         data: {
           userId: targetUser.id,
           unitId,
           relationship: unitRelationship,
           isPrimaryContact: isPrimaryContact ?? false,
+          contactConsentAt: recordConsent ? new Date() : null,
+          contactConsentMode: recordConsent ? "explicit" : null,
         },
       });
 

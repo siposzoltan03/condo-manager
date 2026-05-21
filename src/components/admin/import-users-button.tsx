@@ -12,7 +12,7 @@ const usersImportConfig: ImportConfig = {
   fields: [
     { key: "email", label: "Email", required: true, validate: (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? null : "Invalid email" },
     { key: "name", label: "Name", required: true },
-    { key: "role", label: "Role", required: true, validate: (v) => ["SUPER_ADMIN", "ADMIN", "BOARD_MEMBER", "RESIDENT", "TENANT"].includes(v.toUpperCase()) ? null : "Invalid role" },
+    { key: "role", label: "Role", required: true, validate: (v) => ["SUPER_ADMIN", "ADMIN", "BOARD_MEMBER", "OWNER", "TENANT"].includes(v.toUpperCase()) ? null : "Invalid role" },
     { key: "unit_number", label: "Unit Number", required: true },
     { key: "primary_contact", label: "Primary Contact", required: false },
     { key: "relationship", label: "Relationship", required: false, validate: (v) => !v || ["OWNER", "TENANT"].includes(v.toUpperCase()) ? null : "Must be OWNER or TENANT" },

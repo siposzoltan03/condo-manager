@@ -2,10 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import {
   getNotifications,
+  getContractorNotifications,
   markAsRead,
+  markContractorAsRead,
   markAllAsRead,
+  markAllContractorAsRead,
 } from "@/lib/notifications";
 
+/**
+ * The notifications API is shared between the condo and contractor
+ * auth trees. We dispatch by `session.user.kind` so a single bell
+ * component on either side hits the same endpoint and the server
+ * routes the read/write through the matching FK column.
+ */
 export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser();
@@ -19,7 +28,10 @@ export async function GET(request: NextRequest) {
     const page = isNaN(rawPage) || rawPage < 1 ? 1 : rawPage;
     const limit = isNaN(rawLimit) ? 20 : Math.min(Math.max(rawLimit, 1), 100);
 
-    const result = await getNotifications(user.id, page, limit);
+    const result =
+      user.kind === "contractor"
+        ? await getContractorNotifications(user.id, page, limit)
+        : await getNotifications(user.id, page, limit);
 
     return NextResponse.json(result);
   } catch (error) {
@@ -43,14 +55,23 @@ export async function PATCH(request: NextRequest) {
       notificationId?: string;
       markAll?: boolean;
     };
+    const isContractor = user.kind === "contractor";
 
     if (markAll) {
-      await markAllAsRead(user.id);
+      if (isContractor) {
+        await markAllContractorAsRead(user.id);
+      } else {
+        await markAllAsRead(user.id);
+      }
       return NextResponse.json({ success: true });
     }
 
     if (notificationId) {
-      await markAsRead(notificationId, user.id);
+      if (isContractor) {
+        await markContractorAsRead(notificationId, user.id);
+      } else {
+        await markAsRead(notificationId, user.id);
+      }
       return NextResponse.json({ success: true });
     }
 
