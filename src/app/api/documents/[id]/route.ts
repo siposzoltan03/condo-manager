@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
 import { requireRole, hasMinimumRole } from "@/lib/rbac";
-import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
+import { documentUpdated, documentDeleted } from "@/lib/documents/events";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -116,11 +116,10 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       },
     });
 
-    await createAuditLog({
-      entityType: "Document",
-      entityId: id,
-      action: "UPDATE",
-      userId,
+    await documentUpdated({
+      documentId: id,
+      updatedByUserId: userId,
+      buildingId,
       oldValue: {
         title: existing.title,
         description: existing.description,
@@ -166,11 +165,10 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     // Versions cascade-delete via onDelete: Cascade
     await prisma.document.delete({ where: { id } });
 
-    await createAuditLog({
-      entityType: "Document",
-      entityId: id,
-      action: "DELETE",
-      userId,
+    await documentDeleted({
+      documentId: id,
+      deletedByUserId: userId,
+      buildingId,
       oldValue: {
         title: existing.title,
         visibility: existing.visibility,

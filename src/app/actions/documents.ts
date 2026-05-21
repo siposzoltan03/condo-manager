@@ -23,6 +23,8 @@ interface CreateDocumentInput {
   fileUrl: string;
   fileSize: number;
   mimeType: string;
+  /** Optional ISO date when the document expires (e.g. for contracts). */
+  expiresAt?: string | null;
 }
 
 export async function createDocument(input: CreateDocumentInput): Promise<ActionResult> {
@@ -31,7 +33,18 @@ export async function createDocument(input: CreateDocumentInput): Promise<Action
     await requireRole(role, "BOARD_MEMBER");
     await requireNotFrozen(buildingId);
 
-    const { title, description, categoryId, visibility, tags, fileName, fileUrl, fileSize, mimeType } = input;
+    const {
+      title,
+      description,
+      categoryId,
+      visibility,
+      tags,
+      fileName,
+      fileUrl,
+      fileSize,
+      mimeType,
+      expiresAt,
+    } = input;
 
     if (!title || !categoryId || !visibility || !fileName || !fileUrl) {
       return { error: "Missing required fields" };
@@ -39,6 +52,15 @@ export async function createDocument(input: CreateDocumentInput): Promise<Action
 
     if (!Object.values(DocumentVisibility).includes(visibility as DocumentVisibility)) {
       return { error: "Invalid visibility" };
+    }
+
+    let parsedExpiresAt: Date | null = null;
+    if (expiresAt) {
+      const d = new Date(expiresAt);
+      if (Number.isNaN(d.getTime())) {
+        return { error: "Invalid expiresAt" };
+      }
+      parsedExpiresAt = d;
     }
 
     // Verify category exists and belongs to building
@@ -57,6 +79,7 @@ export async function createDocument(input: CreateDocumentInput): Promise<Action
         category: { connect: { id: categoryId } },
         visibility: visibility as DocumentVisibility,
         tags: Array.isArray(tags) ? tags : [],
+        expiresAt: parsedExpiresAt,
         uploadedBy: { connect: { id: userId } },
         versions: {
           create: {
@@ -76,6 +99,7 @@ export async function createDocument(input: CreateDocumentInput): Promise<Action
       entityId: document.id,
       action: "CREATE",
       userId,
+      buildingId,
       newValue: { title, categoryId, visibility, fileName },
     });
 

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
 import { requireRole } from "@/lib/rbac";
-import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
+import { documentVersionCreated } from "@/lib/documents/events";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -73,11 +73,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
       data: { updatedAt: new Date() },
     });
 
-    await createAuditLog({
-      entityType: "DocumentVersion",
-      entityId: version.id,
-      action: "CREATE",
-      userId,
+    await documentVersionCreated({
+      versionId: version.id,
+      documentId: id,
+      createdByUserId: userId,
+      buildingId,
       newValue: {
         documentId: id,
         versionNumber: nextVersion,

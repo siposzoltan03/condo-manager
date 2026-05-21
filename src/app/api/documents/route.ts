@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
 import { requireRole, hasMinimumRole } from "@/lib/rbac";
-import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
 import { Prisma, DocumentVisibility } from "@prisma/client";
+import { documentCreated } from "@/lib/documents/events";
 
 export async function GET(request: NextRequest) {
   try {
@@ -158,7 +158,19 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { title, description, categoryId, visibility, tags, fileName, fileUrl, fileSize, mimeType } = body;
+    const {
+      title,
+      description,
+      categoryId,
+      visibility,
+      tags,
+      fileName,
+      fileUrl,
+      fileSize,
+      mimeType,
+      expiresAt,
+      extractedText,
+    } = body;
 
     if (!title || !categoryId || !fileName || !fileUrl) {
       return NextResponse.json(
@@ -172,6 +184,15 @@ export async function POST(request: NextRequest) {
         { error: "Invalid visibility value" },
         { status: 400 }
       );
+    }
+
+    let parsedExpiresAt: Date | null = null;
+    if (expiresAt) {
+      const d = new Date(expiresAt);
+      if (Number.isNaN(d.getTime())) {
+        return NextResponse.json({ error: "Invalid expiresAt" }, { status: 400 });
+      }
+      parsedExpiresAt = d;
     }
 
     // Verify category exists and belongs to this building
@@ -191,6 +212,7 @@ export async function POST(request: NextRequest) {
         categoryId,
         visibility: visibility ?? "PUBLIC",
         tags: tags ?? [],
+        expiresAt: parsedExpiresAt,
         uploadedById: userId,
         versions: {
           create: {
@@ -199,7 +221,7 @@ export async function POST(request: NextRequest) {
             fileName,
             fileSize: fileSize ?? 0,
             mimeType: mimeType ?? "application/octet-stream",
-            extractedText: null,
+            extractedText: extractedText ?? null,
             uploadedById: userId,
           },
         },
@@ -223,12 +245,13 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    await createAuditLog({
-      entityType: "Document",
-      entityId: document.id,
-      action: "CREATE",
-      userId,
-      newValue: { title, categoryId, visibility: visibility ?? "PUBLIC" },
+    await documentCreated({
+      documentId: document.id,
+      createdByUserId: userId,
+      buildingId,
+      title,
+      categoryId,
+      visibility: visibility ?? "PUBLIC",
     });
 
     return NextResponse.json(document, { status: 201 });
