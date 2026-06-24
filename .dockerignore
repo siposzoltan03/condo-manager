@@ -1,0 +1,44 @@
+# Files NOT sent to the Docker build context (like .gitignore, but for builds).
+# Keeps builds fast and prevents secrets/junk from being baked into images.
+
+# Dependencies & build outputs — reinstalled/rebuilt inside the image
+node_modules
+.next
+out
+dist
+
+# Version control & CI
+.git
+.github
+
+# Secrets & local env — provided at RUNTIME via compose env_file, never baked in
+.env
+.env.*
+!.env.example
+
+# Docs & marketing assets (pitch PDFs/screenshots) — not needed to run the app
+docs
+
+# Test & tooling artifacts
+coverage
+test-results
+playwright-report
+.playwright-mcp
+.vitest
+
+# Editor / OS / agent
+.vscode
+.idea
+.DS_Store
+.claude
+.claude-personal
+
+# Logs
+*.log
+npm-debug.log*
+
+# Docker/compose files themselves don't belong in the context
+Dockerfile
+Dockerfile.worker
+docker-compose*.yml
+.dockerignore
