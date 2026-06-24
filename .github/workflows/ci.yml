@@ -1,0 +1,29 @@
+# Continuous Integration — runs on every push to main and every pull request.
+# Stage 2a: lint + typecheck. (Tests and image build come in later steps.)
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    name: Lint & typecheck
+    runs-on: ubuntu-latest # fresh throwaway VM (x86_64, like your server)
+    steps:
+      # 1. Pull the repo's code onto the runner.
+      - uses: actions/checkout@v4
+
+      # 2. Install Node 22 (matches the Dockerfile) + cache ~/.npm for speed.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # 3. Install dependencies exactly as locked (reproducible).
+      - run: npm ci
+
+      # 4. The actual checks. If either exits non-zero, the job fails (red X).
+      - run: npm run lint
+      - run: npx tsc --noEmit
