@@ -22,8 +22,13 @@
  */
 
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 
-const PATH = "/Users/siposzoltan/projects/condo-manager/docs/data-model.dbml";
+// Resolve relative to this script (repo/scripts/) so it works on ANY machine,
+// in CI, and in Docker — not just the author's laptop. (A hard-coded absolute
+// path here is what made the CI `npm ci` postinstall fail on the Linux runner.)
+const PATH = join(dirname(fileURLToPath(import.meta.url)), "..", "docs", "data-model.dbml");
 
 if (!existsSync(PATH)) {
   console.error(`No DBML file at ${PATH} — run \`npx prisma generate\` first.`);
