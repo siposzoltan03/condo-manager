@@ -61,6 +61,10 @@ jobs:
       REDIS_URL: redis://localhost:6379
       NEXTAUTH_SECRET: ci-test-secret
       NEXTAUTH_URL: http://localhost:3000
+      # stripe-webhook tests sign payloads with this and the route verifies
+      # with it — both read process.env, so they just need to agree. (Locally
+      # it comes from .env; CI has no .env, so declare it here.)
+      STRIPE_WEBHOOK_SECRET: whsec_test_secret
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
