@@ -3392,5 +3392,312 @@
       "title": "Owner names not for public posting",
       "description": "NAIH guidance forbids posting owner names with arrears amounts in public spaces or open noticeboards. This data may only be shared at the general assembly or via sealed delivery."
     }
+  },
+  "featureConsole": {
+    "overrides": {
+      "eyebrow": "Building override",
+      "title": "Building overrides",
+      "intro": "Per-feature effective state for this building, with its source. An override beats the plan default, but the global kill-switch and the dependency chain override everything.",
+      "auditHistory": "Audit history",
+      "colFeature": "Feature · effective source",
+      "colOverride": "Override",
+      "colDetails": "Details",
+      "statPlan": "Plan",
+      "statUnits": "Units",
+      "statSubscription": "Subscription",
+      "statRenews": "Renews",
+      "statusActive": "Active",
+      "inherit": "Inherit",
+      "grant": "Grant",
+      "revoke": "Revoke",
+      "ineffective": "Ineffective",
+      "reasonLabel": "Reason (audit)",
+      "reasonPlaceholder": "e.g. pilot client, board decision…",
+      "expiryLabel": "Expiry",
+      "cascadeTitle": "The dependency isn't available.",
+      "cascadeBody": "The grant is ineffective until {deps} is active for this building (currently disabled or not in the plan).",
+      "planIncluded": "Included in the {plan} plan",
+      "planExcluded": "Not included in the {plan} plan",
+      "forceOn": "Globally enabled (rollout)",
+      "killUnder": "Under global kill-switch",
+      "toastInherit": "Override cleared — inherit",
+      "toastGrant": "Feature granted for this building",
+      "toastRevoke": "Feature revoked for this building"
+    },
+    "plans": {
+      "kezdo": {
+        "name": "Kezdő",
+        "gloss": "Starter"
+      },
+      "kepviselo": {
+        "name": "Képviselő",
+        "gloss": "Manager"
+      },
+      "kezelo_iroda": {
+        "name": "Kezelő iroda",
+        "gloss": "Agency"
+      }
+    },
+    "planEditor": {
+      "eyebrow": "Plan editor · feature × plan matrix",
+      "title": "Plans",
+      "intro": "The checkbox sets whether the plan includes the feature. Enabling a feature auto-checks its prerequisites; disabling is blocked while a dependent feature is active.",
+      "save": "Save",
+      "cancel": "Cancel",
+      "saved": "Saved",
+      "featCol": "Feature · slug",
+      "guardrailTitle": "The {plan} plan is inactive but still has {count, plural, one {# active subscription} other {# active subscriptions}}.",
+      "guardrailBody": "No new checkout can start for it; existing subscribers keep it until renewal. All changes are audit-logged.",
+      "deactivate": "Deactivate…",
+      "reactivate": "Reactivate",
+      "popular": "Most popular",
+      "priceWarn": "Price changes affect new checkouts only. Existing Stripe subscriptions keep the old price until renewal.",
+      "blockedTooltip": "Can't disable: {blocker} still requires it in this plan.",
+      "toastAutoEnabled": "Prerequisites enabled automatically",
+      "toastBlocked": "Disable the dependent feature in this plan first",
+      "limits": {
+        "maxBuildings": "Max. buildings",
+        "maxUnits": "Max. units / building",
+        "maxUnitsPerBuilding": "Max. units / building",
+        "priceMonthly": "Monthly price (Ft)",
+        "priceYearly": "Yearly price (Ft)",
+        "trialDays": "Trial days",
+        "isActive": "Active",
+        "stripePriceId": "Stripe Price ID"
+      }
+    },
+    "modules": {
+      "voting": {
+        "name": "Voting",
+        "gloss": "Voting"
+      },
+      "finance": {
+        "name": "Finance",
+        "gloss": "Finance"
+      },
+      "maintenance": {
+        "name": "Maintenance",
+        "gloss": "Maintenance"
+      },
+      "documents": {
+        "name": "Documents",
+        "gloss": "Documents"
+      },
+      "communication": {
+        "name": "Communication",
+        "gloss": "Communication"
+      },
+      "audit": {
+        "name": "Audit",
+        "gloss": "Audit"
+      },
+      "platform": {
+        "name": "Platform",
+        "gloss": "Platform"
+      },
+      "ai": {
+        "name": "AI",
+        "gloss": "AI"
+      }
+    },
+    "features": {
+      "voting": {
+        "basic": {
+          "name": "Basic voting",
+          "desc": "Yes/no/abstain resolutions weighted by ownership share."
+        },
+        "weighted": {
+          "name": "Weighted voting",
+          "desc": "Voting weight by ownership share; threshold and quorum calculation."
+        },
+        "proxy": {
+          "name": "Proxy voting",
+          "desc": "A resident can authorize someone else to vote, for a period or a single resolution."
+        },
+        "electronic": {
+          "name": "Electronic voting",
+          "desc": "Online, deadline-bound electronic resolutions with minutes."
+        }
+      },
+      "finance": {
+        "ledger": {
+          "name": "Ledger",
+          "desc": "Double-entry bookkeeping, categories, budget vs. actual reporting."
+        },
+        "budget": {
+          "name": "Budget",
+          "desc": "Annual building budget planning and tracking."
+        },
+        "bank-csv": {
+          "name": "Bank CSV import",
+          "desc": "Import transactions from CSV with automatic matching to ledger entries."
+        },
+        "bank-sync-live": {
+          "name": "Live bank sync (PSD2)",
+          "desc": "Real-time bank connection via PSD2 API. Billed separately."
+        },
+        "pdf-report": {
+          "name": "PDF financial report",
+          "desc": "Signable, versioned PDF statements for assemblies and legal use."
+        }
+      },
+      "maintenance": {
+        "tickets": {
+          "name": "Issue reporting",
+          "desc": "Resident issue reports with photos, status tracking to completion."
+        },
+        "kanban": {
+          "name": "Maintenance board",
+          "desc": "Kanban view to manage tickets by status."
+        },
+        "contractors": {
+          "name": "Contractor management",
+          "desc": "Assign contractors, bids, and invoices to tickets."
+        },
+        "scheduled": {
+          "name": "Scheduled maintenance",
+          "desc": "Automatic creation of recurring maintenance tasks."
+        }
+      },
+      "documents": {
+        "basic": {
+          "name": "Document vault",
+          "desc": "Category tree, permission-based visibility, uploads."
+        },
+        "versioning": {
+          "name": "Versioning",
+          "desc": "Keep and restore document versions."
+        },
+        "signing": {
+          "name": "Signing",
+          "desc": "Electronic signing of documents with signature tracking."
+        }
+      },
+      "communication": {
+        "announcements": {
+          "name": "Announcements",
+          "desc": "Targeted notices to a unit, floor, or building, with read receipts."
+        },
+        "forum": {
+          "name": "Forum",
+          "desc": "Community topics, comments, moderation."
+        },
+        "messages": {
+          "name": "Messages",
+          "desc": "Direct messaging between residents and the manager."
+        },
+        "complaints": {
+          "name": "Complaints",
+          "desc": "Formal complaint intake, status tracking, mediation."
+        }
+      },
+      "audit": {
+        "basic": {
+          "name": "Audit log",
+          "desc": "Logging of every change, building-scoped log view."
+        },
+        "export": {
+          "name": "Audit export",
+          "desc": "Full audit-log PDF/CSV export for assemblies and legal use."
+        }
+      },
+      "platform": {
+        "multi-building": {
+          "name": "Multi-building",
+          "desc": "Manage several buildings under one subscription with building switching."
+        },
+        "api": {
+          "name": "API access",
+          "desc": "Programmatic access to platform data via tokens."
+        },
+        "sso": {
+          "name": "SSO",
+          "desc": "Single sign-on (SAML/OIDC) for management agencies."
+        },
+        "custom-branding": {
+          "name": "Custom branding",
+          "desc": "Own logo and colors for the agency's clients."
+        }
+      },
+      "ai": {
+        "minutes-summary": {
+          "name": "AI minutes summary",
+          "desc": "Automatic summarization of assembly minutes."
+        },
+        "classify": {
+          "name": "AI document classification",
+          "desc": "Automatic categorization of uploaded documents. Experimental."
+        }
+      }
+    },
+    "tabs": {
+      "aria": "Feature management",
+      "features": "Features",
+      "plans": "Plans",
+      "buildings": "Building overrides"
+    },
+    "comingSoon": {
+      "title": "Coming soon",
+      "plans": "The plan editor (feature × plan matrix + limits and pricing) is built in the next step.",
+      "buildings": "The building-level overrides screen is built in the next step."
+    },
+    "badges": {
+      "kill": "Kill-switch",
+      "override": "Override",
+      "force": "Force-on",
+      "plan": "Plan"
+    },
+    "catalog": {
+      "eyebrow": "Feature catalog · global flags",
+      "title": "Features",
+      "countSummary": "· {features} across {modules} modules",
+      "intro": "Code-owned features and their global switches. The global flag overrides the plan setting; the Kill-switch disables a feature for every building, regardless of plan or override.",
+      "auditExport": "Audit export",
+      "legendTitle": "Effective source · precedence",
+      "legendKillSuffix": "overrides everything",
+      "legendOverrideSuffix": "building-level",
+      "legendPlanSuffix": "plan-based",
+      "available": "Available",
+      "unavailable": "Unavailable",
+      "activeCount": "{count} active",
+      "featureCount": "{count} features",
+      "moduleEmpty": "empty",
+      "emptyTitle": "No features in this module",
+      "emptyBody": "The {module} module is registered in code but has no published features yet.",
+      "beta": "BETA",
+      "plansLabel": "Plan:",
+      "requires": "Requires: {deps}",
+      "modifiedBy": "Changed by: {by} · {when}",
+      "active": "Active",
+      "inactive": "Inactive",
+      "isActiveSuffix": "· isActive",
+      "flagPlan": "Per plan",
+      "flagForce": "Force-on",
+      "flagKill": "Kill-switch",
+      "flagNotePlan": "Inherited by buildings according to plan.",
+      "flagNoteForce": "▲ Overrides the plan setting — on for every building.",
+      "flagNoteKill": "⏻ Globally disabled for every building.",
+      "flagAria": "Global flag — {name}",
+      "toastFlagForce": "Global flag: Force-on",
+      "toastFlagPlan": "Global flag: Per plan",
+      "toastKillOn": "Kill-switch enabled — {slug}",
+      "toastActivated": "Feature activated",
+      "toastDeactivated": "Feature deactivated"
+    },
+    "kill": {
+      "label": "Global kill-switch · reversible",
+      "title": "Disable “{name}” for EVERY building?",
+      "body": "This disables <b>{name}</b> for <b>all buildings</b> — regardless of plan, force-on flag, or building-level override. Services built on this feature also stop.",
+      "affected": "Affected buildings",
+      "affectedValue": "{count} buildings",
+      "planOverride": "Plan override",
+      "ignored": "ignored",
+      "reenable": "Re-enable",
+      "immediate": "instant, right here",
+      "confirmPlaceholder": "Type: KILL — to confirm",
+      "confirmAria": "Confirmation",
+      "cancel": "Cancel",
+      "confirm": "Enable kill-switch"
+    }
   }
 }

@@ -1,6 +1,20 @@
 import { NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
-import { getSubscriptionForBuilding } from "@/lib/feature-gate";
+import {
+  getSubscriptionForBuilding,
+  LEGACY_FEATURE_SLUG,
+} from "@/lib/feature-gate";
+import { getActiveFeatures } from "@/lib/feature-access";
+
+/** Legacy module slugs (used by the sidebar nav) whose taxonomy slug is
+ *  effectively active for the building — i.e. the new resolver's view,
+ *  expressed in the slugs the client already understands. */
+async function activeLegacySlugs(buildingId: string): Promise<string[]> {
+  const active = await getActiveFeatures(buildingId);
+  return Object.entries(LEGACY_FEATURE_SLUG)
+    .filter(([, slug]) => active.has(slug))
+    .map(([legacy]) => legacy);
+}
 
 /**
  * GET /api/subscription
@@ -30,12 +44,10 @@ export async function GET() {
       });
     }
 
-    const featuresRaw = subscription.plan.features;
-    const features: string[] = Array.isArray(featuresRaw)
-      ? (featuresRaw as string[])
-      : typeof featuresRaw === "string"
-        ? JSON.parse(featuresRaw)
-        : [];
+    // Feature list reflects the live resolver (plan matrix + global flags +
+    // per-building overrides + dependency cascade), mapped to the legacy
+    // slugs the sidebar nav uses.
+    const features = await activeLegacySlugs(buildingId);
 
     return NextResponse.json({
       id: subscription.id,

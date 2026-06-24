@@ -3432,5 +3432,312 @@
       "title": "Tulajdonosi nevek nem helyezhetők ki nyilvánosan",
       "description": "A NAIH iránymutatása szerint hátralékos tulajdonosok neve és összege nem helyezhető ki közterületre vagy nyilvános hirdetőtáblára. Ezek az adatok csak közgyűlésen vagy zárt küldeményben oszthatók meg."
     }
+  },
+  "featureConsole": {
+    "overrides": {
+      "eyebrow": "Épület-felülírás",
+      "title": "Épület-felülírások",
+      "intro": "Funkciónkénti effektív állapot ezen az épületen, a forrás magyarázatával. A felülírás a csomag-alapot bírálja felül, de a globális kill-switch és a függőség-lánc mindent felülír.",
+      "auditHistory": "Audit-előzmény",
+      "colFeature": "Funkció · effektív forrás",
+      "colOverride": "Felülírás",
+      "colDetails": "Részletek",
+      "statPlan": "Csomag",
+      "statUnits": "Lakás",
+      "statSubscription": "Előfizetés",
+      "statRenews": "Megújul",
+      "statusActive": "Aktív",
+      "inherit": "Öröklés",
+      "grant": "Engedélyezés",
+      "revoke": "Tiltás",
+      "ineffective": "Hatástalan",
+      "reasonLabel": "Indok (audit)",
+      "reasonPlaceholder": "Pl. pilot ügyfél, IB döntés…",
+      "expiryLabel": "Lejárat",
+      "cascadeTitle": "A függőség nem elérhető.",
+      "cascadeBody": "Az engedély hatástalan, amíg a(z) {deps} prerekvizit nem aktív ezen az épületen (jelenleg le van tiltva vagy nincs a csomagban).",
+      "planIncluded": "A(z) {plan} csomag tartalmazza",
+      "planExcluded": "A(z) {plan} csomag nem tartalmazza",
+      "forceOn": "Globálisan bekapcsolva (rollout)",
+      "killUnder": "Globális kill-switch alatt",
+      "toastInherit": "Felülírás törölve — öröklés",
+      "toastGrant": "Funkció engedélyezve ennél az épületnél",
+      "toastRevoke": "Funkció letiltva ennél az épületnél"
+    },
+    "plans": {
+      "kezdo": {
+        "name": "Kezdő",
+        "gloss": "Starter"
+      },
+      "kepviselo": {
+        "name": "Képviselő",
+        "gloss": "Manager"
+      },
+      "kezelo_iroda": {
+        "name": "Kezelő iroda",
+        "gloss": "Agency"
+      }
+    },
+    "planEditor": {
+      "eyebrow": "Csomag-szerkesztő · funkció × csomag mátrix",
+      "title": "Csomagok",
+      "intro": "A jelölőnégyzet azt állítja, hogy a csomag tartalmazza-e a funkciót. Egy funkció bekapcsolása automatikusan bejelöli a prerekvizitjeit; a kikapcsolás blokkolt, amíg egy függő funkció aktív.",
+      "save": "Mentés",
+      "cancel": "Mégse",
+      "saved": "Mentve",
+      "featCol": "Funkció · slug",
+      "guardrailTitle": "A(z) {plan} csomag inaktív, de {count} aktív előfizetés van rajta.",
+      "guardrailBody": "Új checkout nem indítható rá; a meglévő előfizetők a megújulásig megtartják. Minden módosítás audit-naplózott.",
+      "deactivate": "Deaktiválás…",
+      "reactivate": "Újraaktiválás",
+      "popular": "Legnépszerűbb",
+      "priceWarn": "Az ár módosítása csak az új checkoutokra hat. A meglévő Stripe-előfizetések a megújulásig a régi árat tartják.",
+      "blockedTooltip": "Nem kapcsolható ki: {blocker} még igényli ezt a csomagban.",
+      "toastAutoEnabled": "Prerekvizitek automatikusan bekapcsolva",
+      "toastBlocked": "Előbb a függő funkciót kell kikapcsolni ebben a csomagban",
+      "limits": {
+        "maxBuildings": "Max. épület",
+        "maxUnits": "Max. lakás / épület",
+        "maxUnitsPerBuilding": "Max. lakás / épület",
+        "priceMonthly": "Havi díj (Ft)",
+        "priceYearly": "Éves díj (Ft)",
+        "trialDays": "Próbanapok",
+        "isActive": "Aktív",
+        "stripePriceId": "Stripe Price ID"
+      }
+    },
+    "modules": {
+      "voting": {
+        "name": "Szavazás",
+        "gloss": "Voting"
+      },
+      "finance": {
+        "name": "Pénzügy",
+        "gloss": "Finance"
+      },
+      "maintenance": {
+        "name": "Karbantartás",
+        "gloss": "Maintenance"
+      },
+      "documents": {
+        "name": "Dokumentumok",
+        "gloss": "Documents"
+      },
+      "communication": {
+        "name": "Kommunikáció",
+        "gloss": "Communication"
+      },
+      "audit": {
+        "name": "Audit",
+        "gloss": "Audit"
+      },
+      "platform": {
+        "name": "Platform",
+        "gloss": "Platform"
+      },
+      "ai": {
+        "name": "MI / AI",
+        "gloss": "AI"
+      }
+    },
+    "features": {
+      "voting": {
+        "basic": {
+          "name": "Alapszavazás",
+          "desc": "Igen/nem/tartózkodom határozathozatal, tulajdoni hányad szerinti súlyozással."
+        },
+        "weighted": {
+          "name": "Súlyozott szavazás",
+          "desc": "Szavazati súly a tulajdoni hányad alapján; küszöb- és határozatképesség-számítás."
+        },
+        "proxy": {
+          "name": "Meghatalmazott szavazás",
+          "desc": "Lakó meghatalmazhat mást a szavazásra, időszakra vagy egy határozatra."
+        },
+        "electronic": {
+          "name": "Elektronikus szavazás",
+          "desc": "Online, határidőre záruló elektronikus határozathozatal jegyzőkönyvvel."
+        }
+      },
+      "finance": {
+        "ledger": {
+          "name": "Főkönyv",
+          "desc": "Kettős könyvelés, kategóriák, költségvetés vs. tény kimutatás."
+        },
+        "budget": {
+          "name": "Költségvetés",
+          "desc": "Éves épület-költségvetés tervezése és követése."
+        },
+        "bank-csv": {
+          "name": "Banki CSV import",
+          "desc": "Tranzakciók beolvasása CSV-ből, automatikus párosítás a főkönyvi tételekhez."
+        },
+        "bank-sync-live": {
+          "name": "Élő bankszinkron (PSD2)",
+          "desc": "Valós idejű banki adatkapcsolat PSD2 API-n át. Külön költséggel jár."
+        },
+        "pdf-report": {
+          "name": "PDF pénzügyi riport",
+          "desc": "Aláírható, verziózott PDF kimutatások közgyűlési és jogi felhasználásra."
+        }
+      },
+      "maintenance": {
+        "tickets": {
+          "name": "Hibabejelentés",
+          "desc": "Lakói hibabejelentés fotóval, állapotkövetés a kész állapotig."
+        },
+        "kanban": {
+          "name": "Karbantartás-tábla",
+          "desc": "Kanban nézet a hibajegyek állapot szerinti kezelésére."
+        },
+        "contractors": {
+          "name": "Vállalkozó-kezelés",
+          "desc": "Vállalkozók hozzárendelése, ajánlatok, számlák a hibajegyekhez."
+        },
+        "scheduled": {
+          "name": "Ütemezett karbantartás",
+          "desc": "Ismétlődő karbantartási feladatok automatikus létrehozása."
+        }
+      },
+      "documents": {
+        "basic": {
+          "name": "Dokumentumtár",
+          "desc": "Kategóriafa, jogosultság-alapú láthatóság, feltöltés."
+        },
+        "versioning": {
+          "name": "Verziózás",
+          "desc": "Dokumentum-verziók megőrzése és visszaállítása."
+        },
+        "signing": {
+          "name": "Aláírás",
+          "desc": "Dokumentumok elektronikus aláírása és aláírás-követése."
+        }
+      },
+      "communication": {
+        "announcements": {
+          "name": "Hirdetmények",
+          "desc": "Célzott értesítés lakásnak, emeletnek vagy a háznak, olvasottság-jelentéssel."
+        },
+        "forum": {
+          "name": "Fórum",
+          "desc": "Lakóközösségi témák, hozzászólások, moderáció."
+        },
+        "messages": {
+          "name": "Üzenetek",
+          "desc": "Közvetlen üzenetváltás lakók és a képviselő között."
+        },
+        "complaints": {
+          "name": "Panaszkezelés",
+          "desc": "Formális panaszok rögzítése, állapotkövetés, mediáció."
+        }
+      },
+      "audit": {
+        "basic": {
+          "name": "Audit napló",
+          "desc": "Minden módosítás naplózása, épület-szintű napló-nézet."
+        },
+        "export": {
+          "name": "Audit export",
+          "desc": "Teljes audit-napló PDF/CSV export, közgyűlési és jogi felhasználásra."
+        }
+      },
+      "platform": {
+        "multi-building": {
+          "name": "Több épület",
+          "desc": "Több épület kezelése egy előfizetés alatt, épület-váltással."
+        },
+        "api": {
+          "name": "API hozzáférés",
+          "desc": "Programozott hozzáférés a platform adataihoz tokenekkel."
+        },
+        "sso": {
+          "name": "SSO",
+          "desc": "Egyszeri bejelentkezés (SAML/OIDC) kezelő cégeknek."
+        },
+        "custom-branding": {
+          "name": "Egyedi arculat",
+          "desc": "Saját logó és színek a kezelő iroda ügyfeleinek."
+        }
+      },
+      "ai": {
+        "minutes-summary": {
+          "name": "MI jegyzőkönyv-összegzés",
+          "desc": "Közgyűlési jegyzőkönyvek automatikus összegzése."
+        },
+        "classify": {
+          "name": "MI dokumentum-osztályozás",
+          "desc": "Feltöltött dokumentumok automatikus kategorizálása. Kísérleti."
+        }
+      }
+    },
+    "tabs": {
+      "aria": "Funkciókezelés",
+      "features": "Funkciók",
+      "plans": "Csomagok",
+      "buildings": "Épület-felülírások"
+    },
+    "comingSoon": {
+      "title": "Hamarosan",
+      "plans": "A csomag-szerkesztő (funkció × csomag mátrix + limitek és árazás) a következő lépésben készül el.",
+      "buildings": "Az épület-szintű felülírások képernyő a következő lépésben készül el."
+    },
+    "badges": {
+      "kill": "Kill-switch",
+      "override": "Felülírás",
+      "force": "Mindenkinek be",
+      "plan": "Terv"
+    },
+    "catalog": {
+      "eyebrow": "Funkció-katalógus · globális jelzők",
+      "title": "Funkciók",
+      "countSummary": "· {features} a {modules} modulban",
+      "intro": "Kódvezérelt funkciók és globális kapcsolóik. A globális jelző felülírja a csomag-beállítást; a Kill-switch minden épületnél kikapcsol, csomagtól és felülírástól függetlenül.",
+      "auditExport": "Audit export",
+      "legendTitle": "Effektív forrás · precedencia",
+      "legendKillSuffix": "mindent felülír",
+      "legendOverrideSuffix": "épület-szintű",
+      "legendPlanSuffix": "csomag-alapú",
+      "available": "Elérhető",
+      "unavailable": "Nem elérhető",
+      "activeCount": "{count} aktív",
+      "featureCount": "{count} funkció",
+      "moduleEmpty": "üres",
+      "emptyTitle": "Nincs funkció ebben a modulban",
+      "emptyBody": "A(z) {module} modul kódszinten regisztrált, de még nincs hozzá publikált funkció.",
+      "beta": "BÉTA",
+      "plansLabel": "Csomag:",
+      "requires": "Igényli: {deps}",
+      "modifiedBy": "Módosította: {by} · {when}",
+      "active": "Aktív",
+      "inactive": "Inaktív",
+      "isActiveSuffix": "· isActive",
+      "flagPlan": "Terv szerint",
+      "flagForce": "Mindenkinek be",
+      "flagKill": "Kill-switch",
+      "flagNotePlan": "A csomag szerint öröklődik az épületekre.",
+      "flagNoteForce": "▲ Felülírja a csomag-beállítást — minden épületnél bekapcsol.",
+      "flagNoteKill": "⏻ Globálisan kikapcsolva minden épületnél.",
+      "flagAria": "Globális jelző — {name}",
+      "toastFlagForce": "Globális jelző: Mindenkinek be",
+      "toastFlagPlan": "Globális jelző: Terv szerint",
+      "toastKillOn": "Kill-switch bekapcsolva — {slug}",
+      "toastActivated": "Funkció aktiválva",
+      "toastDeactivated": "Funkció inaktiválva"
+    },
+    "kill": {
+      "label": "Globális kill-switch · visszafordítható",
+      "title": "Kikapcsolod a(z) „{name}” funkciót MINDEN épületnél?",
+      "body": "Ez a(z) <b>{name}</b> funkciót kikapcsolja <b>az összes épületnél</b> — csomagtól, force-on jelzőtől és épület-szintű felülírástól függetlenül. A funkcióra épülő szolgáltatások is leállnak.",
+      "affected": "Érintett épületek",
+      "affectedValue": "{count} épület",
+      "planOverride": "Csomag-felülírás",
+      "ignored": "figyelmen kívül hagyva",
+      "reenable": "Visszakapcsolás",
+      "immediate": "azonnali, ugyanitt",
+      "confirmPlaceholder": "Írd be: KILL — a megerősítéshez",
+      "confirmAria": "Megerősítés",
+      "cancel": "Mégse",
+      "confirm": "Kill-switch bekapcsolása"
+    }
   }
 }

@@ -16,6 +16,62 @@ Table Plan {
   isActive Boolean [not null, default: true]
   createdAt DateTime [default: `now()`, not null]
   subscriptions Subscription [not null]
+  planFeatures PlanFeature [not null, note: 'Superadmin feature console — which features this plan includes.']
+}
+
+Table Feature {
+  id String [pk]
+  slug String [unique, not null, note: 'Mirrors src/lib/features.ts — NEVER edited from the UI.']
+  module String [not null, note: 'Slug prefix: voting | finance | maintenance | ...']
+  name String [not null, note: 'Display name — editable. (UI currently reads i18n; DB is the future source.)']
+  description String
+  sortOrder Int [not null, default: 0]
+  isActive Boolean [not null, default: true, note: 'Retire a feature without deleting rows (preserves overrides/history).']
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  planFeatures PlanFeature [not null]
+  flag FeatureFlag
+  buildingOverrides BuildingFeatureOverride [not null]
+}
+
+Table PlanFeature {
+  id String [pk]
+  planId String [not null]
+  plan Plan [not null]
+  featureId String [not null]
+  feature Feature [not null]
+  enabled Boolean [not null, default: false]
+
+  indexes {
+    (planId, featureId) [unique]
+  }
+}
+
+Table FeatureFlag {
+  id String [pk]
+  featureId String [unique, not null]
+  feature Feature [not null]
+  state FeatureFlagState [not null, default: 'PER_PLAN']
+  note String
+  updatedById String
+  updatedAt DateTime [not null]
+}
+
+Table BuildingFeatureOverride {
+  id String [pk]
+  buildingId String [not null]
+  building Building [not null]
+  featureId String [not null]
+  feature Feature [not null]
+  grant Boolean [not null, note: 'true = force-grant, false = force-revoke.']
+  reason String
+  expiresAt DateTime [note: 'null = permanent. Resolution ignores expired rows even before pruning.']
+  createdById String
+  createdAt DateTime [default: `now()`, not null]
+
+  indexes {
+    (buildingId, featureId) [unique]
+  }
 }
 
 Table Subscription {
@@ -100,6 +156,7 @@ distribution. No PUBLIC option exists — that\'s illegal under NAIH.']
   pendingAgendaItems PendingAgendaItem [not null]
   auditLogs AuditLog [not null]
   generatedReports GeneratedReport [not null]
+  featureOverrides BuildingFeatureOverride [not null, note: 'Superadmin feature console — per-building feature grant/revoke overrides.']
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
 }
@@ -1478,6 +1535,12 @@ Enum InvitationStatus {
   REVOKED
 }
 
+Enum FeatureFlagState {
+  PER_PLAN
+  FORCE_ON
+  KILL_SWITCH
+}
+
 Enum ResignationStatus {
   PENDING
   ACKNOWLEDGED
@@ -1567,6 +1630,16 @@ Enum MinutesSignatureRole {
   AUTHENTICATOR_1
   AUTHENTICATOR_2
 }
+
+Ref: PlanFeature.planId > Plan.id [delete: Cascade]
+
+Ref: PlanFeature.featureId > Feature.id [delete: Cascade]
+
+Ref: FeatureFlag.featureId - Feature.id [delete: Cascade]
+
+Ref: BuildingFeatureOverride.buildingId > Building.id [delete: Cascade]
+
+Ref: BuildingFeatureOverride.featureId > Feature.id [delete: Cascade]
 
 Ref: Subscription.planId > Plan.id
 

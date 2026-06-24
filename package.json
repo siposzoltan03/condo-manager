@@ -14,6 +14,7 @@
     "seed:contractors": "tsx prisma/seed-contractors.ts",
     "seed:marketplace-mock": "tsx prisma/seed-marketplace-mock.ts",
     "seed:demo": "tsx prisma/seed-demo.ts",
+    "seed:features": "tsx prisma/sync-features.ts",
     "pitch:screenshots": "node scripts/take-pitch-screenshots.mjs",
     "pitch:dev": "slidev docs/pitch/slides.md --open",
     "pitch:build": "slidev build docs/pitch/slides.md --out dist --base ./",
@@ -45,7 +46,8 @@
     "sonner": "^2.0.7",
     "stripe": "^21.0.1",
     "web-push": "^3.6.7",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "zod": "^4.4.3"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

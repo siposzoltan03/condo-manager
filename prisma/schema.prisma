@@ -204,6 +204,83 @@ model Plan {
   isActive            Boolean        @default(true)
   createdAt           DateTime       @default(now())
   subscriptions       Subscription[]
+  /// Superadmin feature console — which features this plan includes.
+  planFeatures        PlanFeature[]
+}
+
+// ─── Superadmin Feature Management ────────────────────────────────────────────
+// Plan: docs/plans/2026-06-23-superadmin-feature-management.md
+// Feature *slugs* + dependencies are code-owned (src/lib/features.ts); the
+// Feature table mirrors them (synced by prisma/sync-features.ts) and carries
+// editable display metadata. Assignment (plan / flag / building override) lives
+// here and is what SUPER_ADMIN edits.
+
+model Feature {
+  id          String   @id @default(cuid())
+  /// Mirrors src/lib/features.ts — NEVER edited from the UI.
+  slug        String   @unique
+  /// Slug prefix: voting | finance | maintenance | ...
+  module      String
+  /// Display name — editable. (UI currently reads i18n; DB is the future source.)
+  name        String
+  description String?
+  sortOrder   Int      @default(0)
+  /// Retire a feature without deleting rows (preserves overrides/history).
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  planFeatures      PlanFeature[]
+  flag              FeatureFlag?
+  buildingOverrides BuildingFeatureOverride[]
+
+  @@index([module])
+}
+
+model PlanFeature {
+  id        String  @id @default(cuid())
+  planId    String
+  plan      Plan    @relation(fields: [planId], references: [id], onDelete: Cascade)
+  featureId String
+  feature   Feature @relation(fields: [featureId], references: [id], onDelete: Cascade)
+  enabled   Boolean @default(false)
+
+  @@unique([planId, featureId])
+  @@index([planId])
+}
+
+enum FeatureFlagState {
+  PER_PLAN
+  FORCE_ON
+  KILL_SWITCH
+}
+
+model FeatureFlag {
+  id          String           @id @default(cuid())
+  featureId   String           @unique
+  feature     Feature          @relation(fields: [featureId], references: [id], onDelete: Cascade)
+  state       FeatureFlagState @default(PER_PLAN)
+  note        String?
+  updatedById String?
+  updatedAt   DateTime         @updatedAt
+}
+
+model BuildingFeatureOverride {
+  id          String   @id @default(cuid())
+  buildingId  String
+  building    Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  featureId   String
+  feature     Feature  @relation(fields: [featureId], references: [id], onDelete: Cascade)
+  /// true = force-grant, false = force-revoke.
+  grant       Boolean
+  reason      String?
+  /// null = permanent. Resolution ignores expired rows even before pruning.
+  expiresAt   DateTime?
+  createdById String?
+  createdAt   DateTime @default(now())
+
+  @@unique([buildingId, featureId])
+  @@index([buildingId])
 }
 
 model Subscription {
@@ -314,6 +391,8 @@ model Building {
   pendingAgendaItems   PendingAgendaItem[]
   auditLogs            AuditLog[]
   generatedReports     GeneratedReport[]
+  /// Superadmin feature console — per-building feature grant/revoke overrides.
+  featureOverrides     BuildingFeatureOverride[]
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
 }

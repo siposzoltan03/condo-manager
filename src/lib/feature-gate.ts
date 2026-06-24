@@ -1,4 +1,31 @@
 import { prisma } from "./prisma";
+import { getActiveFeatures } from "./feature-access";
+import type { Feature } from "./features";
+
+/**
+ * Legacy module slugs (used at existing `requireFeature` call sites and the
+ * sidebar nav) → the representative slug in the code-owned taxonomy
+ * (src/lib/features.ts). Lets enforcement run through the DB resolver
+ * (PlanFeature + flags + overrides + cascade) without touching ~40 call sites.
+ */
+export const LEGACY_FEATURE_SLUG: Record<string, Feature> = {
+  voting: "voting.basic",
+  finance: "finance.ledger",
+  maintenance: "maintenance.tickets",
+  complaints: "communication.complaints",
+  announcements: "communication.announcements",
+  messaging: "communication.messages",
+  documents: "documents.basic",
+  forum: "communication.forum",
+  api_access: "platform.api",
+  custom_branding: "platform.custom-branding",
+  audit_exports: "audit.export",
+};
+
+/** Maps a legacy or already-new slug to its taxonomy slug. */
+export function resolveLegacySlug(slug: string): Feature {
+  return (LEGACY_FEATURE_SLUG[slug] ?? slug) as Feature;
+}
 
 /**
  * In-request cache for plan data per building to avoid repeated DB queries.
@@ -113,34 +140,29 @@ export async function getSubscriptionForBuilding(buildingId: string) {
 }
 
 /**
- * Asserts that the given feature is available for the building's plan.
- * Throws FeatureGateError if the feature is not included.
+ * Asserts that the given feature is effectively available for the building,
+ * resolved against the DB feature catalog (plan matrix + global flags +
+ * per-building overrides + dependency cascade — see src/lib/feature-access).
+ * Throws FeatureGateError if it isn't.
  *
- * Buildings without a subscription (legacy) are allowed through for
- * backwards compatibility.
+ * Accepts both legacy module slugs ("voting"/"finance"/…) and taxonomy slugs
+ * ("voting.basic"); the former are mapped via {@link LEGACY_FEATURE_SLUG}.
+ * Buildings without any subscription (legacy) are allowed through.
  */
 export async function requireFeature(
   buildingId: string,
   featureSlug: string
 ): Promise<void> {
-  const plan = await getPlanForBuilding(buildingId);
+  // No subscription at all — legacy building, allow all features.
+  const building = await prisma.building.findUnique({
+    where: { id: buildingId },
+    select: { subscriptionId: true },
+  });
+  if (!building?.subscriptionId) return;
 
-  // Legacy buildings without subscription — allow through
-  if (!plan) {
-    // Check if building actually has no subscription (legacy) vs expired
-    const building = await prisma.building.findUnique({
-      where: { id: buildingId },
-      select: { subscriptionId: true },
-    });
-    if (!building?.subscriptionId) {
-      // No subscription at all — legacy building, allow all features
-      return;
-    }
-    // Has subscription but it's not active/trialing — block
-    throw new FeatureGateError("No active subscription");
-  }
-
-  if (!plan.features.includes(featureSlug)) {
+  const slug = resolveLegacySlug(featureSlug);
+  const active = await getActiveFeatures(buildingId);
+  if (!active.has(slug)) {
     throw new FeatureGateError(
       `Feature "${featureSlug}" requires a plan upgrade`
     );
