@@ -276,7 +276,7 @@ layout: default
 <ul class="mt-2 text-[0.85rem]">
 <li>Maintenance</li>
 <li>Pénzügy részletek</li>
-<li>Hirdetőtábla</li>
+<li>Kommunikáció hub</li>
 <li>Vállalkozói portál (külön slide-okon)</li>
 </ul>
 <p class="mt-4 text-[0.82rem] text-[var(--color-muted)] italic">
@@ -302,11 +302,11 @@ layout: default
 ---
 
 <div class="eyebrow">02 — Közgyűlés</div>
-<h1>Napirend · jelenléti ív · 2 tervezet szavazás · határozatképesség</h1>
+<h1>Napirend, jelenléti ív, határozatképesség</h1>
 
 <div class="shot mt-3"><img src="./public/screenshots/pitch/02-meeting-upcoming.png" /></div>
 
-<div class="caption">NEM HATÁROZATKÉPES 0% (még nincs senki érkeztetve) · 18 igen / 2 nem / 2 meghatalmazás · 6 napirendi pont · 2 tervezet szavazás</div>
+<div class="caption">Még nem határozatképes · 18 igen / 2 nem / 2 meghatalmazás · 6 napirendi pont</div>
 
 ---
 layout: default
@@ -345,17 +345,15 @@ layout: default
 <div class="eyebrow">04 — A lakó oldala</div>
 <h1>30 másodperc. Otthonról. Hitelesen.</h1>
 
-<div class="row row-3 mt-4 max-w-[640px] mx-auto">
+<div class="row row-2 mt-4 max-w-[440px] mx-auto">
 
 <div class="shot-phone"><img src="./public/screenshots/pitch/13-mobile-dashboard.png" /></div>
-
-<div class="shot-phone"><img src="./public/screenshots/pitch/14-mobile-voting.png" /></div>
 
 <div class="shot-phone"><img src="./public/screenshots/pitch/15-mobile-meeting.png" /></div>
 
 </div>
 
-<div class="caption mt-4">Áttekintés telefonról · „Titkos, auditálható, bíróság előtt megáll" · ugyanaz a hitelesség, mint az asztalin</div>
+<div class="caption mt-4">Áttekintés és közgyűlés telefonról · titkos, auditálható szavazás · „bíróság előtt megáll"</div>
 
 ---
 layout: default
@@ -373,11 +371,11 @@ layout: default
 ---
 
 <div class="eyebrow">06 — Jegyzőkönyv</div>
-<h1>Lezárt közgyűlés, automatikus eredmény, kész jegyzőkönyv</h1>
+<h1>Lezárás · eredmény · kész jegyzőkönyv</h1>
 
 <div class="shot mt-3"><img src="./public/screenshots/pitch/03b-meeting-minutes.png" /></div>
 
-<div class="caption">1/2026. határozat ELFOGADVA — 95.3% igen / 4.7% nem · minősített többség (2/3) · 19 leadott szavazat</div>
+<div class="caption">1/2026. ELFOGADVA — 95.3% igen · 2/3 minősített többség · 19 szavazat</div>
 
 ---
 layout: default
@@ -405,12 +403,12 @@ layout: default
 
 <div>
 <div class="shot"><img src="./public/screenshots/pitch/10-announcements.png" /></div>
-<div class="text-[0.75rem] text-[var(--color-muted)] mt-1 text-center">Hirdetőtábla</div>
+<div class="text-[0.75rem] text-[var(--color-muted)] mt-1 text-center">Kommunikáció — bejelentések</div>
 </div>
 
 <div>
 <div class="shot"><img src="./public/screenshots/pitch/11-forum.png" /></div>
-<div class="text-[0.75rem] text-[var(--color-muted)] mt-1 text-center">Fórum</div>
+<div class="text-[0.75rem] text-[var(--color-muted)] mt-1 text-center">Kommunikáció — beszélgetések</div>
 </div>
 
 <div>
@@ -479,7 +477,7 @@ layout: default
 
 <div class="shot mt-3"><img src="./public/screenshots/pitch/17-contractor-marketplace.png" /></div>
 
-<div class="caption">3 nyitott hirdetés (lift, lépcsőházi LED, karbantartási szerződés) · sürgősség és régió szerinti szűrés · 1011 Budapest</div>
+<div class="caption">3 nyitott hirdetés (lift javítás, karbantartási szerződés, lépcsőházi LED) · sürgősség és régió szerinti szűrés · 1052 Budapest</div>
 
 ---
 layout: default
@@ -540,33 +538,35 @@ layout: default
 
 <div class="tile">
 <h3 class="text-[var(--color-good)]">Prototípus szinten kész</h3>
-<ul class="mt-2 text-[0.78rem] [&_li]:mb-0.5">
-<li>Közös platform-mag (multi-building, audit napló)</li>
-<li>Kommunikáció, dokumentumok, maintenance, panaszok</li>
-<li>Pénzügy — kettős könyvvitel, főkönyv, költségvetés, közös költség</li>
-<li><strong>Szavazási modul</strong> (Tht. szerinti jelenléti ív, jegyzőkönyv)</li>
-<li>Vállalkozói portál + piactér</li>
-<li>Stripe-számlázás alapfolyamata (checkout, webhook, customer portal)</li>
+<ul class="mt-2 text-[0.72rem] [&_li]:mb-0">
+<li>Platform-mag — multi-building, audit napló, mobil-reszponzív</li>
+<li><strong>Tht.-szerepkörök</strong> + küszöbök (elnök, számvizsgáló, OWNER/TENANT)</li>
+<li>Kommunikáció hub, dokumentumok, maintenance, panaszok</li>
+<li>Pénzügy — főkönyv, költségvetés, PDF jelentések</li>
+<li><strong>Szavazási modul</strong> (jelenléti ív, jegyzőkönyv, 5 többségi típus)</li>
+<li>Vállalkozói portál + piactér + Stripe</li>
+<li>GDPR — bérlő-hozzájárulás, kamera, NAIH hátralék</li>
+<li>Önkiszolgáló regisztráció + 2FA</li>
 </ul>
 </div>
 
 <div class="tile-warm">
 <h3 class="text-[var(--color-ochre)]">Élesüzemhez szükséges</h3>
-<ul class="mt-2 text-[0.78rem] [&_li]:mb-0.5">
+<ul class="mt-2 text-[0.72rem] [&_li]:mb-0">
 <li>AIme integráció</li>
-<li>PSD2 + NAV csatlakozás (Stripe ↔ NAV bridge a magyar számlázáshoz)</li>
-<li>Mobil — natív vagy PWA döntés</li>
+<li>PSD2 + NAV csatlakozás (Stripe ↔ NAV bridge)</li>
+<li>R2/S3 fájltároló (jelenleg lokális filesystem)</li>
 <li>Vállalkozói oldal — kínálati oldal kiépítése</li>
 <li>Bank/biztosító broker-modul aktiválása</li>
-<li>Tht.-compliance csomag (SZMSZ-sablon + ügyvédi opinion)</li>
+<li>GDPR Art. 15 önkiszolgáló adatkivonat</li>
 </ul>
 </div>
 
 </div>
 
-<div class="mt-3 tile text-[0.82rem]">
-<strong>Stratégiai megerősítés — a versenyelőny mélyítése</strong>
-&nbsp;&nbsp;Public API + fejlesztői portál &nbsp;·&nbsp; SZMSZ-felkészítő modul &nbsp;·&nbsp; 3+ biztosító preferred partner-megállapodás
+<div class="mt-2 tile text-[0.74rem]">
+<strong>Stratégiai megerősítés</strong>
+&nbsp;&nbsp;Public API &nbsp;·&nbsp; SZMSZ első osztályú entitás &nbsp;·&nbsp; 3+ biztosító partner
 </div>
 
 ---

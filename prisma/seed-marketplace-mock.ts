@@ -34,25 +34,43 @@ async function main() {
     where: { taxId: "23456789-2-41" },
     select: { id: true },
   });
-  const building = await prisma.building.findFirst({
+  // Prefer the demo Petőfi 23. building (used by the pitch screenshots);
+  // fall back to the base seed's first building when the demo seed isn't
+  // present. The pitch deck logs in as kepviselo@petofi23.local, so
+  // listings need to attach to demo_petofi_23 for the marketplace board
+  // to render anything for Lift-Profi Zrt.
+  const petofi = await prisma.building.findUnique({
+    where: { id: "demo_petofi_23" },
     select: { id: true, name: true, city: true, zipCode: true },
   });
-  const board = await prisma.user.findUnique({
-    where: { email: "board@condo.local" },
-    select: { id: true, name: true, email: true },
-  });
+  const building =
+    petofi ??
+    (await prisma.building.findFirst({
+      select: { id: true, name: true, city: true, zipCode: true },
+    }));
+  const board =
+    (await prisma.user.findUnique({
+      where: { email: "kepviselo@petofi23.local" },
+      select: { id: true, name: true, email: true },
+    })) ??
+    (await prisma.user.findUnique({
+      where: { email: "board@condo.local" },
+      select: { id: true, name: true, email: true },
+    }));
   if (!liftProfi || !plumber || !electrician || !building || !board) {
     throw new Error(
-      "Missing prerequisites — run `npm run seed && npm run seed:contractors` first.",
+      "Missing prerequisites — run `npm run seed:demo && npm run seed:contractors` first.",
     );
   }
 
-  // Patch Lift-Profi's regions to include the building city so the
-  // district-expert badge can fire.
+  // Patch Lift-Profi's regions to cover Buda + the inner-Pest postal
+  // codes used by both Duna Residence (1011 → BP-01) and Petőfi 23.
+  // (1052 → BP-05). Without BP-05 in the list the marketplace board
+  // would filter every Petőfi listing out for Lift-Profi.
   await prisma.contractorOrg.update({
     where: { id: liftProfi.id },
     data: {
-      regions: ["BP-01", "BP-02", "BP-13", "PE"],
+      regions: ["BP-01", "BP-02", "BP-05", "BP-13", "PE"],
       specialties: ["elevator", "lighting", "electrical"],
     },
   });
