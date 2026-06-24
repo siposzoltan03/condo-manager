@@ -27,3 +27,45 @@ jobs:
       # 4. The actual checks. If either exits non-zero, the job fails (red X).
       - run: npm run lint
       - run: npx tsc --noEmit
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    # Service containers: GitHub spins these up next to the job and exposes
+    # them on localhost:<port>. The test harness self-migrates the test DB
+    # (tests/global-setup.ts runs `prisma migrate deploy`), so we just need
+    # an empty Postgres named condo_manager_test, plus Redis to mirror local.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: condo
+          POSTGRES_PASSWORD: condo_secret
+          POSTGRES_DB: condo_manager_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U condo -d condo_manager_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      # vitest.config.ts requires TEST_DATABASE_URL (must end in _test). The
+      # postgres service above provides this DB; global-setup migrates it.
+      TEST_DATABASE_URL: postgresql://condo:condo_secret@localhost:5432/condo_manager_test?schema=public
+      REDIS_URL: redis://localhost:6379
+      NEXTAUTH_SECRET: ci-test-secret
+      NEXTAUTH_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx vitest run
