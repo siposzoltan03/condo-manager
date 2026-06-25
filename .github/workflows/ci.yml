@@ -7,6 +7,14 @@ name: CI
 on:
   push:
     branches: [main]
+    # These paths don't affect the built image or what the CD job does (it pulls
+    # images + runs the server's own compose). Skip the whole pipeline — and the
+    # redeploy — when a push touches ONLY these.
+    paths-ignore:
+      - "docs/**"
+      - "monitoring/**"
+      - "ansible/**"
+      - "**/*.md"
   pull_request:
 
 jobs:
@@ -15,10 +23,10 @@ jobs:
     runs-on: ubuntu-latest # fresh throwaway VM (x86_64, like your server)
     steps:
       # 1. Pull the repo's code onto the runner.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # 2. Install Node 22 (matches the Dockerfile) + cache ~/.npm for speed.
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -68,8 +76,8 @@ jobs:
       # it comes from .env; CI has no .env, so declare it here.)
       STRIPE_WEBHOOK_SECRET: whsec_test_secret
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -92,7 +100,7 @@ jobs:
           - image: condo-manager-worker
             dockerfile: Dockerfile.worker
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: docker/setup-buildx-action@v3 # enables buildx + layer caching
 
