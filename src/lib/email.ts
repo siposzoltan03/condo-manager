@@ -1,28 +1,21 @@
-import nodemailer from "nodemailer";
+import { notificationsQueue } from "./queue";
 
-const smtpPort = parseInt(process.env.SMTP_PORT ?? "1025", 10);
-
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST ?? "localhost",
-  port: smtpPort,
-  secure: smtpPort === 465,
-  auth:
-    process.env.SMTP_USER && process.env.SMTP_PASS
-      ? {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
-        }
-      : undefined,
-});
-
+/**
+ * Queue an email for asynchronous delivery by the worker.
+ *
+ * This returns as soon as the job is enqueued — the actual SMTP send happens
+ * in the worker (worker/processors/email.ts) under the notifications queue's
+ * retry policy (3 attempts, exponential backoff). That keeps a slow or failing
+ * mail server from blocking (or failing) the request that triggered the email.
+ *
+ * The signature is unchanged from the old inline sender, so every caller keeps
+ * working without modification.
+ */
 export async function sendEmail(
   to: string,
   subject: string,
-  html: string
+  html: string,
 ): Promise<void> {
-  const from = process.env.SMTP_FROM ?? "noreply@condo-manager.local";
-
-  await transporter.sendMail({ from, to, subject, html });
-
-  console.log(`[email] Sent to ${to}: ${subject}`);
+  await notificationsQueue.add("send-email", { to, subject, html });
+  console.log(`[email] queued -> ${to}: ${subject}`);
 }
