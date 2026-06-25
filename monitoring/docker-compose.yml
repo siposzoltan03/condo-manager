@@ -14,8 +14,9 @@ services:
       - --storage.tsdb.retention.time=15d # keep 15 days of history
     ports:
       - "127.0.0.1:9090:9090"
-    extra_hosts:
-      - "host.docker.internal:host-gateway" # reach the app on the host's :3000
+    networks:
+      - default # monitoring network (node-exporter, cadvisor, grafana)
+      - appnet # the app's network, to scrape the app container directly
 
   grafana:
     image: grafana/grafana:latest
@@ -58,3 +59,9 @@ services:
 volumes:
   promdata:
   grafanadata:
+
+networks:
+  default: {} # this monitoring project's own network
+  appnet: # the app stack's network, joined so Prometheus can reach the app
+    external: true
+    name: condo-manager_default
