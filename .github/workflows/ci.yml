@@ -73,3 +73,48 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx vitest run
+
+  publish:
+    name: Build & publish images
+    runs-on: ubuntu-latest
+    # Only publish if BOTH gates pass — never ship a broken image.
+    needs: [check, test]
+    permissions:
+      contents: read
+      packages: write # lets the built-in GITHUB_TOKEN push to ghcr.io
+    strategy:
+      matrix:
+        include:
+          - image: condo-manager-app
+            dockerfile: Dockerfile
+          - image: condo-manager-worker
+            dockerfile: Dockerfile.worker
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3 # enables buildx + layer caching
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }} # auto-provided; no secret to manage
+
+      # Compute tags: sha-<short> always (immutable), :latest only on main.
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}
+          tags: |
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
