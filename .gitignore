@@ -64,3 +64,7 @@ docker-compose.override.yml
 
 # Playwright MCP scratch output (snapshots/screenshots) — tooling artifact
 .playwright-mcp/
+
+# Ansible deploy secrets (ghcr PAT, NEXTAUTH_SECRET, DB password). Real values
+# live only on the laptop; commit secrets.example.yml as the template instead.
+ansible/secrets.yml

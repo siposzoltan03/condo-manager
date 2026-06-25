@@ -1,0 +1,48 @@
+# Production compose for the home server. Ansible copies this to the server and
+# runs it. Key differences from the dev docker-compose.yml:
+#   - `image:` (pulled from ghcr, built by CI) instead of `build:` — the server
+#     never compiles; it runs the exact artifact CI published.
+#   - `restart: unless-stopped` — containers come back after crashes/reboots.
+#   - app binds to 127.0.0.1 only — NOT exposed on the network. Tailscale
+#     `serve` (Stage 4) terminates HTTPS and proxies to it.
+#   - secrets come from a server-side `.env` (templated by Ansible, never committed).
+services:
+  app:
+    image: ghcr.io/siposzoltan03/condo-manager-app:latest
+    restart: unless-stopped
+    env_file: [.env]
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_started }
+    ports:
+      - "127.0.0.1:3000:3000" # localhost-only; Tailscale fronts it
+
+  worker:
+    image: ghcr.io/siposzoltan03/condo-manager-worker:latest
+    restart: unless-stopped
+    env_file: [.env]
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_started }
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: condo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD} # from .env
+      POSTGRES_DB: condo_manager
+    volumes:
+      - pgdata:/var/lib/postgresql/data # data survives container restarts
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U condo -d condo_manager"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+volumes:
+  pgdata:
