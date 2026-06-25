@@ -1,5 +1,7 @@
-# Continuous Integration — runs on every push to main and every pull request.
-# Stage 2a: lint + typecheck. (Tests and image build come in later steps.)
+# Continuous Integration + Deployment.
+#   On every push to main and every PR: lint, typecheck, test, build+publish images.
+#   On push to main only (after all gates pass): auto-deploy to the home server
+#   over Tailscale (Stage 5).
 name: CI
 
 on:
@@ -118,3 +120,47 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to home server
+    # Only after images are published, and ONLY on main (never on PRs).
+    needs: [publish]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    # Never run two deploys at once (a second push waits for the first to finish
+    # rather than interrupting a migration mid-flight).
+    concurrency:
+      group: deploy-prod
+      cancel-in-progress: false
+    steps:
+      # The runner lives in GitHub's cloud; the home server has no public IP and
+      # is only reachable via Tailscale. Join the tailnet as an EPHEMERAL node
+      # (auto-removed when the job ends) so we can SSH to it.
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v3
+        with:
+          authkey: ${{ secrets.TS_AUTHKEY }}
+
+      # Load the deploy key (its public half is in zoli's authorized_keys).
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+
+      # Roll the server forward to the freshly published :latest images. The
+      # server already holds .env + the ghcr login (from the Ansible deploy),
+      # so NO app secrets are needed in CI — only network + SSH access.
+      - name: Deploy (pull, migrate, up)
+        env:
+          HOST: zoli@100.86.236.18 # home-server's stable tailnet IP
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new "$HOST" '
+            set -euo pipefail
+            cd ~/condo-manager
+            docker compose pull
+            docker compose run --rm worker npx prisma migrate deploy
+            docker compose up -d
+            curl -sS -o /dev/null -w "health: HTTP %{http_code}\n" \
+              --retry 10 --retry-delay 3 --retry-all-errors http://localhost:3000
+          '
