@@ -1,0 +1,7 @@
+# Auto-configures Loki as a Grafana data source (logs), alongside Prometheus.
+apiVersion: 1
+datasources:
+  - name: Loki
+    type: loki
+    access: proxy # Grafana's backend queries Loki server-to-server
+    url: http://loki:3100
