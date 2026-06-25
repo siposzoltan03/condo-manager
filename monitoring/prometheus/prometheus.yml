@@ -16,3 +16,10 @@ scrape_configs:
   - job_name: cadvisor # per-container metrics
     static_configs:
       - targets: ["cadvisor:8080"]
+
+  - job_name: condo-app # the app's own /api/metrics (prom-client)
+    metrics_path: /api/metrics
+    static_configs:
+      # The app binds to the host's 127.0.0.1:3000; reach the host from inside
+      # the monitoring network via host.docker.internal (see extra_hosts).
+      - targets: ["host.docker.internal:3000"]
