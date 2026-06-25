@@ -20,6 +20,7 @@ scrape_configs:
   - job_name: condo-app # the app's own /api/metrics (prom-client)
     metrics_path: /api/metrics
     static_configs:
-      # The app binds to the host's 127.0.0.1:3000; reach the host from inside
-      # the monitoring network via host.docker.internal (see extra_hosts).
-      - targets: ["host.docker.internal:3000"]
+      # Prometheus joins the app's network (appnet), so it reaches the app
+      # container directly by service name — the app listens on 0.0.0.0:3000
+      # inside its container (the 127.0.0.1 bind only restricts the host port).
+      - targets: ["app:3000"]
