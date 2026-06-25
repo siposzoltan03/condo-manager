@@ -1,0 +1,14 @@
+# Stage 3, step 1: prove Ansible can reach the server. Makes NO changes.
+#   cd ansible && ansible-playbook ping.yml
+- name: Connectivity check
+  hosts: homeserver
+  gather_facts: true
+  tasks:
+    - name: Ping (SSH + Python reachable?)
+      ansible.builtin.ping:
+
+    - name: Report what we connected to
+      ansible.builtin.debug:
+        msg: >-
+          {{ ansible_distribution }} {{ ansible_distribution_version }}
+          ({{ ansible_architecture }}) — Python {{ ansible_python_version }}
