@@ -1,0 +1,42 @@
+# Prometheus alerting rules. These evaluate continuously; firing alerts show in
+# the Prometheus UI (/alerts) and can be panelled in Grafana. NOTE: there's no
+# Alertmanager yet, so nothing is *delivered* (email/Slack) — adding that is the
+# next step. `for:` means the condition must hold that long before firing.
+groups:
+  - name: condo-manager
+    rules:
+      - alert: TargetDown
+        expr: up == 0
+        for: 2m
+        labels: { severity: critical }
+        annotations:
+          summary: "Scrape target down: {{ $labels.job }}"
+          description: "Prometheus cannot scrape {{ $labels.instance }} ({{ $labels.job }}) for 2m."
+
+      - alert: AppDown
+        expr: up{job="condo-app"} == 0
+        for: 1m
+        labels: { severity: critical }
+        annotations:
+          summary: "condo-manager app is not responding to scrapes"
+
+      - alert: HostHighCPU
+        expr: 100 * (1 - avg without (cpu) (rate(node_cpu_seconds_total{mode="idle"}[5m]))) > 90
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "Host CPU above 90% for 10m"
+
+      - alert: HostLowMemory
+        expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100 < 10
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: "Host available memory below 10%"
+
+      - alert: HostDiskAlmostFull
+        expr: 100 * (1 - node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay|squashfs"}) > 85
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "Filesystem {{ $labels.mountpoint }} above 85% full"
