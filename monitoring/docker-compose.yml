@@ -1,0 +1,58 @@
+# Observability stack for the home server — runs as its own compose project,
+# separate from the app stack (independent lifecycle). cAdvisor + node-exporter
+# expose metrics; Prometheus scrapes & stores them; Grafana visualizes.
+# Everything binds to 127.0.0.1; reach Grafana via Tailscale or an SSH tunnel.
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    restart: unless-stopped
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - promdata:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=15d # keep 15 days of history
+    ports:
+      - "127.0.0.1:9090:9090"
+
+  grafana:
+    image: grafana/grafana:latest
+    restart: unless-stopped
+    env_file: [.env] # GRAFANA_ADMIN_PASSWORD, GF_SERVER_ROOT_URL
+    environment:
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafanadata:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    ports:
+      - "127.0.0.1:3001:3000" # Grafana's internal port is 3000; expose on 3001
+    depends_on: [prometheus]
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    restart: unless-stopped
+    pid: host # see the host's processes, not just the container's
+    command:
+      - --path.rootfs=/host
+    volumes:
+      - /:/host:ro,rslave # read the host filesystem for disk metrics
+    # No published port — Prometheus scrapes it at node-exporter:9100 on the
+    # compose network.
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    restart: unless-stopped
+    privileged: true
+    devices:
+      - /dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    # Scraped at cadvisor:8080 on the compose network.
+
+volumes:
+  promdata:
+  grafanadata:

@@ -1,0 +1,53 @@
+# Stage 6: deploy the observability stack (Prometheus + Grafana + exporters).
+#   cd ansible && ansible-playbook monitoring.yml -e @secrets.yml
+- name: Deploy monitoring stack
+  hosts: homeserver
+  gather_facts: false
+  vars:
+    mon_dir: /home/zoli/monitoring
+  tasks:
+    - name: Ensure the monitoring directory exists
+      ansible.builtin.file:
+        path: "{{ mon_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Copy the monitoring stack (compose + prometheus + grafana config)
+      ansible.builtin.copy:
+        src: ../monitoring/
+        dest: "{{ mon_dir }}/"
+        mode: preserve
+
+    - name: Template the Grafana env (admin password)
+      ansible.builtin.template:
+        src: templates/monitoring.env.j2
+        dest: "{{ mon_dir }}/.env"
+        mode: "0600"
+
+    - name: Pull and start the monitoring stack
+      ansible.builtin.command:
+        cmd: docker compose up -d --pull always
+        chdir: "{{ mon_dir }}"
+      changed_when: true
+
+    - name: Wait for Prometheus
+      ansible.builtin.wait_for: { host: 127.0.0.1, port: 9090, timeout: 60 }
+
+    - name: Wait for Grafana
+      ansible.builtin.wait_for: { host: 127.0.0.1, port: 3001, timeout: 60 }
+
+    - name: Query Prometheus for scrape-target health
+      ansible.builtin.uri:
+        url: http://localhost:9090/api/v1/targets?state=active
+        return_content: true
+      register: targets
+      retries: 12
+      delay: 5
+      until: targets.status == 200 and targets.json.data.activeTargets | length > 0
+
+    - name: Report target health (may take one 15s scrape to all go 'up')
+      ansible.builtin.debug:
+        msg: >-
+          {{ targets.json.data.activeTargets | length }} targets;
+          up={{ targets.json.data.activeTargets | selectattr('health','equalto','up') | list | length }};
+          jobs={{ targets.json.data.activeTargets | map(attribute='labels.job') | list }}

@@ -1,0 +1,9 @@
+# Auto-configures the Prometheus data source on Grafana startup, so you don't
+# have to add it by hand in the UI.
+apiVersion: 1
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy # Grafana's backend queries Prometheus (server-to-server)
+    url: http://prometheus:9090
+    isDefault: true
