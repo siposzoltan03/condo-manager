@@ -1,0 +1,33 @@
+// Grafana Alloy: collect Docker container logs and push them to Loki.
+// River-style config. Pipeline: discover containers -> relabel -> tail -> write.
+
+// 1. Discover all containers from the Docker daemon.
+discovery.docker "all" {
+	host = "unix:///var/run/docker.sock"
+}
+
+// 2. Turn the docker name ("/condo-manager-app-1") into a clean `container` label.
+discovery.relabel "logs" {
+	targets = discovery.docker.all.targets
+
+	rule {
+		source_labels = ["__meta_docker_container_name"]
+		regex         = "/(.*)"
+		target_label  = "container"
+	}
+}
+
+// 3. Tail each container's stdout/stderr and forward to the Loki writer.
+loki.source.docker "default" {
+	host       = "unix:///var/run/docker.sock"
+	targets    = discovery.relabel.logs.output
+	labels     = { job = "docker" }
+	forward_to = [loki.write.default.receiver]
+}
+
+// 4. Ship to Loki (same monitoring network).
+loki.write "default" {
+	endpoint {
+		url = "http://loki:3100/loki/api/v1/push"
+	}
+}
