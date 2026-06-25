@@ -12,18 +12,28 @@ services:
     restart: unless-stopped
     env_file: [.env]
     depends_on:
+      uploads-init: { condition: service_completed_successfully }
       db: { condition: service_healthy }
       redis: { condition: service_started }
     ports:
       - "127.0.0.1:3000:3000" # localhost-only; Tailscale fronts it
+    volumes:
+      # Persist uploads across redeploys AND share them with the worker:
+      # getStorage() writes to <cwd>/uploads = /app/uploads.
+      - uploads:/app/uploads
 
   worker:
     image: ghcr.io/siposzoltan03/condo-manager-worker:latest
     restart: unless-stopped
     env_file: [.env]
     depends_on:
+      uploads-init: { condition: service_completed_successfully }
       db: { condition: service_healthy }
       redis: { condition: service_started }
+    volumes:
+      # SAME named volume as app — the worker generates report files that the
+      # app then serves, so they must share one storage location.
+      - uploads:/app/uploads
 
   db:
     image: postgres:16-alpine
@@ -44,5 +54,17 @@ services:
     image: redis:7-alpine
     restart: unless-stopped
 
+  # One-shot init: a fresh named volume is owned by root, but the app/worker run
+  # as uid 1001 (nextjs). chown the uploads volume so they can write to it.
+  # Runs to completion before app/worker start (idempotent on every deploy).
+  uploads-init:
+    image: busybox:latest
+    user: "0:0" # root, to chown
+    command: ["sh", "-c", "mkdir -p /app/uploads && chown -R 1001:1001 /app/uploads"]
+    volumes:
+      - uploads:/app/uploads
+    restart: "no"
+
 volumes:
   pgdata:
+  uploads: # shared file storage for app + worker (survives redeploys)
