@@ -66,7 +66,7 @@ export function ResetPasswordForm() {
               <CheckCircle className="mx-auto h-12 w-12" style={{ color: "#002045" }} />
               <h1
                 className="mt-4 text-2xl font-extrabold"
-                style={{ color: "#002045", fontFamily: "Manrope, sans-serif" }}
+                style={{ color: "#002045", fontFamily: "var(--font-manrope), sans-serif" }}
               >
                 {t("resetPassword")}
               </h1>
@@ -85,7 +85,7 @@ export function ResetPasswordForm() {
             <>
               <h1
                 className="text-2xl font-extrabold"
-                style={{ color: "#002045", fontFamily: "Manrope, sans-serif" }}
+                style={{ color: "#002045", fontFamily: "var(--font-manrope), sans-serif" }}
               >
                 {t("resetPassword")}
               </h1>

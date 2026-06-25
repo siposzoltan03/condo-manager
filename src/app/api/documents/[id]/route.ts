@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
 import { requireRole, hasMinimumRole } from "@/lib/rbac";
-import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
+import { documentUpdated, documentDeleted } from "@/lib/documents/events";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -77,7 +77,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     }
 
     const body = await request.json();
-    const { title, description, categoryId, visibility, tags } = body;
+    const { title, description, categoryId, visibility, tags, isArchived } = body;
 
     if (visibility && !["PUBLIC", "BOARD_ONLY", "ADMIN_ONLY"].includes(visibility)) {
       return NextResponse.json(
@@ -92,6 +92,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     if (categoryId !== undefined) updateData.categoryId = categoryId;
     if (visibility !== undefined) updateData.visibility = visibility;
     if (tags !== undefined) updateData.tags = tags;
+    if (isArchived !== undefined) updateData.isArchived = Boolean(isArchived);
 
     const updated = await prisma.document.update({
       where: { id },
@@ -115,11 +116,10 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       },
     });
 
-    await createAuditLog({
-      entityType: "Document",
-      entityId: id,
-      action: "UPDATE",
-      userId,
+    await documentUpdated({
+      documentId: id,
+      updatedByUserId: userId,
+      buildingId,
       oldValue: {
         title: existing.title,
         description: existing.description,
@@ -165,11 +165,10 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     // Versions cascade-delete via onDelete: Cascade
     await prisma.document.delete({ where: { id } });
 
-    await createAuditLog({
-      entityType: "Document",
-      entityId: id,
-      action: "DELETE",
-      userId,
+    await documentDeleted({
+      documentId: id,
+      deletedByUserId: userId,
+      buildingId,
       oldValue: {
         title: existing.title,
         visibility: existing.visibility,

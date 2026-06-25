@@ -32,3 +32,16 @@ All accounts use password: `password123`
 | BOARD_MEMBER | 3 | Finance, voting, announcements, documents (no user mgmt) |
 | RESIDENT | 2 | View announcements, forum, maintenance, vote, own finances |
 | TENANT | 1 | Same as Resident, restricted financials (own charges only) |
+
+## Contractor accounts
+
+Separate auth tree — sign in at `/contractor/login` (NOT `/login`). All use password `password123`.
+Created/refreshed via `npm run seed:contractors` (idempotent).
+
+| Email | Contact | Org | Tax ID | Plan | Status |
+|-------|---------|-----|--------|------|--------|
+| plumber@contractor.local | Kovács István | Kovács István E.V. – Vízvezeték | 12345678-1-42 | FREE | ACTIVE |
+| electrician@contractor.local | Szabó László | Elektrofix Kft. | 23456789-2-41 | PRO | ACTIVE |
+| elevator@contractor.local | Nagy Tamás | Lift-Profi Zrt. | 34567890-2-43 | PREMIUM | ACTIVE |
+
+All three are `OWNER` role with `emailVerifiedAt` pre-set, so they can sign in immediately.

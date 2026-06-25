@@ -8,6 +8,19 @@ services:
       - "3000:3000"
     env_file:
       - .env
+    # Override the localhost-based .env values (those are for host `npm run dev`).
+    # Inside the Compose network, services are reached by SERVICE NAME, not
+    # localhost — and Redis listens on its real port 6379 (6380 is only the
+    # host-side mapping). `environment:` wins over `env_file:` for the same key.
+    environment:
+      DATABASE_URL: postgresql://condo:condo_secret@db:5432/condo_manager?schema=public
+      REDIS_URL: redis://redis:6379
+      SMTP_HOST: mailhog
+      # Auth.js v5 refuses to resolve sessions for an "untrusted" host in
+      # production (dev trusts automatically). Self-hosting behind our own
+      # proxy (nginx / Tailscale), the host IS trustworthy, so opt in.
+      # Required on the server too (where the host is the tailnet name).
+      AUTH_TRUST_HOST: "true"
     depends_on:
       db:
         condition: service_healthy
@@ -22,6 +35,11 @@ services:
       dockerfile: Dockerfile.worker
     env_file:
       - .env
+    # Same in-network overrides as `app` (see note above).
+    environment:
+      DATABASE_URL: postgresql://condo:condo_secret@db:5432/condo_manager?schema=public
+      REDIS_URL: redis://redis:6379
+      SMTP_HOST: mailhog
     depends_on:
       db:
         condition: service_healthy

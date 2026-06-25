@@ -2,76 +2,73 @@
 
 import { useLocale } from "next-intl";
 import { usePathname, useRouter } from "next/navigation";
-import { Globe } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
 
-const locales = [
-  { code: "hu", label: "Magyar" },
-  { code: "en", label: "English" },
-] as const;
+const SUPPORTED = ["hu", "en"] as const;
+type Locale = (typeof SUPPORTED)[number];
 
-const SUPPORTED_LOCALE_CODES = locales.map((l) => l.code) as string[];
-
+/**
+ * Compact HU · EN locale toggle. Tiles-styled to match the topbar chrome.
+ * Tap targets are 44 px on phone (via `min-h-11`); shrinks to compact at
+ * `sm:+` so it doesn't dominate desktop layouts. Used by both the main
+ * app topbar (`layout/topbar.tsx`) and the contractor portal topbar.
+ */
 export function LanguageSwitcher() {
   const locale = useLocale();
   const pathname = usePathname();
   const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  function switchLocale(newLocale: string) {
-    // Replace the current locale segment in the pathname, guarding against
-    // missing or unrecognised locale at segments[1].
+  function switchLocale(next: Locale) {
+    if (next === locale) return;
     const segments = pathname.split("/");
-    if (segments.length > 1 && SUPPORTED_LOCALE_CODES.includes(segments[1])) {
-      segments[1] = newLocale;
+    if (
+      segments.length > 1 &&
+      (SUPPORTED as readonly string[]).includes(segments[1])
+    ) {
+      segments[1] = next;
     } else {
-      segments.splice(1, 0, newLocale);
+      segments.splice(1, 0, next);
     }
     router.push(segments.join("/"));
-    setOpen(false);
   }
 
-  const currentLabel = locales.find((l) => l.code === locale)?.label ?? locale;
-
   return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 transition-colors"
-      >
-        <Globe className="h-4 w-4" />
-        <span>{currentLabel}</span>
-      </button>
-      {open && (
-        <div className="absolute right-0 top-full mt-1 w-36 rounded-lg border border-slate-200 bg-white py-1 shadow-lg z-50">
-          {locales.map((l) => (
-            <button
-              key={l.code}
-              type="button"
-              onClick={() => switchLocale(l.code)}
-              className={`block w-full px-4 py-2 text-left text-sm transition-colors ${
-                l.code === locale
-                  ? "bg-blue-50 font-medium text-blue-700"
-                  : "text-slate-700 hover:bg-slate-50"
-              }`}
-            >
-              {l.label}
-            </button>
-          ))}
-        </div>
-      )}
+    <div
+      className="inline-flex items-center font-mono"
+      style={{
+        fontSize: "11px",
+        color: "var(--color-muted)",
+        letterSpacing: "0.04em",
+        padding: "4px 8px",
+        borderRadius: "7px",
+        border:
+          "1px solid color-mix(in srgb, var(--color-ink) 10%, transparent)",
+        background: "var(--color-bg)",
+        gap: "6px",
+      }}
+      aria-label="Language"
+    >
+      {SUPPORTED.map((code, i) => (
+        <span key={code} className="flex items-center gap-1.5">
+          {i > 0 && (
+            <span aria-hidden style={{ color: "var(--color-muted)" }}>
+              ·
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={() => switchLocale(code)}
+            aria-pressed={locale === code}
+            className="inline-flex min-h-11 items-center sm:min-h-0"
+            style={{
+              color:
+                locale === code ? "var(--color-ink)" : "var(--color-muted)",
+              fontWeight: locale === code ? 600 : 500,
+            }}
+          >
+            {code.toUpperCase()}
+          </button>
+        </span>
+      ))}
     </div>
   );
 }

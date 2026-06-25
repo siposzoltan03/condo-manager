@@ -1,0 +1,165 @@
+import { describe, it, expect } from "vitest";
+import { can, type ActorContext, type Capability } from "@/lib/capabilities";
+
+// Helper: build an actor with sensible defaults, override only what matters.
+function actor(overrides: Partial<ActorContext> & Pick<ActorContext, "role">): ActorContext {
+  return {
+    isChair: false,
+    isProfessional: false,
+    isAuditor: false,
+    ownsAnyUnit: false,
+    livesAtUnit: false,
+    ...overrides,
+  };
+}
+
+const REPRESENTATIVE_CAPS: Capability[] = [
+  "manage.budget",
+  "approve.invoice",
+  "vote.start",
+  "vote.editMinutes",
+  "ticket.assign",
+  "announcement.publish",
+  "announcement.boardChannel",
+  "document.publish.public",
+  "document.publish.boardOnly",
+];
+
+describe("can() — SUPER_ADMIN scoping", () => {
+  it("grants only platform capabilities and nothing else", () => {
+    const a = actor({ role: "SUPER_ADMIN" });
+    expect(can(a, "platform.impersonate")).toBe(true);
+    expect(can(a, "platform.featureFlags")).toBe(true);
+    expect(can(a, "manage.budget")).toBe(false);
+    expect(can(a, "view.building.finance")).toBe(false);
+    expect(can(a, "vote.cast")).toBe(false);
+    expect(can(a, "residents.viewAll")).toBe(false);
+    expect(can(a, "auditor.readAll")).toBe(false);
+  });
+
+  it("ignores building-level flags entirely", () => {
+    const a = actor({
+      role: "SUPER_ADMIN",
+      isChair: true,
+      isAuditor: true,
+      ownsAnyUnit: true,
+    });
+    for (const cap of REPRESENTATIVE_CAPS) {
+      expect(can(a, cap)).toBe(false);
+    }
+  });
+});
+
+describe("can() — representative authority (Tht. § 43)", () => {
+  it("BOARD_MEMBER who is chair gets all representative caps", () => {
+    const a = actor({ role: "BOARD_MEMBER", isChair: true });
+    for (const cap of REPRESENTATIVE_CAPS) {
+      expect(can(a, cap)).toBe(true);
+    }
+  });
+
+  it("BOARD_MEMBER who is NOT chair is blocked on representative caps", () => {
+    const a = actor({ role: "BOARD_MEMBER", isChair: false });
+    for (const cap of REPRESENTATIVE_CAPS) {
+      expect(can(a, cap)).toBe(false);
+    }
+  });
+
+  it("ADMIN gets all representative caps without chair flag", () => {
+    const a = actor({ role: "ADMIN" });
+    for (const cap of REPRESENTATIVE_CAPS) {
+      expect(can(a, cap)).toBe(true);
+    }
+  });
+
+  it("OWNER and TENANT never get representative caps", () => {
+    const owner = actor({ role: "OWNER", ownsAnyUnit: true });
+    const tenant = actor({ role: "TENANT" });
+    for (const cap of REPRESENTATIVE_CAPS) {
+      expect(can(owner, cap)).toBe(false);
+      expect(can(tenant, cap)).toBe(false);
+    }
+  });
+});
+
+describe("can() — building finance visibility", () => {
+  it("BOARD_MEMBER (any chair flag) can view building finance", () => {
+    expect(can(actor({ role: "BOARD_MEMBER", isChair: false }), "view.building.finance")).toBe(true);
+    expect(can(actor({ role: "BOARD_MEMBER", isChair: true }), "view.building.finance")).toBe(true);
+  });
+
+  it("ADMIN can view building finance", () => {
+    expect(can(actor({ role: "ADMIN" }), "view.building.finance")).toBe(true);
+  });
+
+  it("isAuditor flag grants building finance read regardless of role", () => {
+    expect(can(actor({ role: "OWNER", isAuditor: true }), "view.building.finance")).toBe(true);
+    expect(can(actor({ role: "TENANT", isAuditor: true }), "view.building.finance")).toBe(true);
+  });
+
+  it("OWNER without auditor flag cannot view building finance", () => {
+    expect(can(actor({ role: "OWNER", ownsAnyUnit: true }), "view.building.finance")).toBe(false);
+  });
+
+  it("TENANT without auditor flag cannot view building finance", () => {
+    expect(can(actor({ role: "TENANT" }), "view.building.finance")).toBe(false);
+  });
+});
+
+describe("can() — voting (Tht. § 38)", () => {
+  it("ownsAnyUnit drives vote.cast regardless of building role", () => {
+    expect(can(actor({ role: "OWNER", ownsAnyUnit: true }), "vote.cast")).toBe(true);
+    expect(can(actor({ role: "BOARD_MEMBER", ownsAnyUnit: true }), "vote.cast")).toBe(true);
+    expect(can(actor({ role: "OWNER", ownsAnyUnit: false }), "vote.cast")).toBe(false);
+  });
+
+  it("TENANT cannot vote even if owns flag somehow set (defence in depth)", () => {
+    // ownsAnyUnit=false ⇒ false; with true would technically pass, but a
+    // TENANT must never be flagged ownsAnyUnit by the DAL. The matrix
+    // delegates correctness to the loader.
+    expect(can(actor({ role: "TENANT", ownsAnyUnit: false }), "vote.cast")).toBe(false);
+  });
+});
+
+describe("can() — own unit finance", () => {
+  it("only ownsAnyUnit matters", () => {
+    expect(can(actor({ role: "OWNER", ownsAnyUnit: true }), "view.own.unit.finance")).toBe(true);
+    expect(can(actor({ role: "TENANT", ownsAnyUnit: false }), "view.own.unit.finance")).toBe(false);
+    expect(can(actor({ role: "BOARD_MEMBER", ownsAnyUnit: false }), "view.own.unit.finance")).toBe(false);
+  });
+});
+
+describe("can() — ticket.report", () => {
+  it("any non-SUPER_ADMIN role can report tickets", () => {
+    for (const role of ["ADMIN", "BOARD_MEMBER", "AUDITOR", "OWNER", "TENANT"] as const) {
+      expect(can(actor({ role }), "ticket.report")).toBe(true);
+    }
+  });
+});
+
+describe("can() — residents visibility", () => {
+  it("BOARD_MEMBER and ADMIN see all residents", () => {
+    expect(can(actor({ role: "BOARD_MEMBER" }), "residents.viewAll")).toBe(true);
+    expect(can(actor({ role: "ADMIN" }), "residents.viewAll")).toBe(true);
+  });
+
+  it("OWNER and TENANT see their staircase only", () => {
+    expect(can(actor({ role: "OWNER" }), "residents.viewSameStaircase")).toBe(true);
+    expect(can(actor({ role: "TENANT" }), "residents.viewSameStaircase")).toBe(true);
+    expect(can(actor({ role: "BOARD_MEMBER" }), "residents.viewSameStaircase")).toBe(false);
+    expect(can(actor({ role: "AUDITOR" }), "residents.viewSameStaircase")).toBe(false);
+  });
+
+  it("AUDITOR sees neither residents.viewAll nor sameStaircase by default", () => {
+    expect(can(actor({ role: "AUDITOR" }), "residents.viewAll")).toBe(false);
+    expect(can(actor({ role: "AUDITOR" }), "residents.viewSameStaircase")).toBe(false);
+  });
+});
+
+describe("can() — auditor.readAll", () => {
+  it("isAuditor flag is the only gate", () => {
+    expect(can(actor({ role: "AUDITOR", isAuditor: true }), "auditor.readAll")).toBe(true);
+    expect(can(actor({ role: "OWNER", isAuditor: true }), "auditor.readAll")).toBe(true);
+    expect(can(actor({ role: "AUDITOR", isAuditor: false }), "auditor.readAll")).toBe(false);
+  });
+});

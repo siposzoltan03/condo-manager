@@ -1,113 +1,54 @@
 "use client";
 
-import { useTranslations } from "next-intl";
-import { useEffect, useState, useCallback } from "react";
-import { useAuth } from "@/hooks/use-auth";
-import Link from "next/link";
-import { Building2 } from "lucide-react";
+import { useState, useCallback } from "react";
 import { PaymentSummaryCards } from "./payment-summary-cards";
 import { PaymentTrendsChart } from "./payment-trends-chart";
 import { PaymentHistoryTable } from "./payment-history-table";
+import type { FinanceOverviewData, ChargeItem } from "@/lib/dal";
 
-interface ChargeSummary {
-  currentBalance: string | number;
-  nextDue: { amount: string | number; month: string } | null;
-  lastPayment: { amount: string | number; paidAt: string } | null;
+interface FinanceOverviewProps {
+  initialData: FinanceOverviewData;
 }
 
-interface Charge {
-  id: string;
-  month: string;
-  amount: string | number;
-  dueDate: string | null;
-  paidAt: string | null;
-  status: string;
-  invoiceId: string | null;
-}
+export function FinanceOverview({ initialData }: FinanceOverviewProps) {
+  const [summary] = useState(initialData.summary);
+  const [chargesData, setChargesData] = useState({
+    charges: initialData.charges,
+    total: initialData.total,
+    page: initialData.page,
+    totalPages: initialData.totalPages,
+  });
+  const [allCharges] = useState<ChargeItem[]>(initialData.allCharges);
+  const [loading, setLoading] = useState(false);
 
-interface ChargesResponse {
-  charges: Charge[];
-  total: number;
-  page: number;
-  totalPages: number;
-}
-
-export function FinanceOverview() {
-  const t = useTranslations("finance");
-  const { hasRole } = useAuth();
-
-  const [summary, setSummary] = useState<ChargeSummary | null>(null);
-  const [chargesData, setChargesData] = useState<ChargesResponse | null>(null);
-  const [allCharges, setAllCharges] = useState<Charge[]>([]);
-  const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
-
-  const isBoardPlus = hasRole("BOARD_MEMBER");
-
-  const fetchData = useCallback(async (currentPage: number) => {
+  const handlePageChange = useCallback(async (newPage: number) => {
     setLoading(true);
     try {
-      const [summaryRes, chargesRes, allChargesRes] = await Promise.all([
-        fetch("/api/finance/charges/summary"),
-        fetch(`/api/finance/charges?page=${currentPage}&limit=10`),
-        fetch("/api/finance/charges?page=1&limit=50"),
-      ]);
-
-      if (summaryRes.ok) {
-        setSummary(await summaryRes.json());
+      const res = await fetch(`/api/finance/charges?page=${newPage}&limit=10`);
+      if (res.ok) {
+        setChargesData(await res.json());
       }
-      if (chargesRes.ok) {
-        setChargesData(await chargesRes.json());
-      }
-      if (allChargesRes.ok) {
-        const data = await allChargesRes.json();
-        setAllCharges(data.charges);
-      }
-    } catch (error) {
-      console.error("Failed to fetch finance data:", error);
+    } catch {
+      // ignore
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    fetchData(page);
-  }, [page, fetchData]);
-
-  const handlePageChange = (newPage: number) => {
-    setPage(newPage);
-  };
-
   return (
     <div className="space-y-8">
-      {/* Title and Building Finance link */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-[#002045]">{t("title")}</h1>
-        </div>
-        {isBoardPlus && (
-          <Link
-            href="/finance/building"
-            className="flex items-center gap-2 rounded-lg border border-[#002045] px-4 py-2 text-sm font-medium text-[#002045] transition-colors hover:bg-[#002045] hover:text-white"
-          >
-            <Building2 className="h-4 w-4" />
-            {t("buildingTitle")}
-          </Link>
-        )}
-      </div>
-
       {/* Summary Cards */}
-      <PaymentSummaryCards summary={summary} loading={loading} />
+      <PaymentSummaryCards summary={summary} loading={false} />
 
       {/* Trends Chart */}
-      <PaymentTrendsChart charges={allCharges} loading={loading} />
+      <PaymentTrendsChart charges={allCharges} loading={false} />
 
       {/* Payment History Table */}
       <PaymentHistoryTable
-        charges={chargesData?.charges ?? []}
-        total={chargesData?.total ?? 0}
-        page={chargesData?.page ?? 1}
-        totalPages={chargesData?.totalPages ?? 1}
+        charges={chargesData.charges}
+        total={chargesData.total}
+        page={chargesData.page}
+        totalPages={chargesData.totalPages}
         onPageChange={handlePageChange}
         loading={loading}
       />

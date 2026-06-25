@@ -27,26 +27,36 @@ export function BudgetActionBar({
   const t = useTranslations("finance");
 
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-xl bg-white p-4 border border-gray-100">
+    <div className="flex flex-wrap items-center gap-3 rounded-xl border border-ink/8 bg-card p-4">
       {/* Date range */}
       <div className="flex items-center gap-2">
-        <label htmlFor="finance-from-date" className="text-xs font-medium text-[#515f74]">{t("fromDate")}</label>
+        <label
+          htmlFor="finance-from-date"
+          className="font-mono text-[11px] uppercase tracking-wider text-muted"
+        >
+          {t("fromDate")}
+        </label>
         <input
           id="finance-from-date"
           type="date"
           value={fromDate}
           onChange={(e) => onFromDateChange(e.target.value)}
-          className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-[#002045]"
+          className="rounded-md border border-ink/15 bg-card px-3 py-1.5 text-sm text-ink"
         />
       </div>
       <div className="flex items-center gap-2">
-        <label htmlFor="finance-to-date" className="text-xs font-medium text-[#515f74]">{t("toDate")}</label>
+        <label
+          htmlFor="finance-to-date"
+          className="font-mono text-[11px] uppercase tracking-wider text-muted"
+        >
+          {t("toDate")}
+        </label>
         <input
           id="finance-to-date"
           type="date"
           value={toDate}
           onChange={(e) => onToDateChange(e.target.value)}
-          className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-[#002045]"
+          className="rounded-md border border-ink/15 bg-card px-3 py-1.5 text-sm text-ink"
         />
       </div>
 
@@ -56,7 +66,7 @@ export function BudgetActionBar({
       <button
         type="button"
         onClick={onAddExpense}
-        className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-[#002045] hover:bg-gray-50"
+        className="inline-flex items-center gap-1.5 rounded-md border border-ink/15 bg-card px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider text-ink hover:bg-bg-3 transition-colors min-h-11 sm:min-h-0"
       >
         <Plus className="h-4 w-4" />
         {t("addExpense")}
@@ -64,7 +74,7 @@ export function BudgetActionBar({
       <button
         type="button"
         onClick={onAddIncome}
-        className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-[#002045] hover:bg-gray-50"
+        className="inline-flex items-center gap-1.5 rounded-md border border-ink/15 bg-card px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider text-ink hover:bg-bg-3 transition-colors min-h-11 sm:min-h-0"
       >
         <Plus className="h-4 w-4" />
         {t("addIncome")}
@@ -72,7 +82,7 @@ export function BudgetActionBar({
       <button
         type="button"
         onClick={onImportStatement}
-        className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-[#002045] hover:bg-gray-50"
+        className="inline-flex items-center gap-1.5 rounded-md border border-ink/15 bg-card px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider text-ink hover:bg-bg-3 transition-colors min-h-11 sm:min-h-0"
       >
         <Upload className="h-4 w-4" />
         {t("importStatement")}
@@ -80,7 +90,7 @@ export function BudgetActionBar({
       <button
         type="button"
         onClick={onGenerateReport}
-        className="flex items-center gap-1.5 rounded-lg bg-[#002045] px-4 py-1.5 text-sm font-medium text-white hover:bg-[#003060]"
+        className="inline-flex items-center gap-1.5 rounded-md bg-ink px-4 py-1.5 font-mono text-[11px] uppercase tracking-wider text-bg hover:opacity-90 transition-opacity min-h-11 sm:min-h-0"
       >
         <FileBarChart className="h-4 w-4" />
         {t("generateReport")}

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@/hooks/use-auth";
 import { useBuilding } from "@/hooks/use-building";
+import type { AdminDashboardData } from "@/lib/dal";
 import {
   Building2,
   Users,
@@ -15,7 +16,6 @@ import {
   PlusCircle,
 } from "lucide-react";
 import Link from "next/link";
-import { ResidentDashboard } from "./resident-dashboard";
 
 interface AdminSummary {
   totalUnits: number;
@@ -27,88 +27,53 @@ interface AdminSummary {
   pendingMaintenanceCount: number;
 }
 
-export function AdminDashboard() {
+interface AdminDashboardProps {
+  initialData: AdminDashboardData;
+  userName: string;
+}
+
+export function AdminDashboard({ initialData, userName }: AdminDashboardProps) {
   const t = useTranslations("dashboard");
   const { user } = useAuth();
   const { activeBuildingId, buildings } = useBuilding();
   const activeBuilding = buildings.find((b) => b.id === activeBuildingId);
 
-  const [summary, setSummary] = useState<AdminSummary | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [summary] = useState<AdminSummary | null>({
+    ...initialData,
+    // Finance data still fetched client-side
+    currentFundBalance: 0,
+    reserveFundBalance: 0,
+  });
+  const [loading] = useState(false);
+
+  // Fetch finance data client-side (complex ledger aggregation)
+  const [financeLoaded, setFinanceLoaded] = useState(false);
+  const [currentFundBalance, setCurrentFundBalance] = useState(0);
+  const [reserveFundBalance, setReserveFundBalance] = useState(0);
 
   useEffect(() => {
-    async function fetchAdminData() {
-      setLoading(true);
+    async function fetchFinance() {
       try {
-        const [usersRes, financeRes, chargesRes, complaintsRes, maintenanceRes] =
-          await Promise.allSettled([
-            fetch("/api/users?limit=1"),
-            fetch("/api/finance/summary"),
-            fetch("/api/finance/charges?limit=1"),
-            fetch("/api/complaints?status=SUBMITTED,UNDER_REVIEW,IN_PROGRESS&limit=1"),
-            fetch(
-              "/api/maintenance/tickets?status=SUBMITTED,ACKNOWLEDGED&limit=1"
-            ),
-          ]);
-
-        let totalResidents = 0;
-        let totalUnits = 0;
-        if (usersRes.status === "fulfilled" && usersRes.value.ok) {
-          const data = await usersRes.value.json();
-          totalResidents = data.total ?? 0;
-          totalUnits = data.totalUnits ?? totalResidents;
+        const res = await fetch("/api/finance/summary");
+        if (res.ok) {
+          const data = await res.json();
+          setCurrentFundBalance(data.currentFundBalance ?? 0);
+          setReserveFundBalance(data.reserveFundBalance ?? 0);
         }
-
-        let currentFundBalance = 0;
-        let reserveFundBalance = 0;
-        if (financeRes.status === "fulfilled" && financeRes.value.ok) {
-          const data = await financeRes.value.json();
-          currentFundBalance = data.currentFundBalance ?? 0;
-          reserveFundBalance = data.reserveFundBalance ?? 0;
-        }
-
-        let overduePaymentsCount = 0;
-        if (chargesRes.status === "fulfilled" && chargesRes.value.ok) {
-          const data = await chargesRes.value.json();
-          overduePaymentsCount = data.overdueCount ?? 0;
-        }
-
-        let openComplaintsCount = 0;
-        if (complaintsRes.status === "fulfilled" && complaintsRes.value.ok) {
-          const data = await complaintsRes.value.json();
-          openComplaintsCount = data.total ?? 0;
-        }
-
-        let pendingMaintenanceCount = 0;
-        if (maintenanceRes.status === "fulfilled" && maintenanceRes.value.ok) {
-          const data = await maintenanceRes.value.json();
-          pendingMaintenanceCount = data.total ?? 0;
-        }
-
-        setSummary({
-          totalUnits,
-          totalResidents,
-          currentFundBalance,
-          reserveFundBalance,
-          overduePaymentsCount,
-          openComplaintsCount,
-          pendingMaintenanceCount,
-        });
       } catch {
         // best-effort
       } finally {
-        setLoading(false);
+        setFinanceLoaded(true);
       }
     }
-
-    fetchAdminData();
+    fetchFinance();
   }, []);
 
   return (
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900">
-          {t("welcomeBack", { name: user?.name || "" })}
+          {t("welcomeBack", { name: userName || user?.name || "" })}
         </h1>
         {activeBuilding && (
           <p className="text-sm font-medium text-blue-600">{activeBuilding.name}</p>
@@ -133,17 +98,17 @@ export function AdminDashboard() {
             <StatCard
               icon={<Wallet className="h-5 w-5 text-green-600" />}
               label={t("financialSummary")}
-              value={`${summary.currentFundBalance.toLocaleString()} Ft`}
+              value={`${currentFundBalance.toLocaleString()} Ft`}
               sublabel={t("reserveFund", {
-                amount: summary.reserveFundBalance.toLocaleString(),
+                amount: reserveFundBalance.toLocaleString(),
               })}
             />
             <StatCard
               icon={<AlertTriangle className="h-5 w-5 text-red-600" />}
               label={t("overduePayments")}
               value={`${summary.overduePaymentsCount}`}
-              sublabel={t("openComplaints", {
-                count: summary.openComplaintsCount,
+              sublabel={t("overdueCount", {
+                count: summary.overduePaymentsCount,
               })}
               alert={summary.overduePaymentsCount > 0}
             />
@@ -181,8 +146,7 @@ export function AdminDashboard() {
         </>
       ) : null}
 
-      {/* Also show resident-level dashboard data */}
-      <ResidentDashboard />
+      {/* Resident-level data omitted in admin view */}
     </div>
   );
 }

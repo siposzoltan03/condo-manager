@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { Check, X, UserPlus } from "lucide-react";
 
 interface Props {
@@ -9,6 +10,21 @@ interface Props {
   currentStatus: string | null;
   onChanged: () => void;
 }
+
+const OPTION_STYLE: Record<"good" | "danger" | "ochre", React.CSSProperties> = {
+  good: {
+    background: "color-mix(in srgb, var(--color-good) 14%, transparent)",
+    color: "var(--color-good)",
+  },
+  danger: {
+    background: "color-mix(in srgb, var(--color-danger) 14%, transparent)",
+    color: "var(--color-danger)",
+  },
+  ochre: {
+    background: "color-mix(in srgb, var(--color-ochre) 22%, transparent)",
+    color: "color-mix(in srgb, var(--color-ochre) 75%, var(--color-ink))",
+  },
+};
 
 export function RsvpButton({ meetingId, currentStatus, onChanged }: Props) {
   const t = useTranslations("voting");
@@ -24,10 +40,11 @@ export function RsvpButton({ meetingId, currentStatus, onChanged }: Props) {
         body: JSON.stringify({ status }),
       });
       if (res.ok) {
+        toast.success(t("rsvpUpdated"));
         onChanged();
       }
     } catch {
-      // silent
+      toast.error(t("somethingWentWrong"));
     } finally {
       setLoading(false);
       setShowOptions(false);
@@ -40,7 +57,8 @@ export function RsvpButton({ meetingId, currentStatus, onChanged }: Props) {
         <button
           onClick={() => handleRsvp("ATTENDING")}
           disabled={loading}
-          className="flex items-center gap-1.5 rounded-md bg-green-50 px-3 py-1.5 text-xs font-medium text-green-700 hover:bg-green-100 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider transition-opacity hover:opacity-80 disabled:opacity-50"
+          style={OPTION_STYLE.good}
         >
           <Check className="h-3.5 w-3.5" />
           {t("rsvpAttending")}
@@ -48,7 +66,8 @@ export function RsvpButton({ meetingId, currentStatus, onChanged }: Props) {
         <button
           onClick={() => handleRsvp("NOT_ATTENDING")}
           disabled={loading}
-          className="flex items-center gap-1.5 rounded-md bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider transition-opacity hover:opacity-80 disabled:opacity-50"
+          style={OPTION_STYLE.danger}
         >
           <X className="h-3.5 w-3.5" />
           {t("rsvpNotAttending")}
@@ -56,7 +75,8 @@ export function RsvpButton({ meetingId, currentStatus, onChanged }: Props) {
         <button
           onClick={() => handleRsvp("PROXY")}
           disabled={loading}
-          className="flex items-center gap-1.5 rounded-md bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-100 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider transition-opacity hover:opacity-80 disabled:opacity-50"
+          style={OPTION_STYLE.ochre}
         >
           <UserPlus className="h-3.5 w-3.5" />
           {t("rsvpProxy")}
@@ -68,7 +88,7 @@ export function RsvpButton({ meetingId, currentStatus, onChanged }: Props) {
   return (
     <button
       onClick={() => setShowOptions(true)}
-      className="rounded-md bg-[#002045] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#002045]/90"
+      className="rounded-md bg-ink px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider text-bg hover:opacity-90 transition-opacity"
     >
       {currentStatus ? t("changeRsvp") : t("rsvp")}
     </button>

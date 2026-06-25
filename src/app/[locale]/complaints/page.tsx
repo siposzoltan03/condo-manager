@@ -1,17 +1,74 @@
-import { setRequestLocale } from "next-intl/server";
-import { ComplaintList } from "@/components/complaints/complaint-list";
+import type { Metadata } from "next";
+import { setRequestLocale, getTranslations } from "next-intl/server";
+import { getComplaints } from "@/lib/dal";
+import { getUnitsOverview } from "@/lib/units-dal";
+import { hasMinimumRole } from "@/lib/rbac";
+import { requireBuildingContext } from "@/lib/auth";
+import { ComplaintsShell } from "@/components/complaints/complaints-shell";
+import { ComplaintsExplorer } from "@/components/complaints/complaints-explorer";
+import { ComplaintsHeaderActions } from "@/components/complaints/complaints-header-actions";
 
 type Props = {
   params: Promise<{ locale: string }>;
 };
 
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "complaints.shell" });
+  return { title: t("title") };
+}
+
 export default async function ComplaintsPage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
 
+  const [data, units, ctx] = await Promise.all([
+    getComplaints(),
+    getUnitsOverview(),
+    requireBuildingContext(),
+  ]);
+  const isBoardPlus = hasMinimumRole(ctx.role, "BOARD_MEMBER");
+
+  const activeCount = data.complaints.filter(
+    (c) => c.status !== "RESOLVED" && c.status !== "ESCALATED",
+  ).length;
+  const closedCount = data.complaints.length - activeCount;
+
+  const unitOptions = units.units
+    .map((u) => ({
+      id: u.id,
+      number: u.number,
+      stairwell: u.stairwell,
+      floor: u.floor,
+    }))
+    .sort((a, b) => {
+      const sa = a.stairwell ?? "";
+      const sb = b.stairwell ?? "";
+      if (sa !== sb) return sa.localeCompare(sb);
+      if (a.floor !== b.floor) return a.floor - b.floor;
+      return a.number.localeCompare(b.number);
+    });
+
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <ComplaintList />
-    </div>
+    <ComplaintsShell
+      locale={locale}
+      activeCount={activeCount}
+      closedCount={closedCount}
+      headerActions={
+        <ComplaintsHeaderActions
+          isBoardPlus={isBoardPlus}
+          locale={locale}
+          categories={data.categories}
+          units={unitOptions}
+        />
+      }
+    >
+      <ComplaintsExplorer
+        locale={locale}
+        isBoardPlus={isBoardPlus}
+        initialComplaints={data.complaints}
+        categories={data.categories}
+      />
+    </ComplaintsShell>
   );
 }

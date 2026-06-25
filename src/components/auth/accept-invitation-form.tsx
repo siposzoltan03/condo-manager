@@ -9,6 +9,9 @@ interface InvitationData {
   email: string;
   type: "ADMIN_SETUP" | "USER_INVITE";
   role: string | null;
+  /** Phase 5 — present when the invitation also assigns a unit. Used to
+   *  show the tenant-consent checkbox only for TENANT relationships. */
+  relationship: "OWNER" | "TENANT" | null;
   buildingName: string | null;
   unitNumber: string | null;
 }
@@ -46,6 +49,8 @@ export function AcceptInvitationForm({ token }: Props) {
   const [buildingAddress, setBuildingAddress] = useState("");
   const [buildingCity, setBuildingCity] = useState("");
   const [buildingZipCode, setBuildingZipCode] = useState("");
+  /** Phase 5 — only meaningful when invitation.relationship === "TENANT". */
+  const [contactConsent, setContactConsent] = useState(false);
 
   useEffect(() => {
     async function validate() {
@@ -101,12 +106,18 @@ export function AcceptInvitationForm({ token }: Props) {
 
     setSubmitting(true);
     try {
-      const body: Record<string, string> = { name, password };
+      const body: Record<string, string | boolean> = { name, password };
       if (invitation?.type === "ADMIN_SETUP") {
         body.buildingName = buildingName;
         body.buildingAddress = buildingAddress;
         body.buildingCity = buildingCity;
         body.buildingZipCode = buildingZipCode;
+      }
+      // Phase 5 — only forward the consent flag when the invitation is
+      // actually for a TENANT. Owners aren't subject to § 22(2) so the
+      // server ignores the flag for non-tenant invites anyway.
+      if (invitation?.relationship === "TENANT") {
+        body.contactConsent = contactConsent;
       }
 
       const res = await fetch(`/api/invitations/by-token/${token}/accept`, {
@@ -146,7 +157,7 @@ export function AcceptInvitationForm({ token }: Props) {
           </div>
           <h1
             className="text-2xl font-extrabold mb-2"
-            style={{ color: "#002045", fontFamily: "Manrope, sans-serif" }}
+            style={{ color: "#002045", fontFamily: "var(--font-manrope), sans-serif" }}
           >
             {errorState.type === "expired" ? t("expiredTitle") : t("invalidTitle")}
           </h1>
@@ -179,7 +190,7 @@ export function AcceptInvitationForm({ token }: Props) {
       <div className="mb-8">
         <h1
           className="text-3xl font-extrabold"
-          style={{ color: "#002045", fontFamily: "Manrope, sans-serif" }}
+          style={{ color: "#002045", fontFamily: "var(--font-manrope), sans-serif" }}
         >
           {t("acceptTitle")}
         </h1>
@@ -327,6 +338,33 @@ export function AcceptInvitationForm({ token }: Props) {
             />
           </div>
         </div>
+
+        {/* Phase 5 — Tht. § 22(2) + GDPR Art. 6: tenant contact consent.
+            Owners aren't shown this — § 16 makes them members of the
+            condo and contact data is part of membership records. */}
+        {invitation.relationship === "TENANT" && (
+          <div
+            className="border-t pt-5 mt-5"
+            style={{ borderColor: "#c4c6cf" }}
+          >
+            <p
+              className="text-xs font-semibold uppercase tracking-wider mb-2"
+              style={{ color: "#43474e" }}
+            >
+              {t("tenantConsentTitle")}
+            </p>
+            <label className="flex gap-3 items-start text-sm" style={{ color: "#1f2024" }}>
+              <input
+                type="checkbox"
+                checked={contactConsent}
+                onChange={(e) => setContactConsent(e.target.checked)}
+                className="mt-1"
+                style={{ width: "16px", height: "16px" }}
+              />
+              <span>{t("tenantConsentLabel")}</span>
+            </label>
+          </div>
+        )}
 
         {/* ADMIN_SETUP: Building fields */}
         {invitation.type === "ADMIN_SETUP" && (

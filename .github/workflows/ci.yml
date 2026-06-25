@@ -1,0 +1,120 @@
+# Continuous Integration — runs on every push to main and every pull request.
+# Stage 2a: lint + typecheck. (Tests and image build come in later steps.)
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    name: Lint & typecheck
+    runs-on: ubuntu-latest # fresh throwaway VM (x86_64, like your server)
+    steps:
+      # 1. Pull the repo's code onto the runner.
+      - uses: actions/checkout@v4
+
+      # 2. Install Node 22 (matches the Dockerfile) + cache ~/.npm for speed.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # 3. Install dependencies exactly as locked (reproducible).
+      - run: npm ci
+
+      # 4. The actual checks. If either exits non-zero, the job fails (red X).
+      - run: npm run lint
+      - run: npx tsc --noEmit
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    # Service containers: GitHub spins these up next to the job and exposes
+    # them on localhost:<port>. The test harness self-migrates the test DB
+    # (tests/global-setup.ts runs `prisma migrate deploy`), so we just need
+    # an empty Postgres named condo_manager_test, plus Redis to mirror local.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: condo
+          POSTGRES_PASSWORD: condo_secret
+          POSTGRES_DB: condo_manager_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U condo -d condo_manager_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      # vitest.config.ts requires TEST_DATABASE_URL (must end in _test). The
+      # postgres service above provides this DB; global-setup migrates it.
+      TEST_DATABASE_URL: postgresql://condo:condo_secret@localhost:5432/condo_manager_test?schema=public
+      REDIS_URL: redis://localhost:6379
+      NEXTAUTH_SECRET: ci-test-secret
+      NEXTAUTH_URL: http://localhost:3000
+      # stripe-webhook tests sign payloads with this and the route verifies
+      # with it — both read process.env, so they just need to agree. (Locally
+      # it comes from .env; CI has no .env, so declare it here.)
+      STRIPE_WEBHOOK_SECRET: whsec_test_secret
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx vitest run
+
+  publish:
+    name: Build & publish images
+    runs-on: ubuntu-latest
+    # Only publish if BOTH gates pass — never ship a broken image.
+    needs: [check, test]
+    permissions:
+      contents: read
+      packages: write # lets the built-in GITHUB_TOKEN push to ghcr.io
+    strategy:
+      matrix:
+        include:
+          - image: condo-manager-app
+            dockerfile: Dockerfile
+          - image: condo-manager-worker
+            dockerfile: Dockerfile.worker
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3 # enables buildx + layer caching
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }} # auto-provided; no secret to manage
+
+      # Compute tags: sha-<short> always (immutable), :latest only on main.
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}
+          tags: |
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

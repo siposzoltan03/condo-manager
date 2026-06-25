@@ -3,11 +3,18 @@ WORKDIR /app
 
 COPY package.json package-lock.json* ./
 COPY prisma ./prisma/
-RUN npm ci
+# --ignore-scripts: skip the package.json "postinstall" (prisma generate +
+# scripts/clean-dbml.mjs). scripts/ isn't copied yet at this layer, and we
+# generate Prisma explicitly on the next line. (Matches the main Dockerfile.)
+RUN npm ci --ignore-scripts
 RUN npx prisma generate
 
 COPY worker ./worker/
-COPY src/lib ./src/lib/
+# The worker imports shared code from across src/ (src/lib AND src/reports/*),
+# so copy the whole tree. A container only contains what you COPY — missing a
+# path here is exactly why it crashed with MODULE_NOT_FOUND on src/reports.
+# (tsx only executes what's imported; unused files just sit in the image.)
+COPY src ./src/
 COPY tsconfig.json ./
 
 CMD ["npx", "tsx", "worker/index.ts"]

@@ -1,5 +1,6 @@
 import { setRequestLocale } from "next-intl/server";
 import { RoleGuard } from "@/components/auth/role-guard";
+import { getBuildings } from "@/lib/dal";
 import { BuildingList } from "@/components/admin/building-list";
 
 type Props = {
@@ -9,6 +10,8 @@ type Props = {
 export default async function BuildingsPage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
+
+  const data = await getBuildings();
 
   return (
     <RoleGuard
@@ -25,7 +28,7 @@ export default async function BuildingsPage({ params }: Props) {
       }
     >
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <BuildingList />
+        <BuildingList initialData={data} />
       </div>
     </RoleGuard>
   );

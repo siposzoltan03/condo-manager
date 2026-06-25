@@ -1,15 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
 import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
-import { createAuditLog } from "@/lib/audit";
+import { requireRole, hasMinimumRole } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { createHash } from "crypto";
+import { rateLimitMutationOrRespond } from "@/lib/rate-limit";
+import { ballotCast } from "@/lib/voting/events";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
-    const { userId, buildingId } = await requireBuildingContext();
+    const { userId, buildingId, role } = await requireBuildingContext();
+    const limited = await rateLimitMutationOrRespond(userId, "ballot:cast", {
+      limit: 10,
+      windowSeconds: 60,
+    });
+    if (limited) return limited;
 
     try {
       await requireFeature(buildingId, "voting");
@@ -22,7 +29,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     const { id: voteId } = await context.params;
     const body = await request.json();
-    const { optionId, proxyForUnitId } = body;
+    const { optionId, proxyForUnitId, onBehalfOfUnitId } = body;
 
     if (!optionId) {
       return NextResponse.json(
@@ -34,10 +41,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
     // Fetch the vote and verify building scope
     const vote = await prisma.vote.findUnique({
       where: { id: voteId },
-      include: { options: true, meeting: { select: { buildingId: true } } },
+      include: { options: true },
     });
 
-    if (!vote || vote.meeting?.buildingId !== buildingId) {
+    if (!vote || vote.buildingId !== buildingId) {
       return NextResponse.json({ error: "Vote not found" }, { status: 404 });
     }
 
@@ -55,18 +62,48 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Invalid option for this vote" }, { status: 400 });
     }
 
-    // Determine the unit casting the ballot
-    const userUnit = await prisma.unitUser.findFirst({
-      where: { userId, unit: { buildingId } },
-      select: { unitId: true },
-    });
-    if (!userUnit) {
-      return NextResponse.json({ error: "No unit found in this building" }, { status: 400 });
-    }
-    let unitId = userUnit.unitId;
+    let unitId: string;
+    let castById: string | null = null;
+    let ballotUserId: string | null = vote.isSecret ? null : userId;
 
-    if (proxyForUnitId) {
-      // Verify proxy assignment — find grantor via UnitUser
+    if (onBehalfOfUnitId) {
+      // "Cast on behalf" — organizer/board member votes for another unit
+      const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
+      if (!isBoardPlus) {
+        return NextResponse.json(
+          { error: "Only board members can cast votes on behalf of others" },
+          { status: 403 }
+        );
+      }
+
+      // Verify the unit belongs to this building
+      const unit = await prisma.unit.findFirst({
+        where: { id: onBehalfOfUnitId, buildingId },
+      });
+      if (!unit) {
+        return NextResponse.json({ error: "Unit not found in this building" }, { status: 404 });
+      }
+
+      unitId = onBehalfOfUnitId;
+      castById = userId;
+
+      // Find the unit owner for ballot attribution
+      const unitOwner = await prisma.unitUser.findFirst({
+        where: { unitId: onBehalfOfUnitId, isPrimaryContact: true },
+        select: { userId: true },
+      });
+      ballotUserId = vote.isSecret ? null : (unitOwner?.userId ?? null);
+
+    } else if (proxyForUnitId) {
+      // Proxy voting — existing logic
+      const userUnit = await prisma.unitUser.findFirst({
+        where: { userId, unit: { buildingId } },
+        select: { unitId: true },
+      });
+      if (!userUnit) {
+        return NextResponse.json({ error: "No unit found in this building" }, { status: 400 });
+      }
+
       const now = new Date();
       const proxy = await prisma.proxyAssignment.findFirst({
         where: {
@@ -79,7 +116,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
             {
               OR: [
                 { voteId: voteId },
-                { voteId: null }, // general proxy
+                { voteId: null },
               ],
             },
             {
@@ -100,9 +137,19 @@ export async function POST(request: NextRequest, context: RouteContext) {
       }
 
       unitId = proxyForUnitId;
+    } else {
+      // Self-voting
+      const userUnit = await prisma.unitUser.findFirst({
+        where: { userId, unit: { buildingId } },
+        select: { unitId: true },
+      });
+      if (!userUnit) {
+        return NextResponse.json({ error: "No unit found in this building" }, { status: 400 });
+      }
+      unitId = userUnit.unitId;
     }
 
-    // Check if this unit already voted (unique constraint)
+    // Check if this unit already voted
     const existingBallot = await prisma.ballot.findUnique({
       where: { voteId_unitId: { voteId, unitId } },
     });
@@ -130,17 +177,23 @@ export async function POST(request: NextRequest, context: RouteContext) {
         voteId,
         optionId,
         unitId,
-        userId: vote.isSecret ? null : userId,
+        userId: ballotUserId,
+        castById,
         weight: unit.ownershipShare,
-        receiptHash: null, // will be set below for secret ballots
+        receiptHash: null,
       },
     });
 
     let receiptHash: string | null = null;
 
     if (vote.isSecret) {
-      // Generate receipt hash: SHA256(ballotId + secret)
-      const secret = process.env.BALLOT_SECRET ?? "default-ballot-secret";
+      const secret = process.env.BALLOT_SECRET;
+      if (!secret) {
+        return NextResponse.json(
+          { error: "Voting system configuration error. Contact administrator." },
+          { status: 500 }
+        );
+      }
       receiptHash = createHash("sha256")
         .update(ballot.id + secret)
         .digest("hex");
@@ -151,15 +204,15 @@ export async function POST(request: NextRequest, context: RouteContext) {
       });
     }
 
-    await createAuditLog({
-      entityType: "Ballot",
-      entityId: ballot.id,
-      action: "CREATE",
-      userId,
+    await ballotCast({
+      ballotId: ballot.id,
+      voterUserId: userId,
+      buildingId,
       newValue: {
         voteId,
         unitId,
         isProxy: !!proxyForUnitId,
+        isOnBehalf: !!onBehalfOfUnitId,
         isSecret: vote.isSecret,
       },
     });
@@ -170,6 +223,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       optionId: ballot.optionId,
       weight: Number(ballot.weight),
       receiptHash,
+      castOnBehalf: !!castById,
     }, { status: 201 });
   } catch (error) {
     console.error("Failed to cast ballot:", error);

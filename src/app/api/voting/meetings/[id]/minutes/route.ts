@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
 import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
 import { requireRole } from "@/lib/rbac";
-import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
+import { meetingMinutesUpdated } from "@/lib/voting/events";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -47,12 +47,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
       data: { minutes },
     });
 
-    await createAuditLog({
-      entityType: "Meeting",
-      entityId: meetingId,
-      action: "UPDATE",
-      userId,
-      newValue: { minutesUpdated: true },
+    await meetingMinutesUpdated({
+      meetingId,
+      updatedByUserId: userId,
+      buildingId,
     });
 
     return NextResponse.json({ id: updated.id, hasMinutes: true });

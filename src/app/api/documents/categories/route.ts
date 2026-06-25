@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
 import { requireRole, hasMinimumRole } from "@/lib/rbac";
-import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
 import { DocumentVisibility } from "@prisma/client";
+import { documentCategoryCreated } from "@/lib/documents/events";
 
 export async function GET(request: NextRequest) {
   try {
@@ -121,12 +121,13 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    await createAuditLog({
-      entityType: "DocumentCategory",
-      entityId: category.id,
-      action: "CREATE",
-      userId,
-      newValue: { name, icon, parentId },
+    await documentCategoryCreated({
+      categoryId: category.id,
+      createdByUserId: userId,
+      buildingId,
+      name,
+      icon,
+      parentId,
     });
 
     return NextResponse.json(category, { status: 201 });

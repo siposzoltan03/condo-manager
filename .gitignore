@@ -10,6 +10,11 @@
 
 # testing
 /coverage
+/playwright-report
+/test-results
+/blob-report
+/playwright/.cache
+/e2e/.auth
 
 # next.js
 /.next/
@@ -48,3 +53,14 @@ next-env.d.ts
 nginx/certs/
 .claude/worktrees/
 .idea/
+
+# Slidev build output for the pitch deck — regenerate with `npm run build`
+# inside docs/pitch/ rather than checking compiled bundles into the repo.
+docs/pitch/dist/
+
+# Local-only Docker Compose overrides (machine-specific ports/env). Auto-merged
+# by `docker compose`, so committing it would wrongly apply on the server too.
+docker-compose.override.yml
+
+# Playwright MCP scratch output (snapshots/screenshots) — tooling artifact
+.playwright-mcp/

@@ -6,11 +6,26 @@ import { auth } from "./lib/auth";
 
 const intlMiddleware = createIntlMiddleware(routing);
 
-/** Auth-excluded pages: unauthenticated users can view, authenticated users are redirected to dashboard. */
-const publicPages = ["/login", "/forgot-password", "/reset-password"];
+/** Auth-excluded pages: unauthenticated users can view, authenticated users are redirected to their home. */
+const publicPages = [
+  "/login",
+  "/forgot-password",
+  "/reset-password",
+  "/verify-email",
+  "/contractor/login",
+  "/contractor/signup",
+];
 
 /** Pages accessible by BOTH authenticated and unauthenticated users (no redirect either way). */
 const publicAccessiblePages = ["/", "/pricing", "/checkout", "/accept-invitation"];
+
+/** Exact-path public pages — match without prefix expansion. */
+const publicExactPaths = new Set(["/contractor"]);
+
+/** Strip locale prefix and return the path. */
+function isContractorPath(stripped: string): boolean {
+  return stripped === "/contractor" || stripped.startsWith("/contractor/");
+}
 
 /** Strip locale prefix from a pathname (e.g. /hu/login -> /login, /hu -> /). */
 function stripLocale(pathname: string): string {
@@ -32,6 +47,7 @@ function isPublicPage(pathname: string): boolean {
 
 function isPublicAccessiblePage(pathname: string): boolean {
   const p = stripLocale(pathname);
+  if (publicExactPaths.has(p)) return true;
   return publicAccessiblePages.some((page) =>
     page === "/" ? p === "/" || p === "" : p === page || p.startsWith(page + "/")
   );
@@ -40,6 +56,9 @@ function isPublicAccessiblePage(pathname: string): boolean {
 function isPublicApiRoute(pathname: string): boolean {
   return (
     pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/api/contractor/auth/signup") ||
+    pathname.startsWith("/api/contractor/auth/check-tax-id") ||
+    pathname.startsWith("/api/contractor/auth/verify-email") ||
     pathname.startsWith("/api/invitations/by-token") ||
     pathname.startsWith("/api/plans") ||
     pathname.startsWith("/api/stripe/checkout") ||
@@ -65,25 +84,52 @@ export default auth((req) => {
   const isAuthenticated = !!req.auth;
   const isPublic = isPublicPage(pathname);
   const isAccessible = isPublicAccessiblePage(pathname);
+  const sessionKind =
+    (req.auth?.user as { kind?: "condo" | "contractor" } | undefined)?.kind ??
+    "condo";
 
   const localeMatch = pathname.match(new RegExp(`^/(${routing.locales.join("|")})(\/|$)`));
   const locale = localeMatch ? localeMatch[1] : routing.defaultLocale;
+  const stripped = stripLocale(pathname);
+  const wantsContractorTree = isContractorPath(stripped);
 
   // Public-accessible pages: allow through regardless of auth state
   if (isAccessible) {
     return intlMiddleware(req);
   }
 
-  // Redirect unauthenticated users to login
+  // Cross-tree isolation: a contractor session on a condo route or vice
+  // versa is redirected to the right home. Stops a contractor accidentally
+  // landing on /dashboard via a stale cookie + condo sessions snooping
+  // /contractor/marketplace.
+  if (isAuthenticated && !isPublic) {
+    if (sessionKind === "contractor" && !wantsContractorTree) {
+      return NextResponse.redirect(
+        new URL(`/${locale}/contractor/marketplace`, req.url),
+      );
+    }
+    if (sessionKind === "condo" && wantsContractorTree) {
+      return NextResponse.redirect(new URL(`/${locale}/dashboard`, req.url));
+    }
+  }
+
+  // Redirect unauthenticated users to the right login form.
   if (!isAuthenticated && !isPublic) {
-    const loginUrl = new URL(`/${locale}/login`, req.url);
+    const loginPath = wantsContractorTree
+      ? `/${locale}/contractor/login`
+      : `/${locale}/login`;
+    const loginUrl = new URL(loginPath, req.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // Redirect authenticated users away from auth-excluded pages
+  // Redirect authenticated users away from auth-excluded pages.
   if (isAuthenticated && isPublic) {
-    return NextResponse.redirect(new URL(`/${locale}/dashboard`, req.url));
+    const home =
+      sessionKind === "contractor"
+        ? `/${locale}/contractor/marketplace`
+        : `/${locale}/dashboard`;
+    return NextResponse.redirect(new URL(home, req.url));
   }
 
   return intlMiddleware(req);

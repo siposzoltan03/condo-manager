@@ -39,6 +39,9 @@ export async function GET(
       email: invitation.email,
       type: invitation.type,
       role: invitation.role,
+      // Phase 5 — exposed so the accept form can render the
+      // tenant-consent checkbox when relationship === "TENANT".
+      relationship: invitation.relationship ?? null,
       buildingName: invitation.building?.name ?? null,
       unitNumber: invitation.unit?.number ?? null,
     });

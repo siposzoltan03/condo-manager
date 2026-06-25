@@ -2,22 +2,12 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import { useAuth } from "@/hooks/use-auth";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Loader2, Send, XCircle, RefreshCw } from "lucide-react";
 import { InviteUserModal } from "./invite-user-modal";
-
-interface Invitation {
-  id: string;
-  email: string;
-  type: string;
-  role: string | null;
-  status: string;
-  expiresAt: string;
-  acceptedAt: string | null;
-  createdAt: string;
-  invitedBy: { name: string } | null;
-  unit: { number: string } | null;
-}
+import { useConfirm } from "@/components/shared/confirm-dialog";
+import type { InvitationsData, InvitationItemData } from "@/lib/dal";
 
 const STATUS_STYLES: Record<string, string> = {
   PENDING: "bg-yellow-100 text-yellow-700",
@@ -33,42 +23,45 @@ const ROLE_STYLES: Record<string, string> = {
   TENANT: "bg-slate-100 text-slate-700",
 };
 
-export function InvitationList() {
+interface InvitationListProps {
+  initialData: InvitationsData;
+}
+
+export function InvitationList({ initialData }: InvitationListProps) {
   const t = useTranslations("invitationManagement");
-  const { hasRole } = useAuth();
-  const [invitations, setInvitations] = useState<Invitation[]>([]);
-  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const confirm = useConfirm();
+  const [invitations, setInvitations] = useState<InvitationItemData[]>(initialData.invitations);
+  const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
-  const fetchInvitations = useCallback(async () => {
+  // Client-side filtering when status filter changes
+  const fetchFiltered = useCallback(async (filter: string) => {
+    setLoading(true);
     try {
-      const url = statusFilter
-        ? `/api/invitations?status=${statusFilter}`
+      const url = filter
+        ? `/api/invitations?status=${filter}`
         : "/api/invitations";
       const res = await fetch(url);
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
       setInvitations(data.invitations ?? []);
     } catch {
-      setToast({ message: "Failed to load invitations", type: "error" });
+      toast.error("Failed to load invitations");
     } finally {
       setLoading(false);
     }
-  }, [statusFilter]);
+  }, []);
 
   useEffect(() => {
-    fetchInvitations();
-  }, [fetchInvitations]);
-
-  useEffect(() => {
-    if (toast) {
-      const timer = setTimeout(() => setToast(null), 3000);
-      return () => clearTimeout(timer);
+    if (statusFilter) {
+      fetchFiltered(statusFilter);
+    } else {
+      setInvitations(initialData.invitations);
     }
-  }, [toast]);
+  }, [statusFilter, fetchFiltered, initialData.invitations]);
 
   async function handleResend(id: string) {
     setActionLoading(id);
@@ -78,20 +71,21 @@ export function InvitationList() {
       });
       if (!res.ok) {
         const data = await res.json();
-        setToast({ message: data.error || "Failed", type: "error" });
+        toast.error(data.error || "Failed");
         return;
       }
-      setToast({ message: t("resendSuccess"), type: "success" });
-      fetchInvitations();
+      toast.success(t("resendSuccess"));
+      router.refresh();
     } catch {
-      setToast({ message: "Failed", type: "error" });
+      toast.error("Failed");
     } finally {
       setActionLoading(null);
     }
   }
 
   async function handleRevoke(id: string) {
-    if (!confirm(t("revokeConfirm"))) return;
+    const ok = await confirm({ title: t("revokeConfirm"), danger: true });
+    if (!ok) return;
     setActionLoading(id);
     try {
       const res = await fetch(`/api/invitations/${id}/revoke`, {
@@ -99,24 +93,16 @@ export function InvitationList() {
       });
       if (!res.ok) {
         const data = await res.json();
-        setToast({ message: data.error || "Failed", type: "error" });
+        toast.error(data.error || "Failed");
         return;
       }
-      setToast({ message: t("revokeSuccess"), type: "success" });
-      fetchInvitations();
+      toast.success(t("revokeSuccess"));
+      router.refresh();
     } catch {
-      setToast({ message: "Failed", type: "error" });
+      toast.error("Failed");
     } finally {
       setActionLoading(null);
     }
-  }
-
-  if (!hasRole("ADMIN")) {
-    return (
-      <div className="rounded-lg bg-red-50 border border-red-200 p-4 text-sm text-red-700">
-        Access restricted to administrators.
-      </div>
-    );
   }
 
   function formatDate(dateStr: string) {
@@ -139,19 +125,6 @@ export function InvitationList() {
 
   return (
     <div>
-      {/* Toast */}
-      {toast && (
-        <div
-          className={`fixed top-4 right-4 z-50 rounded-lg px-4 py-3 text-sm shadow-lg ${
-            toast.type === "success"
-              ? "bg-green-50 border border-green-200 text-green-700"
-              : "bg-red-50 border border-red-200 text-red-700"
-          }`}
-        >
-          {toast.message}
-        </div>
-      )}
-
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -170,10 +143,7 @@ export function InvitationList() {
       <div className="mb-4">
         <select
           value={statusFilter}
-          onChange={(e) => {
-            setLoading(true);
-            setStatusFilter(e.target.value);
-          }}
+          onChange={(e) => setStatusFilter(e.target.value)}
           className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
         >
           <option value="">{t("allStatuses")}</option>
@@ -300,7 +270,7 @@ export function InvitationList() {
           onClose={() => setShowModal(false)}
           onSuccess={() => {
             setShowModal(false);
-            fetchInvitations();
+            router.refresh();
           }}
         />
       )}

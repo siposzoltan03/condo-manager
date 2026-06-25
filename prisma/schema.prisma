@@ -2,36 +2,32 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// Generates `docs/data-model.dbml` on every `prisma generate`.
+// View / share via https://dbdiagram.io (paste contents) or via dbdocs.io.
+generator dbml {
+  provider   = "prisma-dbml-generator"
+  output     = "../docs"
+  outputName = "data-model.dbml"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-enum TargetAudience {
-  ALL
-  SPECIFIC_UNITS
-  BOARD_ONLY
-}
-
-enum ConversationType {
-  DIRECT
-  GROUP
-}
-
-enum ComplaintCategory {
-  NOISE
-  DAMAGE
-  SAFETY
-  PARKING
-  OTHER
-}
-
 enum ComplaintStatus {
-  SUBMITTED
-  UNDER_REVIEW
-  IN_PROGRESS
+  /// Newly filed by a resident, awaiting board acknowledgement.
+  REPORTED
+  /// Board has read it; case is officially open.
+  ACKNOWLEDGED
+  /// Formal warning letter has been sent to the respondent.
+  WARNING_SENT
+  /// Active mediation in progress between parties.
+  MEDIATION
+  /// Closed — situation resolved.
   RESOLVED
-  REJECTED
+  /// Escalated to a közgyűlés agenda item.
+  ESCALATED
 }
 
 enum MaintenanceCategory {
@@ -91,6 +87,14 @@ enum RsvpStatus {
   PROXY
 }
 
+enum MajorityType {
+  SIMPLE_MAJORITY
+  TWO_THIRDS
+  FOUR_FIFTHS
+  UNANIMOUS
+  PLURALITY
+}
+
 enum DocumentVisibility {
   PUBLIC
   BOARD_ONLY
@@ -101,8 +105,62 @@ enum BuildingRole {
   SUPER_ADMIN
   ADMIN
   BOARD_MEMBER
-  RESIDENT
+  /// Phase 2 — Tht. § 27(3) számvizsgáló bizottság tag. Peer of
+  /// BOARD_MEMBER (not in linear hierarchy); the `can()` matrix uses
+  /// `actor.isAuditor` independently of role.
+  AUDITOR
+  /// Tht. § 16 — tulajdonostárs (owner) login. RESIDENT was removed in
+  /// Phase 3b; rows backfilled to OWNER in Phase 3a.
+  OWNER
   TENANT
+}
+
+/// Phase 2 — Tht. § 27(3), § 51/A: the three flavours of audit role.
+enum AuditorKind {
+  /// Tht. § 27(3) — tag of the számvizsgáló bizottság. Must be a
+  /// tulajdonostárs (enforced at the application layer).
+  COMMITTEE_MEMBER
+  /// Chair of the FB.
+  COMMITTEE_CHAIR
+  /// Tht. § 51/A — bejegyzett könyvvizsgáló (external auditor). Need
+  /// not be a tulajdonostárs.
+  REGISTERED_AUDITOR
+}
+
+/// Phase 5 — Tht. § 33/A, § 43/A: how an announcement reached a recipient.
+enum AnnouncementChannel {
+  /// § 33/A — email is legally equivalent to notice-board if the
+  /// recipient's address is on file. One DELIVERED EMAIL row is enough.
+  EMAIL
+  /// Supplementary push notification — not a legal-equivalent channel.
+  PUSH
+  /// Tht. § 43/A — physical noticeboard is still mandatory. One signed
+  /// PHYSICAL_BOARD row per announcement (no userId).
+  PHYSICAL_BOARD
+  /// Supplementary SMS — not a legal-equivalent channel; reserved for
+  /// emergency broadcasts.
+  SMS
+}
+
+/// Phase 5 — delivery status for an AnnouncementDelivery row.
+enum DeliveryStatus {
+  QUEUED
+  DELIVERED
+  FAILED
+  /// Recipient must explicitly acknowledge (for high-stakes decisions
+  /// like SZMSZ amendments — not auto-checked).
+  ACK_REQUIRED
+}
+
+/// Phase 5 — NAIH guidance: posting arrears + names publicly is
+/// forbidden. Two compliant modes only.
+enum ArrearsDisclosureMode {
+  /// Default — visible only at közgyűlés or to the named owner. No
+  /// public posting, no public-distributable PDF.
+  INTERNAL_ONLY
+  /// Sealed-envelope ("zárt küldemény") distribution to each owner;
+  /// names allowed since each envelope is addressed.
+  CLOSED_DELIVERY
 }
 
 enum UnitRelationship {
@@ -146,6 +204,83 @@ model Plan {
   isActive            Boolean        @default(true)
   createdAt           DateTime       @default(now())
   subscriptions       Subscription[]
+  /// Superadmin feature console — which features this plan includes.
+  planFeatures        PlanFeature[]
+}
+
+// ─── Superadmin Feature Management ────────────────────────────────────────────
+// Plan: docs/plans/2026-06-23-superadmin-feature-management.md
+// Feature *slugs* + dependencies are code-owned (src/lib/features.ts); the
+// Feature table mirrors them (synced by prisma/sync-features.ts) and carries
+// editable display metadata. Assignment (plan / flag / building override) lives
+// here and is what SUPER_ADMIN edits.
+
+model Feature {
+  id          String   @id @default(cuid())
+  /// Mirrors src/lib/features.ts — NEVER edited from the UI.
+  slug        String   @unique
+  /// Slug prefix: voting | finance | maintenance | ...
+  module      String
+  /// Display name — editable. (UI currently reads i18n; DB is the future source.)
+  name        String
+  description String?
+  sortOrder   Int      @default(0)
+  /// Retire a feature without deleting rows (preserves overrides/history).
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  planFeatures      PlanFeature[]
+  flag              FeatureFlag?
+  buildingOverrides BuildingFeatureOverride[]
+
+  @@index([module])
+}
+
+model PlanFeature {
+  id        String  @id @default(cuid())
+  planId    String
+  plan      Plan    @relation(fields: [planId], references: [id], onDelete: Cascade)
+  featureId String
+  feature   Feature @relation(fields: [featureId], references: [id], onDelete: Cascade)
+  enabled   Boolean @default(false)
+
+  @@unique([planId, featureId])
+  @@index([planId])
+}
+
+enum FeatureFlagState {
+  PER_PLAN
+  FORCE_ON
+  KILL_SWITCH
+}
+
+model FeatureFlag {
+  id          String           @id @default(cuid())
+  featureId   String           @unique
+  feature     Feature          @relation(fields: [featureId], references: [id], onDelete: Cascade)
+  state       FeatureFlagState @default(PER_PLAN)
+  note        String?
+  updatedById String?
+  updatedAt   DateTime         @updatedAt
+}
+
+model BuildingFeatureOverride {
+  id          String   @id @default(cuid())
+  buildingId  String
+  building    Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  featureId   String
+  feature     Feature  @relation(fields: [featureId], references: [id], onDelete: Cascade)
+  /// true = force-grant, false = force-revoke.
+  grant       Boolean
+  reason      String?
+  /// null = permanent. Resolution ignores expired rows even before pruning.
+  expiresAt   DateTime?
+  createdById String?
+  createdAt   DateTime @default(now())
+
+  @@unique([buildingId, featureId])
+  @@index([buildingId])
 }
 
 model Subscription {
@@ -157,6 +292,8 @@ model Subscription {
   planId                String
   plan                  Plan               @relation(fields: [planId], references: [id])
   trialEndsAt           DateTime?
+  readOnlyAt            DateTime?
+  archivedAt            DateTime?
   subscriptionStatus    SubscriptionStatus @default(TRIALING)
   ownerId               String
   owner                 User               @relation("SubscriptionOwner", fields: [ownerId], references: [id])
@@ -207,33 +344,245 @@ model Building {
   subscription         Subscription?          @relation(fields: [subscriptionId], references: [id])
   invitationExpiryHours Int                   @default(168)
   isFrozen             Boolean                @default(false)
+
+  // Phase 4 — denormalized counts for threshold checks. Refreshed by
+  // refreshBuildingThresholds() in src/lib/thresholds.ts (called from
+  // unit CRUD + nightly worker for cashflow).
+  totalUnits                      Int       @default(0)
+  annualCashflowHUF               BigInt    @default(0)
+  // Tht. § 27(3) — committee mandatory above 25 lakás.
+  requiresAuditCommittee          Boolean   @default(false)
+  // Tht. § 51/A — registered auditor mandatory above 50 units OR above 20M HUF cashflow.
+  requiresExternalAuditor         Boolean   @default(false)
+  // Tht. § 55 — assembly may compel professional manager above 6 units.
+  requiresProfessionalManager     Boolean   @default(false)
+  // Tht. § 13(2) — SZMSZ required for buildings of 7+ units.
+  szmszRequired                   Boolean   @default(false)
+
+  // Tht. § 55/A–D — földhivatal officer registry. Deadline extended by
+  // 2025. évi LXXXVIII. tv. to 2026-10-31. Unregistered képviselő is
+  // invalid representation against third parties after the deadline.
+  representativeRegisteredAt      DateTime?
+  representativeRegistryDeadline  DateTime  @default(dbgenerated("'2026-10-31 23:59:59+02'::timestamptz"))
+
+  /// Phase 5 — NAIH guidance forbids posting arrears + names publicly.
+  /// Default INTERNAL_ONLY means the data is visible only at közgyűlés
+  /// or to the named owner. CLOSED_DELIVERY allows sealed-envelope
+  /// distribution. No PUBLIC option exists — that's illegal under NAIH.
+  arrearsDisclosureMode    ArrearsDisclosureMode  @default(INTERNAL_ONLY)
+
   units                Unit[]
   userBuildings        UserBuilding[]
-  announcements        Announcement[]
-  forumCategories      ForumCategory[]
+  /// Phase 2 — Tht. § 27(3), § 51/A: audit committee members + external auditor.
+  auditorMemberships   AuditorMembership[]
+  /// Phase 5 — Tht. § 25 building cameras + NAIH 15-day retention.
+  cameras              BuildingCamera[]
+  channels             Channel[]
   complaints           Complaint[]
+  complaintCategories  ComplaintCategory[]
   accounts             Account[]
   maintenanceTickets   MaintenanceTicket[]
   scheduledMaintenance ScheduledMaintenance[]
   meetings             Meeting[]
+  votes                Vote[]
   documentCategories   DocumentCategory[]
   invitations          Invitation[]
+  tasks                Task[]
+  pendingAgendaItems   PendingAgendaItem[]
+  auditLogs            AuditLog[]
+  generatedReports     GeneratedReport[]
+  /// Superadmin feature console — per-building feature grant/revoke overrides.
+  featureOverrides     BuildingFeatureOverride[]
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
 }
 
 model UserBuilding {
-  id         String       @id @default(cuid())
-  user       User         @relation(fields: [userId], references: [id])
-  userId     String
-  building   Building     @relation(fields: [buildingId], references: [id])
-  buildingId String
-  role       BuildingRole @default(RESIDENT)
-  isActive   Boolean      @default(true)
-  createdAt  DateTime     @default(now())
+  id          String       @id @default(cuid())
+  user        User         @relation(fields: [userId], references: [id])
+  userId      String
+  building    Building     @relation(fields: [buildingId], references: [id])
+  buildingId  String
+  role        BuildingRole @default(OWNER)
+  isActive    Boolean      @default(true)
+  /// Phase 1 — Tht. § 27(2)–(3); marks the sole közös képviselő or the
+  /// chair of the intézőbizottság. At most one per building (enforced
+  /// by a partial unique index in migration SQL).
+  isChair                     Boolean   @default(false)
+  /// Phase 1 — Tht. § 52, § 54; marks a professional/business manager
+  /// (üzletszerű kezelő). Tracked, not enforced, until Phase 4 banners
+  /// flag buildings >6 units that compelled professional management.
+  isProfessional              Boolean   @default(false)
+  /// Optional pointer to a Document holding accreditation evidence (OKJ
+  /// szakképesítés). Only meaningful when isProfessional = true.
+  accreditationDocumentId     String?
+  /// Set by ADMIN when accreditation evidence is reviewed.
+  accreditationVerifiedAt     DateTime?
+  accreditationVerifiedById   String?
+  accreditationVerifiedBy     User?     @relation("AccreditationVerifier", fields: [accreditationVerifiedById], references: [id])
+  permissions UserBuildingPermission[]
+  resignations BoardResignation[]
+  createdAt   DateTime     @default(now())
 
   @@unique([userId, buildingId])
   @@index([buildingId])
+}
+
+/// Phase 2 — Tht. § 27(3) audit committee + § 51/A external auditor.
+///
+/// Separate from UserBuilding so a building keeps a history of past
+/// auditors (endedAt) and one user can serve in different capacities
+/// across multiple buildings. Members of the FB must be tulajdonostárs
+/// — enforced at the application layer (POST endpoint validates that
+/// the user has a UnitUser{ relationship: OWNER } for the building when
+/// kind is COMMITTEE_MEMBER or COMMITTEE_CHAIR). REGISTERED_AUDITOR
+/// need not be an owner.
+model AuditorMembership {
+  id          String      @id @default(cuid())
+  user        User        @relation("AuditorMember", fields: [userId], references: [id])
+  userId      String
+  building    Building    @relation(fields: [buildingId], references: [id])
+  buildingId  String
+  kind        AuditorKind
+  startedAt   DateTime    @default(now())
+  endedAt     DateTime?
+  createdAt   DateTime    @default(now())
+
+  @@index([buildingId, kind])
+  @@index([userId])
+}
+
+/// Phase 5 — Tht. § 33/A, § 40(3), § 43/A: delivery proof for announcements.
+///
+/// One row per (announcement, recipient, channel). The plan's original
+/// schema referenced a non-existent `Announcement` model; in this app
+/// announcements live as `ChannelMessage` rows inside per-building
+/// ANNOUNCEMENT channels, so this row links to `ChannelMessage`.
+///
+/// For PHYSICAL_BOARD, one row per announcement signed by the képviselő
+/// (no userId — captures the timestamped fact of posting). For EMAIL /
+/// PUSH / SMS, one row per recipient with the external message ID.
+///
+/// Compliance rules:
+/// - § 33/A — email is legally equivalent when at least one DELIVERED
+///   EMAIL row exists for a recipient whose email is on file.
+/// - § 40(3) — eight-day deadline: a worker flags messages with no
+///   DELIVERED rows after 8 days.
+model AnnouncementDelivery {
+  id              String              @id @default(cuid())
+  message         ChannelMessage      @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  messageId       String
+  user            User?               @relation("AnnouncementRecipient", fields: [userId], references: [id])
+  userId          String?
+  channel         AnnouncementChannel
+  /// External provider message-id (mail server, push receipt, SMS gateway).
+  externalId      String?
+  status          DeliveryStatus      @default(QUEUED)
+  deliveredAt     DateTime?
+  errorMessage    String?
+  createdAt       DateTime            @default(now())
+
+  @@index([messageId, status])
+  @@index([userId])
+}
+
+/// Phase 5 — Tht. § 25 building camera install + NAIH 15-day retention.
+///
+/// Install requires a passed TWO_THIRDS vote against *total* shares
+/// AND a privacy notice document on file. Enforced at the install API
+/// (separate route work).
+model BuildingCamera {
+  id                 String     @id @default(cuid())
+  building           Building   @relation(fields: [buildingId], references: [id])
+  buildingId         String
+  /// Human-readable location. Tht. § 25 — must not face apartment doors
+  /// or sanitary spaces. Verified at install time, not enforced by schema.
+  location           String
+  /// Pointer to the Vote that authorised the install. Null only for
+  /// pre-Phase-5 backfill rows (none in seed).
+  installedByVoteId  String?
+  installedAt        DateTime   @default(now())
+  /// NAIH guidance: maximum 15 days for ordinary buildings.
+  retentionDays      Int        @default(15)
+  isActive           Boolean    @default(true)
+  accessLogs         CameraAccessLog[]
+
+  @@index([buildingId])
+}
+
+/// Phase 5 — every camera review must log reviewer + purpose
+/// (Tht. § 25 + NAIH). The footage storage purge driver lives in
+/// src/lib/camera-retention.ts; this table is the audit trail.
+model CameraAccessLog {
+  id          String          @id @default(cuid())
+  camera      BuildingCamera  @relation(fields: [cameraId], references: [id])
+  cameraId    String
+  reviewer    User            @relation("CameraReviewer", fields: [reviewerId], references: [id])
+  reviewerId  String
+  /// Required — Tht. § 25 mandates the purpose for every review.
+  reason      String
+  reviewedAt  DateTime        @default(now())
+
+  @@index([cameraId, reviewedAt])
+  @@index([reviewerId])
+}
+
+/// Catalog of permission keys that board members can hold. Seeded with a
+/// fixed set; new keys added via migration only.
+model BoardPermission {
+  id          String                   @id @default(cuid())
+  /// Stable key like "financial_full" — used by code paths.
+  key         String                   @unique
+  /// i18n key for display label (lookup in the UI).
+  labelKey    String
+  /// Optional i18n key for the description small print.
+  descriptionKey String?
+  /// Display sort order.
+  sortOrder   Int                      @default(0)
+  grants      UserBuildingPermission[]
+  createdAt   DateTime                 @default(now())
+}
+
+/// Per-user-per-building grant of a board permission.
+model UserBuildingPermission {
+  id              String          @id @default(cuid())
+  userBuilding    UserBuilding    @relation(fields: [userBuildingId], references: [id], onDelete: Cascade)
+  userBuildingId  String
+  permission      BoardPermission @relation(fields: [permissionId], references: [id])
+  permissionId    String
+  /// When the grant was given (may differ from userBuilding.createdAt).
+  grantedAt       DateTime        @default(now())
+
+  @@unique([userBuildingId, permissionId])
+  @@index([userBuildingId])
+}
+
+enum ResignationStatus {
+  PENDING
+  ACKNOWLEDGED
+  WITHDRAWN
+}
+
+/// Board member resignation submitted on the profile page. Goes into the
+/// PENDING state and surfaces as an obligatory agenda item on the next
+/// scheduled meeting. Role demotion happens when a board member acknowledges.
+model BoardResignation {
+  id              String            @id @default(cuid())
+  userBuilding    UserBuilding      @relation(fields: [userBuildingId], references: [id])
+  userBuildingId  String
+  status          ResignationStatus @default(PENDING)
+  /// Free-text reason from the resigning board member (optional).
+  reason          String?
+  /// Pending-agenda link — the resignation surfaces as a mandatory
+  /// agenda item on the next közgyűlés. The attached meeting (if any)
+  /// lives on PendingAgendaItem.
+  pendingAgenda   PendingAgendaItem?
+  acknowledgedAt  DateTime?
+  acknowledgedById String?
+  submittedAt     DateTime          @default(now())
+
+  @@index([userBuildingId])
+  @@index([status])
 }
 
 model UnitUser {
@@ -244,6 +593,19 @@ model UnitUser {
   unitId           String
   relationship     UnitRelationship @default(OWNER)
   isPrimaryContact Boolean          @default(false)
+  /// Phase 3a — UX hint only. Tht. has no "rezidens" vs "távoli
+  /// tulajdonos" legal distinction (§ 16, § 38); we use this flag to
+  /// decide which UI defaults to show, never to gate privileges.
+  livesAtUnit      Boolean          @default(false)
+  /// Phase 5 — Tht. § 22(2) + GDPR Art. 6. Tenants (bérlő) must
+  /// affirmatively consent to share phone/email beyond the bare-minimum
+  /// name + presence the statute requires. Null = no consent on file;
+  /// SaaS must retain only name and unit presence for that user.
+  contactConsentAt   DateTime?
+  /// Audit trail for the consent basis: "explicit" (user opt-in) or
+  /// "legitimate-interest" (rare, only when a building has a documented
+  /// legitimate-interest assessment). Used for GDPR Art. 5(2) records.
+  contactConsentMode String?
   createdAt        DateTime         @default(now())
 
   @@unique([userId, unitId])
@@ -254,6 +616,10 @@ model Unit {
   id             String   @id @default(cuid())
   number         String
   floor          Int
+  /// Stairwell label (e.g. "A", "B"). Null for single-stairwell buildings.
+  stairwell      String?
+  /// Position within the floor (1-based, left-to-right). Null = unspecified.
+  positionOnFloor Int?
   ownershipShare Decimal  @db.Decimal(5, 4)
   size           Decimal  @db.Decimal(8, 2)
   building       Building @relation(fields: [buildingId], references: [id])
@@ -261,11 +627,14 @@ model Unit {
   unitUsers      UnitUser[]
   monthlyCharges MonthlyCharge[]
   ballots        Ballot[]
+  attendances    MeetingAttendance[]
   invitations    Invitation[]
+  complaintsAgainst Complaint[]   @relation("ComplaintRespondent")
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   @@unique([buildingId, number])
+  @@index([buildingId, stairwell, floor, positionOnFloor])
 }
 
 model User {
@@ -276,36 +645,80 @@ model User {
   language                String               @default("hu")
   notificationPreferences Json                 @default("{}")
   isActive                Boolean              @default(true)
+  emailVerifiedAt         DateTime?
+  /// Optional contact phone number.
+  phone                   String?
+  /// Optional secondary email (e.g. work address). Verification flow optional.
+  secondaryEmail          String?
+  secondaryEmailVerifiedAt DateTime?
+  /// Optional birth date (date-only stored as DateTime).
+  birthDate               DateTime?
+  /// Optional permanent address (free text, single line).
+  permanentAddress        String?
+  /// Optional mailing address. Null = same as permanentAddress.
+  mailingAddress          String?
+  /// Soft-delete tombstone — populated when the user requests account erasure.
+  deletedAt               DateTime?
+  /// Set when PII fields were anonymized (independent of deletedAt for audit).
+  anonymizedAt            DateTime?
+  /// TOTP secret (base32). Stored at-rest; consider field-level encryption if
+  /// the threat model warrants it.
+  totpSecret              String?
+  /// When the user successfully enrolled in 2FA. Required = totpSecret present.
+  totpEnrolledAt          DateTime?
+  backupCodes             BackupCode[]
+  sessions                UserSession[]
   createdAt               DateTime             @default(now())
   updatedAt               DateTime             @updatedAt
   auditLogs               AuditLog[]
   notifications           Notification[]
   passwordResetTokens     PasswordResetToken[]
-  announcements           Announcement[]              @relation("AnnouncementAuthor")
-  announcementReads       AnnouncementRead[]
-  forumTopics             ForumTopic[]                @relation("ForumTopicAuthor")
-  forumReplies            ForumReply[]                @relation("ForumReplyAuthor")
-  conversationParticipants ConversationParticipant[]
-  sentMessages            Message[]                   @relation("MessageSender")
+  emailVerificationTokens EmailVerificationToken[]
+  tasksCreated            Task[]                      @relation("TaskCreator")
+  tasksAssigned           Task[]                      @relation("TaskAssignee")
+  channelsCreated         Channel[]                   @relation("ChannelCreator")
+  channelMemberships      ChannelMember[]
+  channelMessages         ChannelMessage[]            @relation("ChannelMessageAuthor")
+  messageReads            MessageRead[]
+  pollVotes               PollVote[]
+  messageReactions        MessageReaction[]
+  messageMentions         MessageMention[]
   complaints              Complaint[]                 @relation("ComplaintAuthor")
   complaintNotes          ComplaintNote[]             @relation("ComplaintNoteAuthor")
+  complaintStatusEvents   ComplaintStatusEvent[]      @relation("ComplaintStatusActor")
+  pendingAgendaItems      PendingAgendaItem[]         @relation("PendingAgendaCreator")
+  pendingAgendaResolved   PendingAgendaItem[]         @relation("PendingAgendaResolver")
   ledgerEntries           LedgerEntry[]               @relation("LedgerEntryCreator")
   maintenanceTickets      MaintenanceTicket[]         @relation("MaintenanceTickets")
   ticketComments          TicketComment[]             @relation("TicketComments")
   contractorRatings       ContractorRating[]          @relation("ContractorRatings")
   meetingsCreated         Meeting[]                   @relation("MeetingCreator")
+  minutesEdited           Meeting[]                   @relation("MinutesEditor")
   meetingRsvps            MeetingRsvp[]
   votesCreated            Vote[]                      @relation("VoteCreator")
   ballots                 Ballot[]                    @relation("BallotVoter")
+  ballotsCastOnBehalf     Ballot[]                    @relation("BallotCaster")
   proxiesGranted          ProxyAssignment[]           @relation("ProxyGrantor")
   proxiesReceived         ProxyAssignment[]           @relation("ProxyGrantee")
   documents               Document[]                  @relation("DocumentUploader")
   documentVersions        DocumentVersion[]           @relation("DocumentVersionUploader")
   userBuildings           UserBuilding[]
+  /// Phase 1 — Tht. § 52: ADMIN-reviewed accreditation evidence approvals.
+  accreditationVerifications UserBuilding[] @relation("AccreditationVerifier")
+  /// Phase 2 — Tht. § 27(3), § 51/A: this user's audit-committee /
+  /// external-auditor memberships across all buildings.
+  auditorMemberships      AuditorMembership[] @relation("AuditorMember")
+  /// Phase 5 — Tht. § 33/A delivery rows where this user is the recipient.
+  announcementDeliveries  AnnouncementDelivery[] @relation("AnnouncementRecipient")
+  /// Phase 5 — Tht. § 25 NAIH-required camera access audit trail.
+  cameraReviews           CameraAccessLog[]      @relation("CameraReviewer")
   unitUsers               UnitUser[]
   pushSubscriptions       PushSubscription[]
   ownedSubscriptions      Subscription[]          @relation("SubscriptionOwner")
   invitationsSent         Invitation[]             @relation("InvitationSender")
+  generatedReports        GeneratedReport[]
+  minutesSignatures       MeetingMinutesSignature[]
+  marketplacePublications MarketplacePublication[] @relation("MarketplacePublisher")
 }
 
 model AuditLog {
@@ -315,6 +728,11 @@ model AuditLog {
   action     String
   user       User     @relation(fields: [userId], references: [id])
   userId     String
+  /// Building scope. Null for system-level events that aren't tied to a
+  /// specific building. The audit-log GET filters to (caller's active
+  /// building OR null) so admins can't see cross-building rows.
+  building   Building? @relation(fields: [buildingId], references: [id])
+  buildingId String?
   oldValue   Json?
   newValue   Json?
   reason     String?
@@ -323,12 +741,19 @@ model AuditLog {
   @@index([entityType, entityId])
   @@index([userId])
   @@index([createdAt])
+  @@index([buildingId])
 }
 
 model Notification {
   id         String   @id @default(cuid())
-  user       User     @relation(fields: [userId], references: [id])
-  userId     String
+  /// Condo-side recipient. Exactly one of `userId` / `contractorUserId`
+  /// is set, enforced in app code.
+  user       User?    @relation(fields: [userId], references: [id])
+  userId     String?
+  /// Contractor-side recipient. Lives in the parallel auth tree, so we
+  /// need a discrete FK rather than reusing `User`.
+  contractorUser   ContractorUser? @relation(fields: [contractorUserId], references: [id])
+  contractorUserId String?
   type       String
   title      String
   body       String
@@ -338,6 +763,7 @@ model Notification {
   createdAt  DateTime @default(now())
 
   @@index([userId, isRead])
+  @@index([contractorUserId, isRead])
   @@index([createdAt])
 }
 
@@ -351,141 +777,436 @@ model PasswordResetToken {
   createdAt DateTime  @default(now())
 }
 
-// ─── Communication Module ────────────────────────────────────────────────────
-
-model Announcement {
-  id             String           @id @default(cuid())
-  title          String
-  body           String           @db.Text
-  author         User             @relation("AnnouncementAuthor", fields: [authorId], references: [id])
-  authorId       String
-  targetAudience TargetAudience
-  attachments    Json             @default("[]")
-  building       Building         @relation(fields: [buildingId], references: [id])
-  buildingId     String
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  reads          AnnouncementRead[]
-
-  @@index([createdAt])
-  @@index([authorId])
-  @@index([buildingId])
+enum TaskStatus {
+  OPEN
+  DONE
+  ARCHIVED
 }
 
-model AnnouncementRead {
-  id             String       @id @default(cuid())
-  user           User         @relation(fields: [userId], references: [id])
-  userId         String
-  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
-  announcementId String
-  readAt         DateTime     @default(now())
-
-  @@unique([userId, announcementId])
+enum TaskPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
 }
 
-model ForumCategory {
+/// Explicit follow-up reminders attached to a building. The dashboard's
+/// "Teendőim" panel UNIONs these rows with derived signals from other modules
+/// (overdue charges, unassigned tickets, etc.) — see lib/followups.ts.
+model Task {
+  id                 String       @id @default(cuid())
+  building           Building     @relation(fields: [buildingId], references: [id])
+  buildingId         String
+  title              String
+  body               String?
+  dueDate            DateTime?
+  priority           TaskPriority @default(NORMAL)
+  status             TaskStatus   @default(OPEN)
+  assignee           User?        @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  assigneeId         String?
+  createdBy          User         @relation("TaskCreator", fields: [createdById], references: [id])
+  createdById        String
+  /// Optional reference to the source entity (e.g. "MaintenanceTicket"+id).
+  /// Lets the UI deep-link from a task back to its source module item.
+  sourceEntityType   String?
+  sourceEntityId     String?
+  completedAt        DateTime?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  @@index([buildingId, status, dueDate])
+  @@index([assigneeId, status])
+}
+
+model EmailVerificationToken {
+  id         String    @id @default(cuid())
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+/// Per-device session row backing JWT cookies. The cookie carries `tokenId`
+/// in its JWT payload; the auth `jwt` callback validates the row exists and
+/// is not revoked on every request, allowing remote logout.
+model UserSession {
+  id           String    @id @default(cuid())
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String
+  /// Random opaque token-id; matched against the JWT's `tokenId` claim.
+  tokenId      String    @unique
+  /// Raw User-Agent string. Capped at 512 chars on insert.
+  userAgent    String?
+  /// IP truncated to /24 (v4) or /48 (v6) for privacy + audit balance.
+  ipMasked     String?
+  /// Best-guess device label, e.g. "MacBook Pro · Chrome 128 · macOS".
+  deviceLabel  String?
+  /// Optional geo (city/country) — populated only if a lookup is available.
+  city         String?
+  country      String?
+  createdAt    DateTime  @default(now())
+  lastActiveAt DateTime  @default(now())
+  /// Set when the session is revoked (user clicks Lezárás or signs out).
+  revokedAt    DateTime?
+
+  @@index([userId])
+  @@index([revokedAt])
+}
+
+/// Single-use recovery codes generated at 2FA enrollment. Stored hashed.
+/// Each row's usedAt flips to a timestamp the moment its code is redeemed,
+/// so the same code cannot be re-used.
+model BackupCode {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  /// SHA-256 hash of the user-facing code.
+  codeHash  String   @unique
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+// ─── Communication Module v2 (unified) ─────────────────────────────────────
+
+enum ChannelKind {
+  /// Building-wide official announcements ("Hirdetőtábla").
+  ANNOUNCEMENT
+  /// Threaded discussion ("Kérdezz-felelek" / forum-style).
+  TOPIC
+  /// Direct message between exactly two users.
+  DM
+  /// Group DM among 3+ users.
+  GROUP_DM
+  /// Board-only channel.
+  BOARD
+  /// Channel for talking to a partner contractor.
+  PARTNER
+}
+
+enum MessageKind {
+  /// Long-form announcement-style post (has title + body).
+  POST
+  /// Conversational chat message.
+  CHAT
+  /// Poll message body — payload lives in the inline poll fields below.
+  POLL
+  /// System event ("X started a poll", "Y joined the channel").
+  SYSTEM
+}
+
+/// A unified communication channel: announcements, Q&A, DMs, board chat,
+/// partner threads. Replaces the old ForumCategory / Conversation models;
+/// announcement broadcasts live as messages inside the per-building
+/// ANNOUNCEMENT channel.
+model Channel {
   id          String       @id @default(cuid())
-  name        String
-  description String?
-  sortOrder   Int          @default(0)
   building    Building     @relation(fields: [buildingId], references: [id])
   buildingId  String
+  kind        ChannelKind
+  /// Display name. Null for ANNOUNCEMENT (always "Hirdetőtábla") and DMs.
+  name        String?
+  description String?
+  /// True when membership is restricted (board-only, partner channels).
+  isPrivate   Boolean      @default(false)
+  /// Officially-sanctioned channel — emoji marker / restrictions in UI.
+  isOfficial  Boolean      @default(false)
+  createdBy   User?        @relation("ChannelCreator", fields: [createdById], references: [id])
+  createdById String?
+  members     ChannelMember[]
+  messages    ChannelMessage[]
   createdAt   DateTime     @default(now())
-  topics      ForumTopic[]
+  updatedAt   DateTime     @updatedAt
 
-  @@unique([buildingId, name])
-  @@index([buildingId])
+  @@index([buildingId, kind])
 }
 
-model ForumTopic {
-  id             String        @id @default(cuid())
-  title          String
-  body           String        @db.Text
-  category       ForumCategory @relation(fields: [categoryId], references: [id])
-  categoryId     String
-  author         User          @relation("ForumTopicAuthor", fields: [authorId], references: [id])
-  authorId       String
-  isPinned       Boolean       @default(false)
-  isLocked       Boolean       @default(false)
-  lastActivityAt DateTime      @default(now())
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  replies        ForumReply[]
+model ChannelMember {
+  id        String   @id @default(cuid())
+  channel   Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  channelId String
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  /// Read pointer — most recent messageId the user has seen.
+  lastReadMessageId String?
+  /// True when this user is a moderator / channel admin.
+  isAdmin   Boolean  @default(false)
+  /// Timestamp the user joined the channel.
+  joinedAt  DateTime @default(now())
 
-  @@index([categoryId, lastActivityAt])
+  @@unique([channelId, userId])
+  @@index([userId])
+}
+
+model ChannelMessage {
+  id          String      @id @default(cuid())
+  channel     Channel     @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  channelId   String
+  author      User        @relation("ChannelMessageAuthor", fields: [authorId], references: [id])
+  authorId    String
+  kind        MessageKind @default(CHAT)
+  /// Title for POST messages.
+  title       String?
+  /// Markdown body (POST/CHAT).
+  body        String?     @db.Text
+  /// Audience targeting for posts: { type: "all" | "board" | "stairwell:A" }.
+  audience    Json?
+  /// Pinned to the top of its channel.
+  isPinned    Boolean     @default(false)
+  /// True for "vészriasztás" — fires SMS in addition to push, regardless of prefs.
+  isUrgent    Boolean     @default(false)
+  /// Reply chain (for chat replies + forum-style nested topics).
+  parent      ChannelMessage?  @relation("MessageReplies", fields: [parentId], references: [id])
+  parentId    String?
+  replies     ChannelMessage[] @relation("MessageReplies")
+  attachments MessageAttachment[]
+  reads       MessageRead[]
+  poll        Poll?
+  reactions   MessageReaction[]
+  mentions    MessageMention[]
+  /// Phase 5 — Tht. § 33/A delivery proof rows (one per recipient per channel).
+  deliveries  AnnouncementDelivery[]
+  /// Set when the message is edited.
+  editedAt    DateTime?
+  /// Soft-delete tombstone.
+  deletedAt   DateTime?
+  createdAt   DateTime    @default(now())
+
+  @@index([channelId, createdAt])
   @@index([authorId])
+  @@index([parentId])
+  @@index([isPinned])
 }
 
-model ForumReply {
-  id            String       @id @default(cuid())
-  body          String       @db.Text
-  topic         ForumTopic   @relation(fields: [topicId], references: [id], onDelete: Cascade)
-  topicId       String
-  author        User         @relation("ForumReplyAuthor", fields: [authorId], references: [id])
-  authorId      String
-  parentReply   ForumReply?  @relation("ReplyThread", fields: [parentReplyId], references: [id])
-  parentReplyId String?
-  childReplies  ForumReply[] @relation("ReplyThread")
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+/// Per-user read receipt for a single message. Used for the read-receipt
+/// grid on broadcast posts.
+model MessageRead {
+  id        String         @id @default(cuid())
+  message   ChannelMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  messageId String
+  user      User           @relation(fields: [userId], references: [id])
+  userId    String
+  readAt    DateTime       @default(now())
 
-  @@index([topicId, createdAt])
+  @@unique([messageId, userId])
+  @@index([userId])
 }
 
-model Conversation {
-  id           String                    @id @default(cuid())
-  type         ConversationType
-  name         String?
-  createdAt    DateTime                  @default(now())
-  updatedAt    DateTime                  @updatedAt
-  participants ConversationParticipant[]
-  messages     Message[]
+model MessageAttachment {
+  id        String         @id @default(cuid())
+  message   ChannelMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  messageId String
+  fileUrl   String
+  fileName  String
+  fileSize  Int
+  mimeType  String
+  createdAt DateTime       @default(now())
+
+  @@index([messageId])
 }
 
-model ConversationParticipant {
-  id             String       @id @default(cuid())
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  conversationId String
-  user           User         @relation(fields: [userId], references: [id])
-  userId         String
-  lastReadAt     DateTime     @default(now())
-  joinedAt       DateTime     @default(now())
+/// Inline poll attached to a ChannelMessage (kind=POLL). One poll per message.
+model Poll {
+  id          String         @id @default(cuid())
+  message     ChannelMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  messageId   String         @unique
+  question    String
+  /// Allow voters to pick more than one option.
+  allowMultiple Boolean      @default(false)
+  /// Auto-close at this date/time. Null = open until manually closed.
+  closesAt    DateTime?
+  /// Manually closed by the author or a board member.
+  closedAt    DateTime?
+  options     PollOption[]
+  votes       PollVote[]
+  createdAt   DateTime       @default(now())
 
-  @@unique([conversationId, userId])
+  @@index([messageId])
 }
 
-model Message {
-  id             String       @id @default(cuid())
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  conversationId String
-  sender         User         @relation("MessageSender", fields: [senderId], references: [id])
-  senderId       String
-  body           String       @db.Text
-  createdAt      DateTime     @default(now())
+model PollOption {
+  id        String     @id @default(cuid())
+  poll      Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  pollId    String
+  /// Display label.
+  label     String
+  /// Display order.
+  position  Int        @default(0)
+  votes     PollVote[]
 
-  @@index([conversationId, createdAt])
+  @@index([pollId])
+}
+
+model PollVote {
+  id        String     @id @default(cuid())
+  poll      Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  pollId    String
+  option    PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  optionId  String
+  user      User       @relation(fields: [userId], references: [id])
+  userId    String
+  createdAt DateTime   @default(now())
+
+  @@unique([pollId, optionId, userId])
+  @@index([userId])
+}
+
+/// Emoji reaction on a single message. One row per user per message.
+/// Reactions are upserted: re-clicking the same emoji removes it; clicking
+/// a different emoji replaces.
+model MessageReaction {
+  id        String         @id @default(cuid())
+  message   ChannelMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  messageId String
+  user      User           @relation(fields: [userId], references: [id])
+  userId    String
+  emoji     String
+  createdAt DateTime       @default(now())
+
+  @@unique([messageId, userId])
+  @@index([messageId])
+}
+
+/// @-mention of a user inside a ChannelMessage. One row per mentioned user.
+/// Created on send by parsing the body against channel members.
+model MessageMention {
+  id        String         @id @default(cuid())
+  message   ChannelMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  messageId String
+  user      User           @relation(fields: [userId], references: [id])
+  userId    String
+  createdAt DateTime       @default(now())
+
+  @@unique([messageId, userId])
+  @@index([userId])
 }
 
 model Complaint {
   id             String           @id @default(cuid())
   author         User             @relation("ComplaintAuthor", fields: [authorId], references: [id])
   authorId       String
-  category       ComplaintCategory
+  /// Optional title — resident-supplied. Body lives in description.
+  title          String?
   description    String           @db.Text
+  category       ComplaintCategory @relation(fields: [categoryId], references: [id])
+  categoryId     String
+  /// Optional unit being complained about.
+  respondentUnit Unit?            @relation("ComplaintRespondent", fields: [respondentUnitId], references: [id])
+  respondentUnitId String?
+  /// Pending-agenda link (set when status=ESCALATED). Source-of-truth for
+  /// the meeting attachment lives on PendingAgendaItem.
+  pendingAgenda  PendingAgendaItem?
   photos         Json             @default("[]")
-  isPrivate      Boolean          @default(false)
+  isPrivate      Boolean          @default(true)
   trackingNumber String           @unique
-  status         ComplaintStatus  @default(SUBMITTED)
+  status         ComplaintStatus  @default(REPORTED)
   building       Building         @relation(fields: [buildingId], references: [id])
   buildingId     String
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
   notes          ComplaintNote[]
+  statusEvents   ComplaintStatusEvent[]
 
   @@index([status])
   @@index([authorId])
   @@index([createdAt])
   @@index([buildingId])
+  @@index([categoryId])
+  @@index([respondentUnitId])
+}
+
+/// Per-building, board-managed taxonomy. Default rows have isDefault=true
+/// and cannot be deleted (only renamed or hidden via isActive=false).
+model ComplaintCategory {
+  id         String      @id @default(cuid())
+  building   Building    @relation(fields: [buildingId], references: [id])
+  buildingId String
+  /// Stable identifier for default categories ("noise", "parking", …).
+  /// Custom categories use a generated slug.
+  slug       String
+  name       String
+  /// Optional emoji icon shown next to the category name.
+  icon       String?
+  sortOrder  Int         @default(0)
+  /// True for built-in defaults (cannot be deleted, can be renamed).
+  isDefault  Boolean     @default(false)
+  /// Soft-toggle to hide a category without breaking historical rows.
+  isActive   Boolean     @default(true)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  complaints Complaint[]
+
+  @@unique([buildingId, slug])
+  @@index([buildingId, isActive])
+}
+
+/// Status-transition log for the mediation timeline. Auto-recorded on
+/// every complaint.status change.
+model ComplaintStatusEvent {
+  id          String          @id @default(cuid())
+  complaint   Complaint       @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  complaintId String
+  fromStatus  ComplaintStatus?
+  toStatus    ComplaintStatus
+  /// Who triggered the transition.
+  actor       User            @relation("ComplaintStatusActor", fields: [actorId], references: [id])
+  actorId     String
+  /// Optional free-text note for the transition (e.g. warning letter contents).
+  note        String?         @db.Text
+  createdAt   DateTime        @default(now())
+
+  @@index([complaintId, createdAt])
+}
+
+/// Cross-cutting "needs to be tabled at közgyűlés" queue.
+///
+/// Polymorphic source — exactly one of complaintId / resignationId is set
+/// per kind. Items start with attachedMeetingId=null; the board picks them
+/// off the queue when scheduling / editing a meeting. After the meeting,
+/// the board explicitly marks each item resolved with an optional note.
+model PendingAgendaItem {
+  id                String            @id @default(cuid())
+  building          Building          @relation(fields: [buildingId], references: [id])
+  buildingId        String
+  kind              PendingAgendaKind
+  /// Display title rendered in the meeting agenda + the pending inbox.
+  title             String
+  description       String?           @db.Text
+  /// Polymorphic source.
+  complaint         Complaint?        @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  complaintId       String?           @unique
+  resignation       BoardResignation? @relation(fields: [resignationId], references: [id], onDelete: Cascade)
+  resignationId     String?           @unique
+  createdBy         User              @relation("PendingAgendaCreator", fields: [createdById], references: [id])
+  createdById       String
+  /// Null = still queued. Set when the board attaches it to a meeting.
+  attachedMeeting   Meeting?          @relation(fields: [attachedMeetingId], references: [id])
+  attachedMeetingId String?
+  /// Free-text resolution captured when the board explicitly checks the
+  /// item off (typically after the meeting).
+  resolutionNote    String?           @db.Text
+  resolvedAt        DateTime?
+  resolvedBy        User?             @relation("PendingAgendaResolver", fields: [resolvedById], references: [id])
+  resolvedById      String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([buildingId, attachedMeetingId])
+  @@index([attachedMeetingId])
+  @@index([resolvedAt])
+}
+
+enum PendingAgendaKind {
+  /// Complaint escalated to közgyűlés for ratification.
+  COMPLAINT_ESCALATION
+  /// Board member resignation awaiting közgyűlés acknowledgement.
+  BOARD_RESIGNATION
 }
 
 model ComplaintNote {
@@ -513,11 +1234,21 @@ model MaintenanceTicket {
   location              String?
   urgency               Urgency
   status                TicketStatus        @default(SUBMITTED)
+  /// Hours until SLA breach, set at creation. null = no SLA tracking.
+  slaHours              Int?
   trackingNumber        String              @unique
   assignedContractorId  String?
   assignedContractor    Contractor?         @relation(fields: [assignedContractorId], references: [id])
+  /// New marketplace-awarded contractor (separate from the legacy
+  /// `assignedContractor` directory FK, which we keep for historical rows).
+  awardedContractorId   String?
+  awardedContractor     ContractorOrg?      @relation("AwardedContractor", fields: [awardedContractorId], references: [id])
+  publication           MarketplacePublication?
   building              Building            @relation(fields: [buildingId], references: [id])
   buildingId            String
+  /// Set when this ticket was auto-materialized from a scheduled entry.
+  scheduledMaintenance  ScheduledMaintenance? @relation("ScheduledTickets", fields: [scheduledMaintenanceId], references: [id])
+  scheduledMaintenanceId String?
   comments              TicketComment[]
   attachments           TicketAttachment[]
   ratings               ContractorRating[]
@@ -528,6 +1259,7 @@ model MaintenanceTicket {
   @@index([reporterId])
   @@index([createdAt])
   @@index([buildingId])
+  @@index([scheduledMaintenanceId])
 }
 
 model TicketComment {
@@ -553,39 +1285,328 @@ model TicketAttachment {
 }
 
 model Contractor {
-  id          String             @id @default(cuid())
-  name        String
-  specialty   String
-  contactInfo String
-  taxId       String?
-  tickets     MaintenanceTicket[]
-  ratings     ContractorRating[]
-  createdAt   DateTime           @default(now())
+  id              String             @id @default(cuid())
+  name            String
+  specialty       String
+  contactInfo     String
+  taxId           String?
+  tickets         MaintenanceTicket[]
+  ratings         ContractorRating[]
+  /// Back-link if this directory row has been claimed by a registered
+  /// `ContractorOrg`. Null = legacy unclaimed.
+  contractorOrg   ContractorOrg?
+  /// Phase 5 — GDPR Art. 28. Pointer to the Data Processing Agreement
+  /// (adatfeldolgozói szerződés) stored as a Document. Ticket assignment
+  /// is blocked for contractors with no DPA on file.
+  dataProcessingAgreementDocumentId String?
+  dataProcessingAgreementDocument   Document?  @relation("ContractorDPA", fields: [dataProcessingAgreementDocumentId], references: [id])
+  createdAt       DateTime           @default(now())
+}
+
+// ─── Contractor Marketplace ─────────────────────────────────────────────────
+
+enum ContractorPlan {
+  FREE
+  PRO
+  PREMIUM
+}
+
+enum ContractorOrgStatus {
+  PENDING_VERIFICATION
+  ACTIVE
+  SUSPENDED
+  DELISTED
+}
+
+enum ContractorUserRole {
+  OWNER
+  STAFF
+}
+
+/// A vendor business signing up to bid on `MaintenanceTicket`s published
+/// to the marketplace. Independent of `UserBuilding` — orgs operate
+/// across many condos.
+model ContractorOrg {
+  id              String                  @id @default(cuid())
+  name            String
+  /// HU tax id (adószám), validated at onboarding.
+  taxId           String                  @unique
+  /// Filled when the NAV adószám-validation API confirms registration.
+  navConfirmedAt  DateTime?
+  /// JSON list of specialty slugs ("plumbing", "electrical", "elevator", ...).
+  specialties     Json                    @default("[]")
+  /// JSON list of HU county / Budapest district codes the org will travel to.
+  regions         Json                    @default("[]")
+  description     String?                 @db.Text
+  websiteUrl      String?
+  logoUrl         String?
+  documents       ContractorDocument[]
+  /// Stripe customer for contractor-side billing.
+  stripeCustomerId String?                @unique
+  /// Stripe subscription id when org is on PRO or PREMIUM.
+  stripeSubscriptionId String?            @unique
+  plan            ContractorPlan          @default(FREE)
+  /// "TRIALING" | "ACTIVE" | "PAST_DUE" | "CANCELLED".
+  planStatus      String                  @default("ACTIVE")
+  /// When the current Pro trial ends. After this we lazily downgrade to FREE.
+  trialEndsAt     DateTime?
+  /// Current Stripe billing period end — surfaced in the billing UI.
+  currentPeriodEndsAt DateTime?
+  status          ContractorOrgStatus     @default(PENDING_VERIFICATION)
+  users           ContractorUser[]
+  bids            MarketplaceBid[]
+  awardedTickets  MaintenanceTicket[]     @relation("AwardedContractor")
+  ratings         ContractorRating[]
+  messages        MarketplaceMessage[]    @relation("ContractorOrgMessages")
+  /// One-to-one back-link to the legacy `Contractor` directory row when
+  /// a board has worked with this contractor before signing up.
+  legacyContractorId String?              @unique
+  legacyContractor   Contractor?          @relation(fields: [legacyContractorId], references: [id])
+  /// Marker the user accepted the DPA + ToS during onboarding.
+  dpaSignedAt     DateTime?
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+
+  @@index([status])
+  @@index([plan])
+}
+
+/// Login identity scoped to a contractor org. Lives in a parallel auth
+/// tree from `User` — one email belongs to either tree, never both.
+model ContractorUser {
+  id              String              @id @default(cuid())
+  org             ContractorOrg       @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  orgId           String
+  email           String              @unique
+  passwordHash    String
+  name            String
+  phone           String?
+  role            ContractorUserRole  @default(OWNER)
+  emailVerifiedAt DateTime?
+  isActive        Boolean             @default(true)
+  notificationPreferences Json        @default("{}")
+  notifications   Notification[]
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  @@index([orgId])
+}
+
+/// Insurance / license / reference docs uploaded by the contractor.
+model ContractorDocument {
+  id        String         @id @default(cuid())
+  org       ContractorOrg  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  orgId     String
+  /// "insurance" | "license" | "reference" | "other".
+  kind      String
+  storageKey String
+  fileName  String
+  /// Optional expiry — surfaced to condos as "valid through".
+  validUntil DateTime?
+  createdAt DateTime       @default(now())
+
+  @@index([orgId, kind])
+}
+
+enum MarketplacePublishStatus {
+  DRAFT
+  OPEN
+  AWARDED
+  CLOSED
+}
+
+/// Scrubbed projection of a `MaintenanceTicket` exposed to the
+/// marketplace. The contractor side ONLY reads this row — never the
+/// underlying ticket — so PII can't leak by accident.
+model MarketplacePublication {
+  id           String                    @id @default(cuid())
+  ticket       MaintenanceTicket         @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  ticketId     String                    @unique
+  status       MarketplacePublishStatus  @default(OPEN)
+  /// Frozen at publish time — the listing service does NOT re-read.
+  scrubbedTitle       String
+  scrubbedDescription String                @db.Text
+  category     String
+  urgency      String
+  city         String
+  zip          String
+  /// "<100K", "100K-500K", "500K-2M", "2M+", or null.
+  budgetBand   String?
+  deadlineAt   DateTime?
+  /// JSON list of specialty slugs this publication accepts bids for.
+  specialties  Json                       @default("[]")
+  /// Per-publisher privacy toggles, decided at publish time.
+  revealAddressOnAward Boolean             @default(true)
+  revealUnitOnAward    Boolean             @default(false)
+  revealOwnerPhoneOnAward Boolean          @default(false)
+  /// Board contact surfaced to the winning bidder.
+  boardContactEmail String
+  boardContactPhone String?
+  publishedAt  DateTime                   @default(now())
+  publishedById String
+  publishedBy  User                       @relation("MarketplacePublisher", fields: [publishedById], references: [id])
+  bids         MarketplaceBid[]
+  messages     MarketplaceMessage[]
+  fitScores    MarketplaceFitScore[]
+  /// Awarded counterpart (set when status becomes AWARDED).
+  awardedBidId String?                    @unique
+  awardedBid   MarketplaceBid?            @relation("AwardedBid", fields: [awardedBidId], references: [id])
+  awardedAt    DateTime?
+  closedAt     DateTime?
+  closeReason  String?
+  /// Per-publication snapshot of (publisher's display name, building city)
+  /// so historical aggregates remain meaningful after a publisher leaves
+  /// the board or a building renames itself.
+  publisherDisplayName String
+
+  @@index([status, publishedAt])
+  @@index([city])
+  @@index([category])
+}
+
+enum MarketplaceBidStatus {
+  SUBMITTED
+  WITHDRAWN
+  REJECTED
+  WON
+}
+
+model MarketplaceBid {
+  id              String                   @id @default(cuid())
+  publication     MarketplacePublication   @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+  publicationId   String
+  bidder          ContractorOrg            @relation(fields: [bidderId], references: [id])
+  bidderId        String
+  /// Net Ft amount.
+  amount          Decimal                  @db.Decimal(12, 2)
+  /// Estimated days to completion from award.
+  etaDays         Int
+  /// Plain-text bidder narrative — capped at 800 chars in the route.
+  notes           String?                  @db.Text
+  status          MarketplaceBidStatus     @default(SUBMITTED)
+  decidedAt       DateTime?
+  decidedById     String?
+  /// Free-text reason; required per P2B Art. 4 on rejection.
+  decisionReason  String?                  @db.Text
+  awardedFor      MarketplacePublication?  @relation("AwardedBid")
+  fitScore        MarketplaceFitScore?
+  invoice         MarketplaceInvoice?
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
+
+  @@unique([publicationId, bidderId])
+  @@index([bidderId, status])
+  @@index([status])
+}
+
+enum MarketplaceInvoiceStatus {
+  PENDING
+  PAID
+}
+
+/// One-to-one invoice attached to a WON bid. Contractor submits;
+/// board flips PENDING → PAID, which is what advances the linked
+/// ticket from COMPLETED → VERIFIED.
+model MarketplaceInvoice {
+  id              String                    @id @default(cuid())
+  bid             MarketplaceBid            @relation(fields: [bidId], references: [id], onDelete: Cascade)
+  bidId           String                    @unique
+  invoiceNumber   String
+  /// Gross (VAT-included) Ft amount as written on the invoice.
+  grossAmount     Decimal                   @db.Decimal(12, 2)
+  issuedAt        DateTime
+  dueAt           DateTime
+  /// Optional PDF; rest of the metadata is mandatory.
+  storageKey      String?
+  fileName        String?
+  status          MarketplaceInvoiceStatus  @default(PENDING)
+  paidAt          DateTime?
+  paidById        String?
+  createdAt       DateTime                  @default(now())
+  updatedAt       DateTime                  @updatedAt
+
+  @@index([status])
+}
+
+/// Anonymous board ↔ contractor thread scoped to one (publication, bidder)
+/// pair. Plain-text only.
+model MarketplaceMessage {
+  id            String                  @id @default(cuid())
+  publication   MarketplacePublication  @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+  publicationId String
+  bidder        ContractorOrg           @relation("ContractorOrgMessages", fields: [bidderId], references: [id])
+  bidderId      String
+  /// "BOARD" or "CONTRACTOR".
+  senderSide    String
+  /// userId on the condo side OR contractorUserId on the contractor side.
+  senderId      String
+  body          String                  @db.Text
+  readAt        DateTime?
+  createdAt     DateTime                @default(now())
+
+  @@index([publicationId, bidderId, createdAt])
+}
+
+/// Best-fit score cached per (publication, bid). Rule-based — no LLM.
+/// `weightsVersion` + `factorsJson` make the rationale reproducible.
+model MarketplaceFitScore {
+  id              String                  @id @default(cuid())
+  publication     MarketplacePublication  @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+  publicationId   String
+  bid             MarketplaceBid          @relation(fields: [bidId], references: [id], onDelete: Cascade)
+  bidId           String                  @unique
+  /// 0–100 composite.
+  score           Int
+  /// Templated Hungarian sentence shown under the bid card.
+  rationale       String                  @db.Text
+  /// Versioned scoring weights id, e.g. "v1.0.0".
+  weightsVersion  String
+  /// Frozen factor values used to compute this score.
+  factorsJson     Json
+  computedAt      DateTime                @default(now())
+
+  @@index([publicationId, score])
 }
 
 model ContractorRating {
-  id           String             @id @default(cuid())
-  contractorId String
-  contractor   Contractor         @relation(fields: [contractorId], references: [id])
-  ticketId     String
-  ticket       MaintenanceTicket  @relation(fields: [ticketId], references: [id])
-  raterId      String
-  rater        User               @relation("ContractorRatings", fields: [raterId], references: [id])
-  rating       Int
-  notes        String?
-  createdAt    DateTime           @default(now())
+  id              String             @id @default(cuid())
+  /// Legacy contractor directory rating. Mutually exclusive with
+  /// `contractorOrgId` — exactly one is set, enforced in app code.
+  contractorId    String?
+  contractor      Contractor?        @relation(fields: [contractorId], references: [id])
+  /// Marketplace contractor rating, set on COMPLETED tickets that
+  /// were awarded via `MarketplacePublication`.
+  contractorOrgId String?
+  contractorOrg   ContractorOrg?     @relation(fields: [contractorOrgId], references: [id])
+  ticketId        String
+  ticket          MaintenanceTicket  @relation(fields: [ticketId], references: [id])
+  raterId         String
+  rater           User               @relation("ContractorRatings", fields: [raterId], references: [id])
+  rating          Int
+  notes           String?
+  createdAt       DateTime           @default(now())
+
+  @@index([contractorOrgId])
 }
 
 model ScheduledMaintenance {
-  id              String    @id @default(cuid())
-  title           String
-  description     String?
-  date            DateTime
-  isRecurring     Boolean   @default(false)
-  recurrenceRule  String?
-  building        Building @relation(fields: [buildingId], references: [id])
-  buildingId      String
-  createdAt       DateTime  @default(now())
+  id                String    @id @default(cuid())
+  title             String
+  description       String?
+  /// Next due date. For recurring entries, advanced after each materialization.
+  date              DateTime
+  isRecurring       Boolean   @default(false)
+  /// Months between occurrences when recurring (e.g. 1=monthly, 12=yearly).
+  recurrenceMonths  Int?
+  /// Days before `date` to materialize a ticket. Default 7.
+  leadTimeDays      Int       @default(7)
+  /// When the most recent ticket was materialized from this entry.
+  materializedAt    DateTime?
+  building          Building  @relation(fields: [buildingId], references: [id])
+  buildingId        String
+  /// Tickets generated from this scheduled entry.
+  tickets           MaintenanceTicket[] @relation("ScheduledTickets")
+  createdAt         DateTime  @default(now())
 
   @@index([buildingId])
 }
@@ -659,15 +1680,25 @@ model Meeting {
   time        String        // "HH:mm" format
   location    String?
   agenda      Json          @default("[]")
-  minutes     String?       @db.Text
-  createdBy   User          @relation("MeetingCreator", fields: [createdById], references: [id])
-  createdById String
-  building    Building      @relation(fields: [buildingId], references: [id])
-  buildingId  String
-  rsvps       MeetingRsvp[]
-  votes       Vote[]
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  minutes            String?       @db.Text
+  minutesUpdatedAt   DateTime?
+  minutesUpdatedBy   User?         @relation("MinutesEditor", fields: [minutesUpdatedById], references: [id])
+  minutesUpdatedById String?
+  createdBy          User          @relation("MeetingCreator", fields: [createdById], references: [id])
+  createdById        String
+  building           Building      @relation(fields: [buildingId], references: [id])
+  buildingId         String
+  isRepeated         Boolean       @default(false)
+  rsvps              MeetingRsvp[]
+  attendances        MeetingAttendance[]
+  votes              Vote[]
+  /// Pending agenda items (resignations + escalated complaints) attached
+  /// to this meeting. Source-of-truth for meeting agenda integration.
+  pendingAgenda      PendingAgendaItem[]
+  /// Chair + two-authenticator signatures on the jegyzőkönyv.
+  minutesSignatures  MeetingMinutesSignature[]
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
 
   @@index([date])
   @@index([createdById])
@@ -686,6 +1717,21 @@ model MeetingRsvp {
   @@unique([meetingId, userId])
 }
 
+model MeetingAttendance {
+  id           String    @id @default(cuid())
+  meeting      Meeting   @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  meetingId    String
+  unit         Unit      @relation(fields: [unitId], references: [id])
+  unitId       String
+  checkedIn    Boolean   @default(true)
+  checkedInAt  DateTime  @default(now())
+  checkedOutAt DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@unique([meetingId, unitId])
+  @@index([meetingId])
+}
+
 model Vote {
   id             String       @id @default(cuid())
   title          String
@@ -693,8 +1739,11 @@ model Vote {
   voteType       VoteType     @default(YES_NO)
   status         VoteStatus   @default(DRAFT)
   isSecret       Boolean      @default(false)
-  quorumRequired Decimal      @db.Decimal(5, 4) // e.g. 0.5100 = 51%
+  majorityType   MajorityType @default(SIMPLE_MAJORITY)
+  quorumRequired Decimal      @db.Decimal(5, 4) // @deprecated — replaced by majorityType, kept for migration
   deadline       DateTime
+  building       Building     @relation(fields: [buildingId], references: [id])
+  buildingId     String
   meeting        Meeting?     @relation(fields: [meetingId], references: [id])
   meetingId      String?
   createdBy      User         @relation("VoteCreator", fields: [createdById], references: [id])
@@ -704,6 +1753,7 @@ model Vote {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
+  @@index([buildingId])
   @@index([status])
   @@index([deadline])
   @@index([createdById])
@@ -730,6 +1780,8 @@ model Ballot {
   unitId      String
   user        User?       @relation("BallotVoter", fields: [userId], references: [id])
   userId      String?     // null for secret ballots
+  castBy      User?       @relation("BallotCaster", fields: [castById], references: [id])
+  castById    String?     // set when an organizer casts on behalf of another user
   weight      Decimal     @db.Decimal(5, 4) // copied from unit.ownershipShare at vote time
   receiptHash String?     // SHA256 hash for secret ballot receipt
   createdAt   DateTime    @default(now())
@@ -776,23 +1828,37 @@ model DocumentCategory {
 }
 
 model Document {
-  id           String             @id @default(cuid())
-  title        String
-  description  String?
-  category     DocumentCategory   @relation(fields: [categoryId], references: [id])
-  categoryId   String
-  visibility   DocumentVisibility @default(PUBLIC)
-  tags         Json               @default("[]")
-  uploadedBy   User               @relation("DocumentUploader", fields: [uploadedById], references: [id])
-  uploadedById String
-  versions     DocumentVersion[]
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
+  id              String             @id @default(cuid())
+  title           String
+  description     String?
+  category        DocumentCategory   @relation(fields: [categoryId], references: [id])
+  categoryId      String
+  visibility      DocumentVisibility @default(PUBLIC)
+  tags            Json               @default("[]")
+  isArchived      Boolean            @default(false)
+  /// Pinned to the top of its category as a featured document.
+  isPinned        Boolean            @default(false)
+  /// Expiry date for contracts / licenses. Null means no expiry.
+  expiresAt       DateTime?
+  /// Audit counters (incremented when the version panel opens / a download fires).
+  viewCount       Int                @default(0)
+  downloadCount   Int                @default(0)
+  lastAccessedAt  DateTime?
+  uploadedBy      User               @relation("DocumentUploader", fields: [uploadedById], references: [id])
+  uploadedById    String
+  versions        DocumentVersion[]
+  /// Phase 5 — back-relation for Contractor DPA pointers (GDPR Art. 28).
+  contractorDpas  Contractor[]       @relation("ContractorDPA")
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
 
   @@index([categoryId])
   @@index([visibility])
   @@index([uploadedById])
   @@index([createdAt])
+  @@index([isArchived])
+  @@index([isPinned])
+  @@index([expiresAt])
 }
 
 model DocumentVersion {
@@ -825,4 +1891,72 @@ model PushSubscription {
   createdAt DateTime @default(now())
 
   @@index([userId])
+}
+
+enum ReportStatus {
+  PENDING
+  RUNNING
+  READY
+  FAILED
+}
+
+enum MinutesSignatureRole {
+  CHAIR
+  AUTHENTICATOR_1
+  AUTHENTICATOR_2
+}
+
+/// Tht. § 39 mandates that a meeting's jegyzőkönyv carries the
+/// chair's signature and two authenticators (hitelesítők). One row per
+/// (meeting, role); the unique constraint enforces "exactly three slots".
+/// Once all three are present the minutes are "executed" and the latest
+/// jegyzőkönyv PDF is the legally-binding copy.
+model MeetingMinutesSignature {
+  id        String               @id @default(cuid())
+  meeting   Meeting              @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  meetingId String
+  signer    User                 @relation(fields: [signerId], references: [id])
+  signerId  String
+  role      MinutesSignatureRole
+  signedAt  DateTime             @default(now())
+  /// Best-effort IP capture for after-the-fact dispute resolution.
+  /// Null when the request didn't expose one.
+  ipAddress String?
+
+  @@unique([meetingId, role])
+  @@index([signerId])
+}
+
+/// Cached server-rendered PDF reports.
+///
+/// Dedup is keyed on `(buildingId, kind, period, contentHash)`: if a row
+/// exists with status=READY, callers reuse it. PENDING/RUNNING rows act as
+/// in-flight markers so concurrent generate-requests share a single job.
+model GeneratedReport {
+  id            String       @id @default(cuid())
+  building      Building     @relation(fields: [buildingId], references: [id])
+  buildingId    String
+  kind          String       // "vote-result" | "meeting-summary" | "year-end-account" | ...
+  /// Opaque identifier per kind, e.g. "vote-{voteId}" or "meeting-{meetingId}".
+  period        String
+  /// SHA-256 over the input data used to render the PDF — drives dedupe.
+  contentHash   String
+  status        ReportStatus @default(PENDING)
+  /// Storage key under the configured driver (null until READY).
+  storageKey    String?
+  /// Bytes of the rendered PDF (null until READY). Surfaced in download UI.
+  fileSize      Int?
+  /// Last failure message (set when status=FAILED).
+  errorMessage  String?      @db.Text
+  generatedBy   User         @relation(fields: [generatedById], references: [id])
+  generatedById String
+  generatedAt   DateTime     @default(now())
+  finishedAt    DateTime?
+  isDraft       Boolean      @default(false)
+  /// Retention horizon — null means forever (legal-mandated reports).
+  retainUntil   DateTime?
+
+  @@unique([buildingId, kind, period, contentHash])
+  @@index([buildingId, kind])
+  @@index([status])
 }

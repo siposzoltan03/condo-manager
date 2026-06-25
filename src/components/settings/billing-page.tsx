@@ -1,33 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import Link from "next/link";
 import { CreditCard, BarChart3, Clock, ExternalLink, AlertTriangle } from "lucide-react";
-
-interface SubscriptionData {
-  planSlug: string;
-  planName: string;
-  features: string[];
-  maxBuildings: number;
-  maxUnitsPerBuilding: number;
-  subscriptionStatus: string;
-  trialEndsAt: string | null;
-  isLegacy: boolean;
-  hasStripe?: boolean;
-}
-
-interface FrozenBuilding {
-  id: string;
-  name: string;
-  address: string;
-}
-
-interface UsageData {
-  buildings: { current: number; max: number };
-  units: { current: number; max: number };
-  frozenBuildings: FrozenBuilding[];
-}
+import type { BillingData } from "@/lib/dal";
 
 const STATUS_STYLES: Record<string, string> = {
   ACTIVE: "bg-green-100 text-green-800",
@@ -37,38 +15,17 @@ const STATUS_STYLES: Record<string, string> = {
   EXPIRED: "bg-slate-100 text-slate-600",
 };
 
-export function BillingPage() {
+interface BillingPageProps {
+  initialData: BillingData;
+}
+
+export function BillingPage({ initialData }: BillingPageProps) {
   const t = useTranslations("billing");
   const tCommon = useTranslations("common");
-  const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
-  const [usage, setUsage] = useState<UsageData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const subscription = initialData.subscription;
+  const usage = initialData.usage;
   const [portalLoading, setPortalLoading] = useState(false);
   const [error, setError] = useState("");
-
-  const fetchData = useCallback(async () => {
-    try {
-      const [subRes, usageRes] = await Promise.all([
-        fetch("/api/subscription"),
-        fetch("/api/subscription/usage"),
-      ]);
-
-      if (subRes.ok) {
-        setSubscription(await subRes.json());
-      }
-      if (usageRes.ok) {
-        setUsage(await usageRes.json());
-      }
-    } catch {
-      setError("Failed to load billing data");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
 
   const handleManageSubscription = async () => {
     setPortalLoading(true);
@@ -82,25 +39,18 @@ export function BillingPage() {
         setError(data.error || "Failed to open billing portal");
       }
     } catch {
+      toast.error("Failed to open billing portal");
       setError("Failed to open billing portal");
     } finally {
       setPortalLoading(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex min-h-[40vh] items-center justify-center">
-        <p className="text-slate-500">{tCommon("loading")}</p>
-      </div>
-    );
-  }
-
-  if (error && !subscription) {
+  if (!subscription) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
         <div className="rounded-lg bg-red-50 px-6 py-4 text-center">
-          <p className="text-sm text-red-700">{error}</p>
+          <p className="text-sm text-red-700">{t("noSubscription")}</p>
         </div>
       </div>
     );

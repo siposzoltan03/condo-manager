@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
 import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
 import { requireRole } from "@/lib/rbac";
-import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
+import { calculateMeetingQuorum } from "@/lib/voting/quorum";
+import { meetingUpdated, meetingDeleted } from "@/lib/voting/events";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -41,7 +42,12 @@ export async function GET(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
     }
 
-    return NextResponse.json(meeting);
+    const quorum = await calculateMeetingQuorum(id);
+
+    return NextResponse.json({
+      ...meeting,
+      quorum,
+    });
   } catch (error) {
     console.error("Failed to fetch meeting:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -82,6 +88,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     if (body.time !== undefined) data.time = body.time;
     if (body.location !== undefined) data.location = body.location;
     if (body.agenda !== undefined) data.agenda = body.agenda;
+    if (body.isRepeated !== undefined) data.isRepeated = body.isRepeated;
 
     const updated = await prisma.meeting.update({
       where: { id },
@@ -91,11 +98,10 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       },
     });
 
-    await createAuditLog({
-      entityType: "Meeting",
-      entityId: id,
-      action: "UPDATE",
-      userId,
+    await meetingUpdated({
+      meetingId: id,
+      updatedByUserId: userId,
+      buildingId,
       oldValue: { title: existing.title, date: existing.date.toISOString() },
       newValue: data,
     });
@@ -135,11 +141,10 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
     await prisma.meeting.delete({ where: { id } });
 
-    await createAuditLog({
-      entityType: "Meeting",
-      entityId: id,
-      action: "DELETE",
-      userId,
+    await meetingDeleted({
+      meetingId: id,
+      deletedByUserId: userId,
+      buildingId,
       oldValue: { title: existing.title },
     });
 

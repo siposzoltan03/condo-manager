@@ -1,17 +1,14 @@
-import { setRequestLocale } from "next-intl/server";
-import { BuildingFinanceOverview } from "@/components/finance/building-finance-overview";
+import { redirect } from "next/navigation";
 
 type Props = {
   params: Promise<{ locale: string }>;
 };
 
-export default async function BuildingFinancePage({ params }: Props) {
+/**
+ * Legacy route — the building workspace lives inside `/finance` as the
+ * "Épület" tab now. Existing bookmarks land cleanly via this redirect.
+ */
+export default async function BuildingFinanceRedirect({ params }: Props) {
   const { locale } = await params;
-  setRequestLocale(locale);
-
-  return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <BuildingFinanceOverview />
-    </div>
-  );
+  redirect(`/${locale}/finance?tab=epulet`);
 }

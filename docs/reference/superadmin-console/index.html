@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<title>Condo Manager — Superadmin · Funkciókezelés</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="admin-console.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- SIDEBAR — internal/operator identity -->
+  <aside class="side">
+    <div class="brand">
+      <span class="brand-mark">K</span>
+      <span class="bn">Közös</span>
+      <span class="tag">Superadmin</span>
+    </div>
+    <div class="env">
+      <span class="oi">PR</span>
+      <div class="ot">
+        <strong>Platform · PROD</strong>
+        <small>412 ÉPÜLET · 18.4K LAKÓ</small>
+      </div>
+      <span class="live" title="Élő környezet"></span>
+    </div>
+
+    <div class="sec-lbl">Funkciókezelés</div>
+    <a href="#features" class="nav-item" data-route="features">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 5h16M4 12h16M4 19h16"/><circle cx="8" cy="5" r="2" fill="currentColor" stroke="none"/><circle cx="16" cy="12" r="2" fill="currentColor" stroke="none"/><circle cx="10" cy="19" r="2" fill="currentColor" stroke="none"/></svg>
+      Funkciók
+      <span class="count mono">12</span>
+    </a>
+    <a href="#plans" class="nav-item" data-route="plans">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Csomagok
+      <span class="count mono">3</span>
+    </a>
+    <a href="#buildings" class="nav-item" data-route="buildings">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-3"/><path d="M9 9v.01M9 13v.01M9 17v.01"/></svg>
+      Épület-felülírások
+    </a>
+
+    <div class="sec-lbl">Platform</div>
+    <a href="#features" class="nav-item">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>
+      Audit napló
+    </a>
+    <a href="#features" class="nav-item">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l4 2"/></svg>
+      Rollout állapot
+    </a>
+
+    <div class="side-foot">
+      <span class="av">KA</span>
+      <div class="who"><strong>Kovács Ádám</strong><small>SUPER_ADMIN</small></div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div class="crumbs mono">admin / <b>platform</b> / <span class="seg" id="crumb-seg">features</span></div>
+      <div class="search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" placeholder="Funkció vagy slug keresése…">
+        <span class="k">⌘K</span>
+      </div>
+      <div class="right">
+        <span class="env-pill"><span class="d"></span>Éles környezet</span>
+      </div>
+    </div>
+
+    <!-- ============ SCREEN 1: FEATURE CATALOG ============ -->
+    <div class="screen" data-route="features">
+      <div class="page">
+        <div class="page-head">
+          <div>
+            <div class="eyebrow"><span class="pulse"></span>Funkció-katalógus · globális jelzők</div>
+            <h1>Funkciók <span class="soft">· 12 a 8 modulban</span></h1>
+            <p>Kódvezérelt funkciók és globális kapcsolóik. A globális jelző felülírja a csomag-beállítást; a <b>Kill-switch</b> minden épületnél kikapcsol, csomagtól és felülírástól függetlenül.</p>
+          </div>
+          <div class="hd-acts">
+            <div class="states-bar" aria-label="Nézet-állapot">
+              <button class="on" onclick="setState(this,'default')">Alap</button>
+              <button onclick="setState(this,'loading')">Betöltés</button>
+            </div>
+            <button class="btn btn-ghost"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Audit export</button>
+          </div>
+        </div>
+
+        <!-- Precedence legend (shared badge system) -->
+        <div class="legend">
+          <span class="lg-title">Effektív forrás · precedencia</span>
+          <span class="lg-item"><span class="eff kill"><span class="gl">⏻</span>Kill-switch</span> mindent felülír</span>
+          <span class="lg-item">›</span>
+          <span class="lg-item"><span class="eff override"><span class="gl">✎</span>Felülírás</span> épület-szintű</span>
+          <span class="lg-item">›</span>
+          <span class="lg-item"><span class="eff force"><span class="gl">▲</span>Mindenkinek be</span></span>
+          <span class="lg-item">›</span>
+          <span class="lg-item"><span class="eff plan"><span class="gl">◷</span>Terv</span> csomag-alapú</span>
+          <span class="lg-sep"></span>
+          <span class="lg-item"><span class="avail-dot on"></span>Elérhető</span>
+          <span class="lg-item"><span class="avail-dot off"></span>Nem elérhető</span>
+        </div>
+
+        <!-- skeleton (loading state) -->
+        <div id="catalog-skel" style="display:none">
+          <div class="mod-group"><div class="mod-head"><div class="skel" style="width:30px;height:30px;border-radius:8px"></div><div class="skel" style="width:140px;height:16px"></div></div>
+          <div class="skel-row"><div><div class="skel" style="width:120px;height:12px;margin-bottom:10px"></div><div class="skel" style="width:180px;height:16px;margin-bottom:8px"></div><div class="skel" style="width:90%;height:12px"></div></div><div class="skel" style="width:40px;height:23px;border-radius:999px"></div><div class="skel" style="width:100%;height:34px;border-radius:9px"></div></div>
+          <div class="skel-row"><div><div class="skel" style="width:120px;height:12px;margin-bottom:10px"></div><div class="skel" style="width:160px;height:16px;margin-bottom:8px"></div><div class="skel" style="width:80%;height:12px"></div></div><div class="skel" style="width:40px;height:23px;border-radius:999px"></div><div class="skel" style="width:100%;height:34px;border-radius:9px"></div></div>
+          </div>
+        </div>
+
+        <div id="catalog-body"></div>
+      </div>
+    </div>
+
+    <!-- ============ SCREEN 2: PLAN EDITOR ============ -->
+    <div class="screen" data-route="plans">
+      <div class="page">
+        <div class="page-head">
+          <div>
+            <div class="eyebrow"><span class="pulse"></span>Csomag-szerkesztő · funkció × csomag mátrix</div>
+            <h1>Csomagok <span class="soft">· Kezdő · Képviselő · Kezelő iroda</span></h1>
+            <p>A jelölőnégyzet a <span class="mono">PlanFeature.enabled</span> értéket állítja. Egy funkció bekapcsolása automatikusan bejelöli a prerekvizitjeit; a kikapcsolás blokkolt, amíg egy függő funkció aktív.</p>
+          </div>
+          <div class="hd-acts">
+            <button class="btn btn-ghost btn-sm">Mégse</button>
+            <button class="btn btn-primary btn-sm"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 6L9 17l-5-5"/></svg>Mentés</button>
+          </div>
+        </div>
+
+        <!-- guard-rail banner -->
+        <div class="guardrail">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+          <div>
+            <strong>A Kezdő csomag deaktiválása 118 aktív előfizetést érint.</strong>
+            <p>A meglévő előfizetők a megújulásig megtartják a csomagot; új checkout nem indítható. A művelet audit-naplózott és megerősítést igényel.</p>
+          </div>
+          <div class="ga"><button class="btn btn-ghost btn-sm">Mégse</button><button class="btn btn-danger btn-sm">Deaktiválás…</button></div>
+        </div>
+
+        <div class="plan-layout">
+          <!-- matrix -->
+          <div class="matrix-wrap">
+            <div class="matrix-scroll">
+              <table class="matrix">
+                <thead>
+                  <tr>
+                    <th class="feat-col">Funkció · slug</th>
+                    <th class="plan-col"><div class="pn">Kezdő</div><div class="pp mono">9 900 Ft</div></th>
+                    <th class="plan-col feat"><div class="pn">Képviselő</div><div class="pp mono">24 900 Ft</div></th>
+                    <th class="plan-col"><div class="pn">Kezelő iroda</div><div class="pp mono">Egyedi</div></th>
+                  </tr>
+                </thead>
+                <tbody id="matrix-body"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- per-plan limits & pricing -->
+          <div class="plan-panels">
+            <div class="plan-card featured">
+              <div class="pc-h"><span class="nm">Képviselő</span><span class="badge">Legnépszerűbb</span></div>
+              <div class="pc-b">
+                <div class="lim"><label>maxBuildings</label><input type="number" value="5"></div>
+                <div class="lim"><label>maxUnits / épület</label><input type="number" value="100"></div>
+                <div class="lim"><label>priceMonthly (Ft)</label><input type="text" value="24 900"></div>
+                <div class="lim"><label>priceYearly (Ft)</label><input type="text" value="249 000"></div>
+                <div class="lim"><label>trialDays</label><input type="number" value="14"></div>
+                <div class="lim"><label>isActive</label><span class="sw on" onclick="this.classList.toggle('on')"></span></div>
+              </div>
+              <div class="pc-warn"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><span>Az ár módosítása csak az új checkoutokra hat. A meglévő Stripe-előfizetések a megújulásig a régi árat tartják.</span></div>
+              <div class="pc-stripe"><label>Stripe Price ID</label><input type="text" value="price_1Qk8mZ2eZvKYlo2Cképv24900" class="mono"></div>
+            </div>
+            <div class="plan-card">
+              <div class="pc-h"><span class="nm">Kezdő</span></div>
+              <div class="pc-b">
+                <div class="lim"><label>maxBuildings</label><input type="number" value="1"></div>
+                <div class="lim"><label>maxUnits / épület</label><input type="number" value="30"></div>
+                <div class="lim"><label>priceMonthly (Ft)</label><input type="text" value="9 900"></div>
+                <div class="lim"><label>trialDays</label><input type="number" value="14"></div>
+                <div class="lim"><label>isActive</label><span class="sw on" onclick="this.classList.toggle('on')"></span></div>
+              </div>
+              <div class="pc-stripe"><label>Stripe Price ID</label><input type="text" value="price_1Qk8mZ2eZvKYlo2Ckezdo990" class="mono"></div>
+            </div>
+            <div class="plan-card">
+              <div class="pc-h"><span class="nm">Kezelő iroda</span></div>
+              <div class="pc-b">
+                <div class="lim"><label>maxBuildings</label><input type="text" value="∞"></div>
+                <div class="lim"><label>maxUnits / épület</label><input type="text" value="∞"></div>
+                <div class="lim"><label>priceMonthly</label><input type="text" value="Egyedi"></div>
+                <div class="lim"><label>trialDays</label><input type="number" value="30"></div>
+                <div class="lim"><label>isActive</label><span class="sw on" onclick="this.classList.toggle('on')"></span></div>
+              </div>
+              <div class="pc-stripe"><label>Stripe Price ID</label><input type="text" value="— egyedi ajánlat —" class="mono"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ SCREEN 3: BUILDING OVERRIDES ============ -->
+    <div class="screen" data-route="buildings">
+      <div class="page">
+        <div class="page-head">
+          <div>
+            <div class="eyebrow"><span class="pulse"></span>Épület-felülírás · /admin/buildings/duna-residence/features</div>
+            <h1>Épület-felülírások</h1>
+            <p>Funkciónkénti effektív állapot ezen az épületen, a forrás magyarázatával. A felülírás a csomag-alapot bírálja felül, de a globális kill-switch és a függőség-lánc mindent felülír.</p>
+          </div>
+          <div class="hd-acts">
+            <button class="btn btn-ghost btn-sm">Audit-előzmény</button>
+          </div>
+        </div>
+
+        <!-- building identity -->
+        <div class="bld-header">
+          <div class="bi">DR</div>
+          <div class="bx">
+            <h2>Duna Residence</h2>
+            <div class="addr mono">1138 BUDAPEST · MARGITSZIGET RAKPART 47.</div>
+          </div>
+          <div class="bstats">
+            <div class="bstat"><div class="l">Csomag</div><div class="v">Képviselő</div></div>
+            <div class="bstat"><div class="l">Lakás</div><div class="v">84</div></div>
+            <div class="bstat"><div class="l">Előfizetés</div><div class="v good">Aktív</div></div>
+            <div class="bstat"><div class="l">Megújul</div><div class="v">2026.09.01</div></div>
+          </div>
+        </div>
+
+        <div class="ov-table">
+          <div class="ov-head">
+            <div>Funkció · effektív forrás</div>
+            <div>Felülírás</div>
+            <div>Részletek</div>
+          </div>
+          <div id="overrides-body"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ KILL-SWITCH CONFIRM DIALOG ============ -->
+<div class="overlay" id="kill-overlay">
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="kill-title">
+    <div class="dl-top"></div>
+    <div class="dl-head">
+      <div class="dl-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.4 5.6a9 9 0 1 1-12.8 0"/><path d="M12 2v8"/></svg>
+      </div>
+      <div>
+        <div class="lbl">Globális kill-switch · visszafordítható</div>
+        <h2 id="kill-title">Kikapcsolod a(z) „<span id="kill-feature">…</span>" funkciót<br>MINDEN épületnél?</h2>
+      </div>
+    </div>
+    <div class="dl-body">
+      <p>Ez a <span class="mono" id="kill-slug">…</span> funkciót kikapcsolja <b>az összes épületnél</b> — csomagtól, force-on jelzőtől és épület-szintű felülírástól függetlenül. A funkcióra épülő szolgáltatások is leállnak.</p>
+      <div class="impact">
+        <div class="ir"><span class="l">Érintett épületek</span><span class="v big" id="kill-buildings">…</span></div>
+        <div class="ir"><span class="l">Csomag-felülírás</span><span class="v">figyelmen kívül hagyva</span></div>
+        <div class="ir"><span class="l">Visszakapcsolás</span><span class="v">azonnali, ugyanitt</span></div>
+      </div>
+      <div class="dl-confirm">
+        <input type="text" id="kill-confirm-input" placeholder='Írd be: KILL — a megerősítéshez' oninput="killInputCheck(this)" aria-label="Megerősítés">
+      </div>
+    </div>
+    <div class="dl-foot">
+      <button class="btn btn-ghost" onclick="closeKill()">Mégse</button>
+      <button class="btn btn-danger" id="kill-go" onclick="doKill()" disabled>Kill-switch bekapcsolása</button>
+    </div>
+  </div>
+</div>
+
+<!-- toast -->
+<div class="toast" id="toast">
+  <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+  <span>Mentve</span>
+</div>
+
+<script src="admin-console.app.js"></script>
+</body>
+</html>

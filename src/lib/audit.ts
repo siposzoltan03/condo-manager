@@ -1,3 +1,4 @@
+import "server-only";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 
@@ -8,12 +9,16 @@ interface CreateAuditLogInput {
   entityId: string;
   action: AuditAction;
   userId: string;
+  /** Building scope. Null/undefined for system-level events. */
+  buildingId?: string;
   oldValue?: Record<string, unknown>;
   newValue?: Record<string, unknown>;
   reason?: string;
 }
 
 interface GetAuditLogsParams {
+  /** Required: caller's active building. Filter is buildingId === this OR null. */
+  buildingId: string;
   entityType?: string;
   entityId?: string;
   userId?: string;
@@ -30,6 +35,7 @@ export async function createAuditLog(input: CreateAuditLogInput) {
       entityId: input.entityId,
       action: input.action,
       userId: input.userId,
+      buildingId: input.buildingId ?? null,
       oldValue: (input.oldValue as Prisma.InputJsonValue) ?? undefined,
       newValue: (input.newValue as Prisma.InputJsonValue) ?? undefined,
       reason: input.reason ?? undefined,
@@ -44,7 +50,11 @@ export async function getAuditLogs(params: GetAuditLogsParams) {
   const limit = params.limit ?? 20;
   const skip = (page - 1) * limit;
 
-  const where: Prisma.AuditLogWhereInput = {};
+  // Caller's building OR null (system-level / not-yet-backfilled rows).
+  // TODO: drop the null branch once historical rows are backfilled.
+  const where: Prisma.AuditLogWhereInput = {
+    OR: [{ buildingId: params.buildingId }, { buildingId: null }],
+  };
 
   if (params.entityType) {
     where.entityType = params.entityType;

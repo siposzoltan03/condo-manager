@@ -149,7 +149,7 @@ export function PricingPage() {
                             ? t("unlimited")
                             : plan.maxBuildings}
                         </span>{" "}
-                        {t("buildings")}
+                        {t("buildings", { count: plan.maxBuildings === -1 ? 2 : plan.maxBuildings })}
                       </p>
                       <p className="text-sm text-slate-700">
                         {t("upTo")}{" "}
@@ -278,7 +278,7 @@ export function PricingPage() {
             <span className="text-sm text-slate-500">{tLanding("footerCopyright")}</span>
           </div>
           <div className="flex gap-6">
-            <Link href="/" className="text-sm text-slate-500 transition hover:text-slate-700">
+            <Link href="/login" className="text-sm text-slate-500 transition hover:text-slate-700">
               {tLanding("footerLogin")}
             </Link>
           </div>

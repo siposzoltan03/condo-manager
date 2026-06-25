@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useLocale } from "next-intl";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { DataTable, type Column } from "@/components/shared/data-table";
 
 interface LedgerEntry {
   id: string;
@@ -43,7 +44,7 @@ function formatDate(dateStr: string, locale: string): string {
 
 export function LedgerTable({
   entries,
-  total,
+  total: _total,
   page,
   totalPages,
   onPageChange,
@@ -51,83 +52,101 @@ export function LedgerTable({
 }: LedgerTableProps) {
   const t = useTranslations("finance");
   const locale = useLocale();
+  void _total;
 
-  if (loading) {
-    return (
-      <div className="rounded-xl bg-white border border-gray-100">
-        <div className="border-b border-gray-100 px-6 py-4">
-          <div className="h-5 w-32 animate-pulse rounded bg-gray-200" />
+  const columns: Column<LedgerEntry>[] = [
+    {
+      key: "date",
+      header: t("date"),
+      align: "left",
+      mono: true,
+      render: (entry) => (
+        <span className="whitespace-nowrap text-[11px] text-muted">
+          {formatDate(entry.date, locale)}
+        </span>
+      ),
+    },
+    {
+      key: "description",
+      header: t("description"),
+      primary: true,
+      render: (entry) => (
+        <div>
+          <p className="text-sm text-ink">{entry.description}</p>
+          <div className="mt-0.5 flex flex-wrap gap-1.5">
+            <span
+              className="inline-flex rounded-full px-2 py-0.5 font-mono text-[10.5px] uppercase tracking-wider"
+              style={{
+                background:
+                  "color-mix(in srgb, var(--color-blue) 14%, transparent)",
+                color: "var(--color-blue)",
+              }}
+            >
+              {entry.debitAccount.name}
+            </span>
+            <span
+              className="inline-flex rounded-full px-2 py-0.5 font-mono text-[10.5px] uppercase tracking-wider"
+              style={{
+                background:
+                  "color-mix(in srgb, var(--color-ink) 8%, transparent)",
+                color: "var(--color-ink-soft)",
+              }}
+            >
+              {entry.creditAccount.name}
+            </span>
+          </div>
         </div>
-        <div className="space-y-3 p-6">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-10 animate-pulse rounded bg-gray-100" />
-          ))}
-        </div>
-      </div>
-    );
-  }
+      ),
+    },
+    {
+      key: "debit",
+      header: t("debit"),
+      align: "right",
+      mono: true,
+      render: (entry) => (
+        <span style={{ color: "var(--color-danger)" }}>
+          {formatCurrency(entry.amount, locale)}
+        </span>
+      ),
+    },
+    {
+      key: "credit",
+      header: t("credit"),
+      align: "right",
+      mono: true,
+      render: (entry) => (
+        <span style={{ color: "var(--color-good)" }}>
+          {formatCurrency(entry.amount, locale)}
+        </span>
+      ),
+    },
+  ];
 
   return (
-    <div className="rounded-xl bg-white border border-gray-100">
-      <div className="border-b border-gray-100 px-6 py-4">
-        <h3 className="text-sm font-bold text-[#002045]">{t("ledgerEntries")}</h3>
+    <div className="rounded-xl border border-ink/8 bg-card overflow-hidden">
+      <div className="border-b border-ink/8 px-6 py-4">
+        <h3 className="font-mono text-xs uppercase tracking-wider text-ink">
+          {t("ledgerEntries")}
+        </h3>
       </div>
 
-      {entries.length === 0 ? (
-        <div className="py-12 text-center text-sm text-[#515f74]">{t("noEntries")}</div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-100">
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[#515f74]">
-                  {t("date")}
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[#515f74]">
-                  {t("description")}
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-[#515f74]">
-                  {t("debit")}
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-[#515f74]">
-                  {t("credit")}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {entries.map((entry) => (
-                <tr key={entry.id} className="border-b border-gray-50 transition-colors hover:bg-gray-50">
-                  <td className="px-6 py-3 text-sm text-[#515f74]">
-                    {formatDate(entry.date, locale)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <p className="text-sm font-bold text-[#002045]">{entry.description}</p>
-                    <div className="mt-0.5 flex gap-1.5">
-                      <span className="inline-flex rounded-full bg-blue-50 px-2 py-0.5 text-xs text-blue-700">
-                        {entry.debitAccount.name}
-                      </span>
-                      <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
-                        {entry.creditAccount.name}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-right text-sm font-medium text-red-600">
-                    {formatCurrency(entry.amount, locale)}
-                  </td>
-                  <td className="px-4 py-3 text-right text-sm font-medium text-green-600">
-                    {formatCurrency(entry.amount, locale)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <DataTable
+        rows={entries}
+        columns={columns}
+        rowKey={(e) => e.id}
+        loading={loading}
+        emptyState={
+          <div className="py-12 text-center text-sm text-muted">
+            {t("noEntries")}
+          </div>
+        }
+        className="!rounded-none !border-0"
+      />
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between border-t border-gray-100 px-6 py-3">
-          <p className="text-sm text-[#515f74]">
+        <div className="flex items-center justify-between border-t border-ink/8 px-6 py-3">
+          <p className="font-mono text-[11px] text-muted">
             {t("pageOf", { page, totalPages })}
           </p>
           <div className="flex items-center gap-2">
@@ -135,7 +154,7 @@ export function LedgerTable({
               type="button"
               disabled={page <= 1}
               onClick={() => onPageChange(page - 1)}
-              className="flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-[#515f74] hover:bg-gray-50 disabled:opacity-50"
+              className="inline-flex min-h-11 items-center gap-1 rounded-md border border-ink/15 bg-card px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider text-ink-soft hover:bg-bg-3 disabled:opacity-50 transition-colors sm:min-h-0"
             >
               <ChevronLeft className="h-4 w-4" />
               {t("previous")}
@@ -144,7 +163,7 @@ export function LedgerTable({
               type="button"
               disabled={page >= totalPages}
               onClick={() => onPageChange(page + 1)}
-              className="flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-[#515f74] hover:bg-gray-50 disabled:opacity-50"
+              className="inline-flex min-h-11 items-center gap-1 rounded-md border border-ink/15 bg-card px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider text-ink-soft hover:bg-bg-3 disabled:opacity-50 transition-colors sm:min-h-0"
             >
               {t("next")}
               <ChevronRight className="h-4 w-4" />

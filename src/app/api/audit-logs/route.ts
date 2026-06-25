@@ -5,7 +5,7 @@ import { getAuditLogs } from "@/lib/audit";
 
 export async function GET(request: NextRequest) {
   try {
-    const { role: activeRole } = await requireBuildingContext();
+    const { buildingId, role: activeRole } = await requireBuildingContext();
 
     try {
       await requireRole(activeRole, "ADMIN");
@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = request.nextUrl;
 
     const entityType = searchParams.get("entityType") ?? undefined;
+    const entityId = searchParams.get("entityId") ?? undefined;
     const userId = searchParams.get("userId") ?? undefined;
     const from = searchParams.get("from")
       ? new Date(searchParams.get("from")!)
@@ -42,7 +43,9 @@ export async function GET(request: NextRequest) {
     }
 
     const result = await getAuditLogs({
+      buildingId,
       entityType,
+      entityId,
       userId,
       from,
       to,

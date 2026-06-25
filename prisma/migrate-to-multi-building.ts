@@ -17,12 +17,12 @@ function toBuildingRole(role: string): BuildingRole {
       return BuildingRole.ADMIN;
     case "BOARD_MEMBER":
       return BuildingRole.BOARD_MEMBER;
-    case "RESIDENT":
-      return BuildingRole.RESIDENT;
+    case "OWNER":
+      return BuildingRole.OWNER;
     case "TENANT":
       return BuildingRole.TENANT;
     default:
-      return BuildingRole.RESIDENT;
+      return BuildingRole.OWNER;
   }
 }
 

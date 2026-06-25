@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { title, description, category, urgency, location } = body;
+    const { title, description, category, urgency, location, slaHours } = body;
 
     if (!title || !description || !category || !urgency) {
       return NextResponse.json(
@@ -130,6 +130,18 @@ export async function POST(request: NextRequest) {
 
     if (!Object.values(Urgency).includes(urgency as Urgency)) {
       return NextResponse.json({ error: "Invalid urgency" }, { status: 400 });
+    }
+
+    let normalizedSla: number | null = null;
+    if (slaHours !== undefined && slaHours !== null && slaHours !== "") {
+      const parsed = typeof slaHours === "number" ? slaHours : parseInt(String(slaHours), 10);
+      if (Number.isNaN(parsed) || parsed < 1 || parsed > 720) {
+        return NextResponse.json(
+          { error: "slaHours must be an integer between 1 and 720" },
+          { status: 400 }
+        );
+      }
+      normalizedSla = parsed;
     }
 
     // Generate tracking number with retry on collision
@@ -148,6 +160,7 @@ export async function POST(request: NextRequest) {
             category: category as MaintenanceCategory,
             urgency: urgency as Urgency,
             location: location ?? null,
+            slaHours: normalizedSla,
             reporter: { connect: { id: userId } },
             building: { connect: { id: buildingId } },
           },
@@ -179,11 +192,13 @@ export async function POST(request: NextRequest) {
       entityId: ticket.id,
       action: "CREATE",
       userId,
+      buildingId,
       newValue: {
         trackingNumber: ticket.trackingNumber,
         title,
         category,
         urgency,
+        slaHours: normalizedSla,
       },
     });
 
