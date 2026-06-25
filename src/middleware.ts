@@ -55,6 +55,7 @@ function isPublicAccessiblePage(pathname: string): boolean {
 
 function isPublicApiRoute(pathname: string): boolean {
   return (
+    pathname === "/api/metrics" || // Prometheus scrape endpoint (tailnet-only)
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/api/contractor/auth/signup") ||
     pathname.startsWith("/api/contractor/auth/check-tax-id") ||
