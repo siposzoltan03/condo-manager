@@ -22,7 +22,7 @@ export default defineConfig({
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
-      testIgnore: ["**/responsive-baseline.spec.ts"],
+      testIgnore: ["**/responsive-baseline.spec.ts", "**/roles/**"],
     },
     /** Phase E lock-in: same e2e suite (excluding the snapshot baseline)
      *  also runs at iPhone-SE viewport (375 × 667) with touch. This is
@@ -36,7 +36,15 @@ export default defineConfig({
         viewport: { width: 375, height: 667 },
         hasTouch: true,
       },
-      testIgnore: ["**/responsive-baseline.spec.ts"],
+      testIgnore: ["**/responsive-baseline.spec.ts", "**/roles/**"],
+    },
+    /** Per-role authorization specs (e2e/roles/) — each spec picks its own
+     *  storageState fixture; depends on `setup` to create them. Desktop only. */
+    {
+      name: "roles",
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: /roles\/.*\.spec\.ts/,
+      dependencies: ["setup"],
     },
     /** Setup project — logs in once and saves the session storageState
      *  to e2e/.auth/baseline-admin.json so the responsive-baseline tests
