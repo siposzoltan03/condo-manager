@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { useAuth } from "@/hooks/use-auth";
+import type { Capability } from "@/lib/authz";
 import { usePlanFeatures } from "@/hooks/use-plan-features";
 import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
@@ -14,18 +15,19 @@ interface NavItem {
   key: string;
   href: string;
   icon: (props: { className?: string }) => React.ReactNode;
-  minimumRole: string;
+  /** Caps that grant visibility (ANY); omit/empty = visible to everyone. */
+  capabilities?: Capability[];
   featureSlug?: string;
   requiredPlan?: string;
   badgeCount?: number;
   badgeAlert?: boolean;
-  subItems?: { key: string; href: string; minimumRole: string }[];
+  subItems?: { key: string; href: string; capabilities?: Capability[] }[];
 }
 
 interface NavSection {
   label: string;
   items: NavItem[];
-  minimumRole?: string;
+  capabilities?: Capability[];
 }
 
 // ── Inline icons matching the dashboard design exactly ────────────────────
@@ -165,14 +167,14 @@ const sections: NavSection[] = [
   {
     label: "navSection.workshop",
     items: [
-      { key: "dashboard", href: "/dashboard", icon: Icons.dashboard, minimumRole: "TENANT" },
+      { key: "dashboard", href: "/dashboard", icon: Icons.dashboard },
       {
         key: "finance",
         href: "/finance",
         icon: Icons.finance,
-        // Tht. § 16, § 38 — finance is owner-only (TENANT does not pay
-        // common costs and has no own-unit-finance to view).
-        minimumRole: "OWNER",
+        // Tht. § 16, § 38 — finance is owner-only (own-unit finance) or
+        // board/admin (building finance).
+        capabilities: ["view.own.unit.finance", "view.building.finance"],
         featureSlug: "finance",
         requiredPlan: "pro",
       },
@@ -180,8 +182,8 @@ const sections: NavSection[] = [
         key: "voting",
         href: "/voting",
         icon: Icons.voting,
-        // Tht. § 38 — tenants do not vote. Owner-only nav item.
-        minimumRole: "OWNER",
+        // Tht. § 38 — owners vote; board/admin manage. Tenants do not vote.
+        capabilities: ["vote.cast", "view.boardContext"],
         featureSlug: "voting",
         requiredPlan: "pro",
       },
@@ -189,24 +191,22 @@ const sections: NavSection[] = [
         key: "maintenance",
         href: "/maintenance",
         icon: Icons.maintenance,
-        minimumRole: "TENANT",
         featureSlug: "maintenance",
         requiredPlan: "pro",
         subItems: [
-          { key: "maintenanceContractors", href: "/maintenance/contractors", minimumRole: "BOARD_MEMBER" },
-          { key: "maintenanceScheduled", href: "/maintenance/scheduled", minimumRole: "BOARD_MEMBER" },
+          { key: "maintenanceContractors", href: "/maintenance/contractors", capabilities: ["contractor.view"] },
+          { key: "maintenanceScheduled", href: "/maintenance/scheduled", capabilities: ["board.manage"] },
         ],
       },
       {
         key: "communication",
         href: "/communication",
         icon: Icons.communication,
-        minimumRole: "TENANT",
         subItems: [
-          { key: "complaints", href: "/complaints", minimumRole: "TENANT" },
+          { key: "complaints", href: "/complaints" },
         ],
       },
-      { key: "documents", href: "/documents", icon: Icons.documents, minimumRole: "TENANT" },
+      { key: "documents", href: "/documents", icon: Icons.documents },
     ],
   },
   {
@@ -216,23 +216,23 @@ const sections: NavSection[] = [
       // TENANT see their own unit on the dashboard tile, never the full
       // unit ledger. (Tht. § 16, § 38 — owners have legal standing on
       // their own unit, not on the building's full register.)
-      { key: "units", href: "/units", icon: Icons.units, minimumRole: "BOARD_MEMBER" },
-      { key: "residents", href: "/residents", icon: Icons.residents, minimumRole: "TENANT" },
+      { key: "units", href: "/units", icon: Icons.units, capabilities: ["units.manage"] },
+      { key: "residents", href: "/residents", icon: Icons.residents },
     ],
   },
   {
     label: "navSection.platform",
-    minimumRole: "ADMIN",
+    capabilities: ["view.adminContext", "platform.admin"],
     items: [
-      { key: "buildings", href: "/admin/buildings", icon: Icons.buildings, minimumRole: "SUPER_ADMIN" },
+      { key: "buildings", href: "/admin/buildings", icon: Icons.buildings, capabilities: ["platform.admin"] },
       {
         key: "settings",
         href: "/settings",
         icon: Icons.settings,
-        minimumRole: "ADMIN",
+        capabilities: ["view.adminContext"],
         subItems: [
-          { key: "settingsInvitations", href: "/settings/invitations", minimumRole: "ADMIN" },
-          { key: "settingsBilling", href: "/settings/billing", minimumRole: "ADMIN" },
+          { key: "settingsInvitations", href: "/settings/invitations", capabilities: ["users.manage"] },
+          { key: "settingsBilling", href: "/settings/billing", capabilities: ["view.adminContext"] },
         ],
       },
     ],
@@ -248,7 +248,7 @@ export function Sidebar() {
   const t = useTranslations("nav");
   const locale = useLocale();
   const pathname = usePathname();
-  const { hasRole, user } = useAuth();
+  const { canAny, user } = useAuth();
   const { hasFeature, planSlug, isLegacy } = usePlanFeatures();
   // useBuilding is consumed by the inline BuildingSwitcher; no need to read it here.
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -289,11 +289,13 @@ export function Sidebar() {
   const isFeatureAvailable = (item: NavItem) =>
     !item.featureSlug || isLegacy || hasFeature(item.featureSlug);
 
+  const showFor = (caps?: Capability[]) => !caps || caps.length === 0 || canAny(...caps);
+
   const visibleSections = sections
-    .filter((s) => !s.minimumRole || hasRole(s.minimumRole))
+    .filter((s) => showFor(s.capabilities))
     .map((s) => ({
       ...s,
-      items: s.items.filter((i) => hasRole(i.minimumRole)),
+      items: s.items.filter((i) => showFor(i.capabilities)),
     }))
     .filter((s) => s.items.length > 0);
 
@@ -361,7 +363,7 @@ export function Sidebar() {
             const onBranch = isOnBranch(item.href);
             const available = isFeatureAvailable(item);
             const visibleSubItems =
-              item.subItems?.filter((sub) => hasRole(sub.minimumRole)) ?? [];
+              item.subItems?.filter((sub) => showFor(sub.capabilities)) ?? [];
             const planBadge = item.requiredPlan ? PLAN_BADGE[item.requiredPlan] : null;
 
             if (!available) {

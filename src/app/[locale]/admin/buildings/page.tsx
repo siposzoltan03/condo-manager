@@ -15,7 +15,7 @@ export default async function BuildingsPage({ params }: Props) {
 
   return (
     <RoleGuard
-      role="SUPER_ADMIN"
+      capability="platform.admin"
       fallback={
         <div className="flex min-h-[60vh] items-center justify-center">
           <div className="rounded-lg bg-red-50 px-6 py-4 text-center">
