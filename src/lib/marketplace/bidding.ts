@@ -145,8 +145,13 @@ export async function awardBid(
         rejectedBidIds: [],
       };
     }
-    if (bid.publication.status !== "OPEN") {
-      throw new Error("Publication is not OPEN");
+    // OPEN = manual board award; PENDING_VOTE = auto-award when the
+    // owners' közgyűlés vote closes (the bids were frozen meanwhile).
+    if (
+      bid.publication.status !== "OPEN" &&
+      bid.publication.status !== "PENDING_VOTE"
+    ) {
+      throw new Error("Publication is not awardable");
     }
     if (bid.status !== "SUBMITTED") {
       throw new Error("Bid is not SUBMITTED");

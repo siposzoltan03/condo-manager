@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { MessageThread } from "@/components/marketplace/message-thread";
+import { PutToVoteModal } from "@/components/marketplace/put-to-vote-modal";
 
 interface BidDTO {
   id: string;
@@ -55,6 +56,7 @@ export function BidReviewPage({
   const [error, setError] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("bestFit");
   const [awardingId, setAwardingId] = useState<string | null>(null);
+  const [voteModalOpen, setVoteModalOpen] = useState(false);
 
   const reload = useCallback(async () => {
     setError(null);
@@ -99,6 +101,8 @@ export function BidReviewPage({
 
   const sorted = bids ? sortBids(bids, sortKey) : [];
   const showActions = publication.status === "OPEN";
+  const pendingVote = publication.status === "PENDING_VOTE";
+  const canPutToVote = showActions && (bids?.length ?? 0) > 0;
 
   return (
     <div
@@ -156,6 +160,33 @@ export function BidReviewPage({
         </p>
       </header>
 
+      {pendingVote && (
+        <div
+          role="status"
+          className="rounded-xl mb-5 flex items-center gap-3"
+          style={{
+            padding: "14px 16px",
+            background: "color-mix(in srgb, var(--color-ochre) 16%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--color-ochre) 35%, transparent)",
+          }}
+        >
+          <div style={{ flex: 1 }}>
+            <strong style={{ fontSize: "14px", color: "var(--color-ink)" }}>
+              {t("putToVoteLockedTitle")}
+            </strong>
+            <p style={{ fontSize: "13px", color: "var(--color-ink-soft)", margin: "3px 0 0" }}>
+              {t("putToVoteLockedBody")}{" "}
+              <Link
+                href={`/${locale}/voting`}
+                style={{ fontWeight: 700, textDecoration: "underline" }}
+              >
+                {t("putToVoteLockedLink")}
+              </Link>
+            </p>
+          </div>
+        </div>
+      )}
+
       {error && (
         <div
           role="alert"
@@ -198,6 +229,46 @@ export function BidReviewPage({
           ))}
         </ul>
       )}
+
+      {canPutToVote && (
+        <div
+          className="rounded-2xl mt-5 flex items-center gap-4 flex-wrap"
+          style={{ padding: "18px", background: "var(--color-ink)", color: "var(--color-bg)" }}
+        >
+          <div style={{ flex: 1, minWidth: 220 }}>
+            <strong style={{ fontSize: "15px" }}>{t("putToVoteCtaTitle")}</strong>
+            <p style={{ fontSize: "13px", opacity: 0.75, margin: "4px 0 0", lineHeight: 1.45 }}>
+              {t("putToVoteCtaBody")}
+            </p>
+          </div>
+          <button
+            onClick={() => setVoteModalOpen(true)}
+            className="rounded-lg"
+            style={{
+              padding: "11px 18px",
+              fontSize: "14.5px",
+              fontWeight: 700,
+              background: "var(--color-bg)",
+              color: "var(--color-ink)",
+            }}
+          >
+            {t("putToVoteCta")}
+          </button>
+        </div>
+      )}
+
+      <PutToVoteModal
+        open={voteModalOpen}
+        onClose={() => setVoteModalOpen(false)}
+        ticketId={ticketId}
+        locale={locale}
+        bids={(bids ?? []).map((b) => ({
+          id: b.id,
+          bidderName: b.bidder.name,
+          amount: b.amount,
+          etaDays: b.etaDays,
+        }))}
+      />
     </div>
   );
 }

@@ -1411,6 +1411,9 @@ model ContractorDocument {
 enum MarketplacePublishStatus {
   DRAFT
   OPEN
+  /// Bids frozen and put to an owners' vote at a közgyűlés — the winning
+  /// bid is awarded automatically when that vote closes.
+  PENDING_VOTE
   AWARDED
   CLOSED
 }
@@ -1448,6 +1451,8 @@ model MarketplacePublication {
   bids         MarketplaceBid[]
   messages     MarketplaceMessage[]
   fitScores    MarketplaceFitScore[]
+  /// Owners'-vote(s) that decide the award (PENDING_VOTE flow).
+  awardVotes   Vote[]                     @relation("AwardVote")
   /// Awarded counterpart (set when status becomes AWARDED).
   awardedBidId String?                    @unique
   awardedBid   MarketplaceBid?            @relation("AwardedBid", fields: [awardedBidId], references: [id])
@@ -1491,6 +1496,8 @@ model MarketplaceBid {
   awardedFor      MarketplacePublication?  @relation("AwardedBid")
   fitScore        MarketplaceFitScore?
   invoice         MarketplaceInvoice?
+  /// Vote options that point to this bid (contractor-award votes).
+  voteOptions     VoteOption[]
   createdAt       DateTime                 @default(now())
   updatedAt       DateTime                 @updatedAt
 
@@ -1750,6 +1757,11 @@ model Vote {
   createdById    String
   options        VoteOption[]
   ballots        Ballot[]
+  /// Set when this is a contractor-award vote: links to the marketplace
+  /// publication whose bids are the options. On close, the winning option's
+  /// bid is awarded automatically. Null for ordinary votes.
+  linkedPublication   MarketplacePublication? @relation("AwardVote", fields: [linkedPublicationId], references: [id])
+  linkedPublicationId String?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
@@ -1757,6 +1769,7 @@ model Vote {
   @@index([status])
   @@index([deadline])
   @@index([createdById])
+  @@index([linkedPublicationId])
 }
 
 model VoteOption {
@@ -1766,8 +1779,13 @@ model VoteOption {
   label     String
   sortOrder Int      @default(0)
   ballots   Ballot[]
+  /// On a contractor-award vote, the bid this option represents. Null for
+  /// the auto-added "Egyik sem" (none) option and for ordinary-vote options.
+  bid       MarketplaceBid? @relation(fields: [bidId], references: [id])
+  bidId     String?
 
   @@index([voteId, sortOrder])
+  @@index([bidId])
 }
 
 model Ballot {

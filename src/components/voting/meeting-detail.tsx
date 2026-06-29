@@ -321,14 +321,45 @@ export function MeetingDetail({ meeting }: MeetingDetailProps) {
               ) : (
                 <ol className="space-y-3">
                   {agendaItems.map((item: unknown, i: number) => {
+                    const obj =
+                      typeof item === "object" && item !== null
+                        ? (item as Record<string, unknown>)
+                        : null;
                     const title =
                       typeof item === "string"
                         ? item
-                        : (item as Record<string, unknown>)?.title ?? `Item ${i + 1}`;
-                    const desc =
-                      typeof item === "object" && item !== null
-                        ? (item as Record<string, unknown>)?.description
-                        : null;
+                        : obj?.title ?? `Item ${i + 1}`;
+                    const desc = obj?.description;
+                    const isAwardVote = obj?.kind === "award_vote";
+
+                    if (isAwardVote) {
+                      return (
+                        <li
+                          key={i}
+                          className="flex items-center gap-3 rounded-xl border border-ink/15 bg-bg-3 p-3"
+                        >
+                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-ink font-mono text-[11px] text-bg">
+                            {i + 1}
+                          </span>
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-ink/10 text-ink">
+                            <Vote className="h-4 w-4" />
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-ink">{String(title)}</p>
+                            {typeof desc === "string" && (
+                              <p className="mt-0.5 text-xs text-muted">{desc}</p>
+                            )}
+                          </div>
+                          <Link
+                            href="/voting"
+                            className="shrink-0 rounded-lg bg-ink px-3 py-2 font-mono text-[11px] uppercase tracking-wider text-bg hover:opacity-90"
+                          >
+                            {t("awardVoteAgendaCta")}
+                          </Link>
+                        </li>
+                      );
+                    }
+
                     return (
                       <li key={i} className="flex gap-3">
                         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-bg-3 font-mono text-[11px] text-ink-soft">
