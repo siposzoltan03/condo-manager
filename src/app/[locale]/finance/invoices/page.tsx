@@ -1,5 +1,5 @@
 import { setRequestLocale, getTranslations } from "next-intl/server";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { getDashboardContext } from "@/lib/dal";
 import { redirect } from "next/navigation";
 import { FinanceShell } from "@/components/finance/finance-shell";
@@ -13,7 +13,7 @@ export default async function FinanceInvoicesPage({ params }: Props) {
   setRequestLocale(locale);
 
   const ctx = await getDashboardContext();
-  if (!hasMinimumRole(ctx.role, "BOARD_MEMBER")) {
+  if (!allows(ctx, "view.building.finance")) {
     redirect(`/${locale}/finance`);
   }
 

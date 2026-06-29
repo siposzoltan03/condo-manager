@@ -46,6 +46,16 @@ export function allows(ctx: BuildingActor, cap: Capability): boolean {
 }
 
 /**
+ * True if the actor has ANY of the capabilities. For surfaces reachable via
+ * more than one right — e.g. the /finance entry, which an OWNER reaches via
+ * view.own.unit.finance and a board member via view.building.finance.
+ */
+export function allowsAny(ctx: BuildingActor, ...caps: Capability[]): boolean {
+  const actor = actorFrom(ctx);
+  return caps.some((cap) => can(actor, cap));
+}
+
+/**
  * Throwing gate — for server actions / DAL functions (mirrors requireRole).
  * Throws a {status:403}-tagged Error that adminErrorResponse() and the usual
  * route catch blocks already map to a 403 response.
