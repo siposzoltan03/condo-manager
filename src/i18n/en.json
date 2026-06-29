@@ -2025,6 +2025,19 @@
     "previous": "Previous",
     "next": "Next"
   },
+  "impersonation": {
+    "viewAsUser": "View as user",
+    "pickMember": "Choose a member",
+    "searchMembers": "Search by name or email…",
+    "noMembers": "No matches",
+    "readOnlyNote": "Read-only — no changes can be made; the session is logged.",
+    "cancel": "Cancel",
+    "viewAsName": "View as {name}",
+    "viewingAs": "Viewing as {name} ({role}) — {building}",
+    "readOnly": "read-only",
+    "loggedInAs": "Signed in as {name} (superadmin) — all viewing is logged",
+    "exit": "Exit"
+  },
   "building": {
     "switchBuilding": "Switch Building",
     "role_SUPER_ADMIN": "Super Admin",

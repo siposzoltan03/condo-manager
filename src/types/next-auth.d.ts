@@ -24,6 +24,19 @@ declare module "next-auth" {
     contractorOrgPlan?: string;
     contractorOrgName?: string;
     contractorRole?: string;
+    /** SUPER_ADMIN read-only impersonation context. When set, authorization is
+     *  evaluated as this (impersonated) building member; the real superadmin id
+     *  is preserved separately for audit. Presence ⇒ read-only. */
+    impersonating?: {
+      userId: string;
+      userName?: string;
+      buildingId: string;
+      buildingName?: string;
+      role: string;
+      isChair?: boolean;
+      ownsAnyUnit?: boolean;
+      isAuditor?: boolean;
+    };
   }
 
   interface Session {
@@ -54,6 +67,17 @@ declare module "next-auth" {
       contractorOrgPlan?: string;
       contractorOrgName?: string;
       contractorRole?: string;
+      /** SUPER_ADMIN read-only impersonation context (see User.impersonating). */
+      impersonating?: {
+        userId: string;
+        userName?: string;
+        buildingId: string;
+        buildingName?: string;
+        role: string;
+        isChair?: boolean;
+        ownsAnyUnit?: boolean;
+        isAuditor?: boolean;
+      };
     } & DefaultSession["user"];
   }
 }
@@ -80,5 +104,16 @@ declare module "next-auth/jwt" {
     contractorOrgPlan?: string;
     contractorOrgName?: string;
     contractorRole?: string;
+    /** SUPER_ADMIN read-only impersonation context (see User.impersonating). */
+    impersonating?: {
+      userId: string;
+      userName?: string;
+      buildingId: string;
+      buildingName?: string;
+      role: string;
+      isChair?: boolean;
+      ownsAnyUnit?: boolean;
+      isAuditor?: boolean;
+    };
   }
 }

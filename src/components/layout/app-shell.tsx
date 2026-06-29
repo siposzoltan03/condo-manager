@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { Sidebar } from "./sidebar";
 import { TopBar } from "./topbar";
+import { ImpersonationBanner } from "./impersonation-banner";
 
 /** Pages that render standalone (no sidebar / top bar). */
 const standalonePages = ["/login", "/forgot-password", "/reset-password", "/verify-email"];
@@ -69,6 +70,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     >
       <Sidebar />
       <main className="lg:pl-[244px]">
+        <ImpersonationBanner />
         <TopBar />
         <div>{children}</div>
       </main>
