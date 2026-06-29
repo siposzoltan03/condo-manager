@@ -1,8 +1,13 @@
 import type { BuildingRole } from "@prisma/client";
-import { can, type ActorContext, type Capability } from "./capabilities";
+import {
+  can,
+  type ActorContext,
+  type Capability,
+  type CapabilityOpts,
+} from "./capabilities";
 
 export { can } from "./capabilities";
-export type { ActorContext, Capability } from "./capabilities";
+export type { ActorContext, Capability, CapabilityOpts } from "./capabilities";
 
 /**
  * Building-capability authorization, layered on the can() matrix
@@ -40,9 +45,14 @@ export function actorFrom(ctx: BuildingActor): ActorContext {
   };
 }
 
-/** Boolean check — for the inline route style: `if (!allows(ctx, cap)) return 403`. */
-export function allows(ctx: BuildingActor, cap: Capability): boolean {
-  return can(actorFrom(ctx), cap);
+/** Boolean check — for the inline route style: `if (!allows(ctx, cap)) return 403`.
+ *  Pass `opts` for relational caps, e.g. `allows(ctx, "users.assignRole", { targetRole })`. */
+export function allows(
+  ctx: BuildingActor,
+  cap: Capability,
+  opts?: CapabilityOpts,
+): boolean {
+  return can(actorFrom(ctx), cap, opts);
 }
 
 /**
@@ -60,8 +70,12 @@ export function allowsAny(ctx: BuildingActor, ...caps: Capability[]): boolean {
  * Throws a {status:403}-tagged Error that adminErrorResponse() and the usual
  * route catch blocks already map to a 403 response.
  */
-export function requireCapability(ctx: BuildingActor, cap: Capability): void {
-  if (!can(actorFrom(ctx), cap)) {
+export function requireCapability(
+  ctx: BuildingActor,
+  cap: Capability,
+  opts?: CapabilityOpts,
+): void {
+  if (!can(actorFrom(ctx), cap, opts)) {
     throw Object.assign(new Error("Forbidden"), { status: 403 });
   }
 }

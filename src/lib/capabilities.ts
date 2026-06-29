@@ -41,7 +41,35 @@ export type Capability =
   | "residents.viewSameStaircase"
   | "platform.impersonate"
   | "platform.featureFlags"
-  | "auditor.readAll";
+  | "auditor.readAll"
+  // ── Governance (app administration, NOT Tht. representative acts). Unlike
+  //    building capabilities, SUPER_ADMIN DOES hold these.
+  | "users.manage"
+  | "users.assignRole"
+  | "units.manage"
+  | "contractor.view"
+  | "contractor.manage"
+  | "platform.subscriptions";
+
+/** Optional relational context for capabilities that compare the actor to a
+ *  target — currently only `users.assignRole` (you may not grant a role at or
+ *  above your own authority). */
+export interface CapabilityOpts {
+  targetRole?: BuildingRole;
+}
+
+/** Governance caps SUPER_ADMIN holds. Building-legal caps are NOT here —
+ *  SUPER_ADMIN gets those only via the impersonation flow. */
+const SUPER_ADMIN_CAPS: ReadonlySet<Capability> = new Set<Capability>([
+  "platform.impersonate",
+  "platform.featureFlags",
+  "platform.subscriptions",
+  "users.manage",
+  "users.assignRole",
+  "units.manage",
+  "contractor.view",
+  "contractor.manage",
+]);
 
 export interface ActorContext {
   role: BuildingRole;
@@ -65,11 +93,15 @@ export interface ActorContext {
   livesAtUnit?: boolean;
 }
 
-export function can(actor: ActorContext, cap: Capability): boolean {
-  // SUPER_ADMIN gets platform caps only — never building-level powers
-  // without explicit impersonation (out of scope, separate plan).
+export function can(
+  actor: ActorContext,
+  cap: Capability,
+  opts?: CapabilityOpts,
+): boolean {
+  // SUPER_ADMIN holds platform + governance caps (app administration) but no
+  // building-legal powers without the explicit impersonation flow.
   if (actor.role === "SUPER_ADMIN") {
-    return cap === "platform.impersonate" || cap === "platform.featureFlags";
+    return SUPER_ADMIN_CAPS.has(cap);
   }
 
   // Representative authority — Tht. § 43. Either the sole közös
@@ -77,6 +109,12 @@ export function can(actor: ActorContext, cap: Capability): boolean {
   // at-most-one-chair-per-building via a partial unique index.
   const hasRepresentativeAuthority =
     actor.role === "BOARD_MEMBER" && actor.isChair === true;
+
+  // Auditors are peers of board members for read access (Tht. § 27(3)).
+  const isBoardLevel =
+    actor.role === "BOARD_MEMBER" ||
+    actor.role === "ADMIN" ||
+    actor.isAuditor === true;
 
   switch (cap) {
     case "manage.budget":
@@ -120,6 +158,32 @@ export function can(actor: ActorContext, cap: Capability): boolean {
 
     case "auditor.readAll":
       return actor.isAuditor === true;
+
+    // ── Governance ───────────────────────────────────────────────────────
+    case "users.manage":
+      // Create/edit/deactivate users, resident permissions, board perms.
+      return actor.role === "ADMIN";
+
+    case "users.assignRole": {
+      // Only ADMIN reaches here (SUPER_ADMIN handled above). An ADMIN may
+      // assign building/resident roles but NOT grant ADMIN or SUPER_ADMIN —
+      // those require a SUPER_ADMIN.
+      if (actor.role !== "ADMIN") return false;
+      const target = opts?.targetRole;
+      return target !== "ADMIN" && target !== "SUPER_ADMIN";
+    }
+
+    case "units.manage":
+    case "contractor.view":
+      // Board-level read/management (auditors included as peers).
+      return isBoardLevel;
+
+    case "contractor.manage":
+      return actor.role === "ADMIN";
+
+    case "platform.subscriptions":
+      // Platform plan overrides — SUPER_ADMIN only (handled above).
+      return false;
 
     default:
       return false;

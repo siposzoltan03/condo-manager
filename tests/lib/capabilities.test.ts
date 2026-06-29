@@ -26,10 +26,17 @@ const REPRESENTATIVE_CAPS: Capability[] = [
 ];
 
 describe("can() — SUPER_ADMIN scoping", () => {
-  it("grants only platform capabilities and nothing else", () => {
+  it("grants platform + governance caps but never building-legal caps", () => {
     const a = actor({ role: "SUPER_ADMIN" });
+    // Platform + governance (app administration).
     expect(can(a, "platform.impersonate")).toBe(true);
     expect(can(a, "platform.featureFlags")).toBe(true);
+    expect(can(a, "platform.subscriptions")).toBe(true);
+    expect(can(a, "users.manage")).toBe(true);
+    expect(can(a, "users.assignRole", { targetRole: "SUPER_ADMIN" })).toBe(true);
+    expect(can(a, "units.manage")).toBe(true);
+    expect(can(a, "contractor.manage")).toBe(true);
+    // Building-legal caps stay false (impersonation flow only).
     expect(can(a, "manage.budget")).toBe(false);
     expect(can(a, "view.building.finance")).toBe(false);
     expect(can(a, "vote.cast")).toBe(false);
@@ -161,5 +168,44 @@ describe("can() — auditor.readAll", () => {
     expect(can(actor({ role: "AUDITOR", isAuditor: true }), "auditor.readAll")).toBe(true);
     expect(can(actor({ role: "OWNER", isAuditor: true }), "auditor.readAll")).toBe(true);
     expect(can(actor({ role: "AUDITOR", isAuditor: false }), "auditor.readAll")).toBe(false);
+  });
+});
+
+describe("can() — governance: users.manage / contractor.manage", () => {
+  it("ADMIN holds users.manage and contractor.manage; board/auditor do not", () => {
+    expect(can(actor({ role: "ADMIN" }), "users.manage")).toBe(true);
+    expect(can(actor({ role: "ADMIN" }), "contractor.manage")).toBe(true);
+    expect(can(actor({ role: "BOARD_MEMBER", isChair: true }), "users.manage")).toBe(false);
+    expect(can(actor({ role: "BOARD_MEMBER", isChair: true }), "contractor.manage")).toBe(false);
+    expect(can(actor({ role: "AUDITOR", isAuditor: true }), "contractor.manage")).toBe(false);
+  });
+});
+
+describe("can() — governance: board-level read (units.manage / contractor.view)", () => {
+  it("BOARD_MEMBER, ADMIN, and auditors get board-level read", () => {
+    for (const cap of ["units.manage", "contractor.view"] as const) {
+      expect(can(actor({ role: "BOARD_MEMBER" }), cap)).toBe(true);
+      expect(can(actor({ role: "ADMIN" }), cap)).toBe(true);
+      expect(can(actor({ role: "OWNER", isAuditor: true }), cap)).toBe(true);
+      expect(can(actor({ role: "OWNER" }), cap)).toBe(false);
+      expect(can(actor({ role: "TENANT" }), cap)).toBe(false);
+    }
+  });
+});
+
+describe("can() — governance: users.assignRole (relational escalation)", () => {
+  it("ADMIN may assign building/resident roles but not ADMIN or SUPER_ADMIN", () => {
+    const adm = actor({ role: "ADMIN" });
+    for (const t of ["BOARD_MEMBER", "AUDITOR", "OWNER", "TENANT"] as const) {
+      expect(can(adm, "users.assignRole", { targetRole: t })).toBe(true);
+    }
+    expect(can(adm, "users.assignRole", { targetRole: "ADMIN" })).toBe(false);
+    expect(can(adm, "users.assignRole", { targetRole: "SUPER_ADMIN" })).toBe(false);
+  });
+
+  it("SUPER_ADMIN may assign any role; lower roles may assign none", () => {
+    expect(can(actor({ role: "SUPER_ADMIN" }), "users.assignRole", { targetRole: "ADMIN" })).toBe(true);
+    expect(can(actor({ role: "BOARD_MEMBER", isChair: true }), "users.assignRole", { targetRole: "OWNER" })).toBe(false);
+    expect(can(actor({ role: "OWNER" }), "users.assignRole", { targetRole: "TENANT" })).toBe(false);
   });
 });
