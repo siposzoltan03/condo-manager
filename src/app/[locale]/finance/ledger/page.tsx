@@ -1,5 +1,5 @@
 import { setRequestLocale, getTranslations } from "next-intl/server";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { getDashboardContext } from "@/lib/dal";
 import { getFinanceLedger } from "@/lib/finance-dal";
 import { redirect } from "next/navigation";
@@ -22,7 +22,7 @@ export default async function FinanceLedgerPage({ params, searchParams }: Props)
   setRequestLocale(locale);
 
   const ctx = await getDashboardContext();
-  if (!hasMinimumRole(ctx.role, "BOARD_MEMBER")) {
+  if (!allows(ctx, "view.building.finance")) {
     redirect(`/${locale}/finance`);
   }
 

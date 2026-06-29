@@ -685,16 +685,26 @@ export const getAdminDashboard = cache(async (): Promise<AdminDashboardData> => 
 export interface DashboardContext {
   role: string;
   userName: string;
+  // ActorContext flags for the active building, so RSC pages can use can().
+  isChair: boolean;
+  ownsAnyUnit: boolean;
+  isAuditor: boolean;
+  isProfessional: boolean;
 }
 
 export const getDashboardContext = cache(async (): Promise<DashboardContext> => {
-  const { role } = await requireBuildingContext();
+  const { role, isChair, ownsAnyUnit, isAuditor, isProfessional } =
+    await requireBuildingContext();
   // Get user name from session
   const { getCurrentUser } = await import("@/lib/auth");
   const user = await getCurrentUser();
   return {
     role,
     userName: user?.name ?? "",
+    isChair,
+    ownsAnyUnit,
+    isAuditor,
+    isProfessional,
   };
 });
 

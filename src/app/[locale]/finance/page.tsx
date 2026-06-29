@@ -1,7 +1,7 @@
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows, allowsAny } from "@/lib/authz";
 import {
   getDashboardContext,
   getFinanceOverview,
@@ -24,14 +24,14 @@ export default async function FinancePage({ params, searchParams }: Props) {
 
   const ctx = await getDashboardContext();
 
-  // Tht. § 16, § 38 — finance surfaces are owner-only. TENANT has no
-  // common-cost obligation and no own-unit ledger; deny direct-URL
-  // navigation instead of rendering an empty page.
-  if (!hasMinimumRole(ctx.role, "OWNER")) {
+  // Reachable via EITHER right: an owner sees their own-unit finance, a board
+  // member / admin / auditor sees building finance (Tht. § 16, § 38). TENANT
+  // (and SUPER_ADMIN, under strict can()) have neither → redirect.
+  if (!allowsAny(ctx, "view.own.unit.finance", "view.building.finance")) {
     redirect(`/${locale}/dashboard`);
   }
 
-  const isBoardPlus = hasMinimumRole(ctx.role, "BOARD_MEMBER");
+  const isBoardPlus = allows(ctx, "view.building.finance");
 
   // Default tab depends on the role: residents see only "Saját"; board+
   // lands on "Épület" since that's the workspace they spend most time in.
