@@ -2,7 +2,7 @@ import { setRequestLocale } from "next-intl/server";
 import { notFound, redirect } from "next/navigation";
 import { findTicketForBidReview } from "@/lib/maintenance-dal";
 import { requireBuildingContext } from "@/lib/auth";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { BidReviewPage } from "@/components/marketplace/bid-review-page";
 
 interface PageProps {
@@ -19,7 +19,7 @@ export default async function TicketBidsPage({ params }: PageProps) {
   } catch {
     redirect(`/${locale}/login`);
   }
-  if (!hasMinimumRole(userBlock.role, "BOARD_MEMBER")) {
+  if (!allows(userBlock, "board.manage")) {
     redirect(`/${locale}/maintenance/${id}`);
   }
 

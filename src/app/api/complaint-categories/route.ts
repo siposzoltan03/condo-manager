@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
@@ -48,8 +48,9 @@ function slugify(name: string): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const { buildingId, role } = await requireBuildingContext();
-    if (!hasMinimumRole(role, "BOARD_MEMBER")) {
+    const ctx = await requireBuildingContext();
+    const { buildingId } = ctx;
+    if (!allows(ctx, "board.manage")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

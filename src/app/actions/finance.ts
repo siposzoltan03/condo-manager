@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireBuildingContext } from "@/lib/auth";
-import { requireRole, hasMinimumRole } from "@/lib/rbac";
+import { requireRole } from "@/lib/rbac";
 import { requireCapability } from "@/lib/authz";
 import { requireNotFrozen } from "@/lib/frozen-check";
 import { requireFeature } from "@/lib/feature-gate";

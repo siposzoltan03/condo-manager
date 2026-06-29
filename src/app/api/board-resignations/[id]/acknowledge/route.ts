@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { createAuditLog } from "@/lib/audit";
 import { notify, NotificationType } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
@@ -17,8 +17,9 @@ type RouteContext = { params: Promise<{ id: string }> };
  */
 export async function POST(_request: NextRequest, context: RouteContext) {
   try {
-    const { userId, buildingId, role } = await requireBuildingContext();
-    if (!hasMinimumRole(role, "BOARD_MEMBER")) {
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
+    if (!allows(ctx, "vote.start")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

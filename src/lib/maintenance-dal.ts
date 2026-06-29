@@ -2,7 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { requireBuildingContext } from "@/lib/auth";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -190,8 +190,9 @@ const ACTIVE_STATUSES: TicketStatusKey[] = [
 
 export const getMaintenanceOverview = cache(
   async (): Promise<MaintenanceOverviewData> => {
-    const { userId, buildingId, role } = await requireBuildingContext();
-    const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
+    const isBoardPlus = allows(ctx, "view.boardContext");
     const now = new Date();
     const yearStart = new Date(now.getFullYear(), 0, 1);
 
@@ -582,8 +583,9 @@ export interface TicketDetailData {
 
 export const getTicketDetail = cache(
   async (ticketId: string): Promise<TicketDetailData | null> => {
-    const { userId, buildingId, role } = await requireBuildingContext();
-    const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
+    const isBoardPlus = allows(ctx, "view.boardContext");
 
     const ticket = await prisma.maintenanceTicket.findUnique({
       where: { id: ticketId },
@@ -786,8 +788,9 @@ export interface ContractorListData {
 }
 
 export const getContractorList = cache(async (): Promise<ContractorListData> => {
-  const { buildingId, role } = await requireBuildingContext();
-  const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
+  const ctx = await requireBuildingContext();
+  const { buildingId } = ctx;
+  const isBoardPlus = allows(ctx, "view.boardContext");
 
   const contractors = await prisma.contractor.findMany({
     include: {
@@ -822,7 +825,7 @@ export const getContractorList = cache(async (): Promise<ContractorListData> => 
       presence: presenceOf(c.tickets.map((t) => t.status as TicketStatusKey)),
       createdAt: c.createdAt.toISOString(),
     })),
-    isAdmin: hasMinimumRole(role, "ADMIN"),
+    isAdmin: allows(ctx, "view.adminContext"),
     isBoardPlus,
   };
 });
@@ -856,8 +859,9 @@ export interface ScheduledMaintenanceListData {
 
 export const getScheduledList = cache(
   async (): Promise<ScheduledMaintenanceListData> => {
-    const { buildingId, role } = await requireBuildingContext();
-    const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
+    const ctx = await requireBuildingContext();
+    const { buildingId } = ctx;
+    const isBoardPlus = allows(ctx, "view.boardContext");
 
     const items = await prisma.scheduledMaintenance.findMany({
       where: { buildingId },

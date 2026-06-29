@@ -2,7 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { requireBuildingContext } from "@/lib/auth";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -898,8 +898,9 @@ export interface PendingAgendaInboxData {
 
 export const getPendingAgendaInbox = cache(
   async (): Promise<PendingAgendaInboxData> => {
-    const { buildingId, role } = await requireBuildingContext();
-    const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
+    const ctx = await requireBuildingContext();
+    const { buildingId } = ctx;
+    const isBoardPlus = allows(ctx, "vote.start");
     if (!isBoardPlus) {
       return { items: [], nextMeeting: null, isBoardPlus: false };
     }

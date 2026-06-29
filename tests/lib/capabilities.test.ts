@@ -171,6 +171,23 @@ describe("can() — auditor.readAll", () => {
   });
 });
 
+describe("can() — board/admin read context", () => {
+  it("view.boardContext: board member, admin, auditor — not owner/tenant/super", () => {
+    expect(can(actor({ role: "BOARD_MEMBER" }), "view.boardContext")).toBe(true);
+    expect(can(actor({ role: "ADMIN" }), "view.boardContext")).toBe(true);
+    expect(can(actor({ role: "OWNER", isAuditor: true }), "view.boardContext")).toBe(true);
+    expect(can(actor({ role: "OWNER" }), "view.boardContext")).toBe(false);
+    expect(can(actor({ role: "TENANT" }), "view.boardContext")).toBe(false);
+    expect(can(actor({ role: "SUPER_ADMIN" }), "view.boardContext")).toBe(false);
+  });
+
+  it("view.adminContext: admin only", () => {
+    expect(can(actor({ role: "ADMIN" }), "view.adminContext")).toBe(true);
+    expect(can(actor({ role: "BOARD_MEMBER", isChair: true }), "view.adminContext")).toBe(false);
+    expect(can(actor({ role: "SUPER_ADMIN" }), "view.adminContext")).toBe(false);
+  });
+});
+
 describe("can() — governance: users.manage / contractor.manage", () => {
   it("ADMIN holds users.manage and contractor.manage; board/auditor do not", () => {
     expect(can(actor({ role: "ADMIN" }), "users.manage")).toBe(true);

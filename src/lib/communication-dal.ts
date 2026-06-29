@@ -2,7 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { requireBuildingContext } from "@/lib/auth";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { getOnlineUserIds } from "@/lib/communication-bus";
 
 // ─── Types ────────────────────────────────────────────────────────────────
@@ -162,8 +162,9 @@ export const getCommunicationOverview = cache(
   async (
     selectedId?: string | null,
   ): Promise<CommunicationOverviewData> => {
-    const { userId, buildingId, role } = await requireBuildingContext();
-    const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
+    const isBoardPlus = allows(ctx, "view.boardContext");
 
     // All channels in this building the user can see.
     const channels = await prisma.channel.findMany({
@@ -360,8 +361,9 @@ function truncate(s: string, n: number): string {
 
 export const getChannelDetail = cache(
   async (channelId: string): Promise<ChannelDetailData | null> => {
-    const { userId, buildingId, role } = await requireBuildingContext();
-    const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
+    const isBoardPlus = allows(ctx, "view.boardContext");
 
     const channel = await prisma.channel.findUnique({
       where: { id: channelId },

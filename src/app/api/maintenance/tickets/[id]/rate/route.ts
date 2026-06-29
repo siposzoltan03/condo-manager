@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
 import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { createAuditLog } from "@/lib/audit";
 
@@ -22,7 +22,8 @@ type RouteContext = {
  */
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
-    const { userId, buildingId, role } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
 
     try {
       await requireFeature(buildingId, "maintenance");
@@ -80,9 +81,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
       );
     }
 
-    // Role floor: BOARD_MEMBER for marketplace, ADMIN for legacy.
-    const minRole = isMarketplace ? "BOARD_MEMBER" : "ADMIN";
-    if (!hasMinimumRole(role, minRole)) {
+    // Role floor: any board member for marketplace, ADMIN for legacy.
+    const allowed = isMarketplace
+      ? allows(ctx, "board.manage")
+      : allows(ctx, "view.adminContext");
+    if (!allowed) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

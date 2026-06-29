@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 
 type RouteContext = {
@@ -9,7 +9,8 @@ type RouteContext = {
 
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
-    const { buildingId, role } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
+    const { buildingId } = ctx;
     const { id, versionId } = await context.params;
 
     const document = await prisma.document.findUnique({
@@ -24,10 +25,10 @@ export async function GET(request: NextRequest, context: RouteContext) {
     }
 
     // Visibility check
-    if (document.visibility === "ADMIN_ONLY" && !hasMinimumRole(role, "ADMIN")) {
+    if (document.visibility === "ADMIN_ONLY" && !allows(ctx, "view.adminContext")) {
       return NextResponse.json({ error: "Document not found" }, { status: 404 });
     }
-    if (document.visibility === "BOARD_ONLY" && !hasMinimumRole(role, "BOARD_MEMBER")) {
+    if (document.visibility === "BOARD_ONLY" && !allows(ctx, "view.boardContext")) {
       return NextResponse.json({ error: "Document not found" }, { status: 404 });
     }
 

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireBuildingContext } from "@/lib/auth";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { getBidsForPublication } from "@/lib/marketplace/bidding";
 import { computeFitScores, WEIGHTS_VERSION } from "@/lib/marketplace/fit-scoring";
 import { getTrustSummaries } from "@/lib/marketplace/trust";
@@ -27,7 +27,7 @@ export async function GET(_request: Request, ctx: RouteContext) {
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (!hasMinimumRole(userBlock.role, "BOARD_MEMBER")) {
+  if (!allows(userBlock, "board.manage")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

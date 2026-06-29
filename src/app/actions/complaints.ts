@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireBuildingContext } from "@/lib/auth";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { requireNotFrozen } from "@/lib/frozen-check";
 import { createAuditLog } from "@/lib/audit";
 import { notify, NotificationType } from "@/lib/notifications";
@@ -163,9 +163,10 @@ export async function updateComplaintStatus(
   newMeeting?: NewMeetingInput,
 ): Promise<ActionResult> {
   try {
-    const { userId, buildingId, role } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
 
-    if (!hasMinimumRole(role, "BOARD_MEMBER")) {
+    if (!allows(ctx, "board.manage")) {
       return { error: "Forbidden" };
     }
 

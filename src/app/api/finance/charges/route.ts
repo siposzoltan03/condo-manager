@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
 import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
-import { requireRole, hasMinimumRole } from "@/lib/rbac";
+import { requireRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import {
   findUnitInBuilding,
   listBuildingUnitIds,
@@ -20,7 +21,8 @@ const EMPTY_LIST_PAGE = {
 
 export async function GET(request: NextRequest) {
   try {
-    const { userId, buildingId, role } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
 
     try {
       await requireFeature(buildingId, "finance");
@@ -44,7 +46,7 @@ export async function GET(request: NextRequest) {
       isNaN(rawLimit) || rawLimit < 1 ? 1 : Math.min(rawLimit, 50);
     const skip = (page - 1) * limit;
 
-    const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
+    const isBoardPlus = allows(ctx, "view.building.finance");
 
     let targetUnitIds: string[];
     if (isBoardPlus && unitIdParam) {

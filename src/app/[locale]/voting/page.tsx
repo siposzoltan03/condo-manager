@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import { getDashboardContext } from "@/lib/dal";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { getVotingOverview } from "@/lib/voting-dal";
 import type {
   PastVoteData,
@@ -34,13 +34,13 @@ export default async function VotingPageRoute({ params }: Props) {
   // Tht. § 38 — only owners (tulajdonostárs) have a vote. TENANT may
   // observe deliberations at the meeting, but the SaaS surface itself
   // is owner-only; tenants navigating here directly are redirected.
-  if (!hasMinimumRole(ctx.role, "OWNER")) {
+  if (!allows(ctx, "vote.cast")) {
     redirect(`/${locale}/dashboard`);
   }
 
   const data = await getVotingOverview();
   const t = await getTranslations({ locale, namespace: "voting" });
-  const isBoardPlus = hasMinimumRole(ctx.role, "BOARD_MEMBER");
+  const isBoardPlus = allows(ctx, "vote.start");
 
   // Quarter label for the page title — small visual touch from the design.
   const now = new Date();

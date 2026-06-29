@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { Prisma, ComplaintStatus } from "@prisma/client";
 import { requireNotFrozen, FrozenBuildingError } from "@/lib/frozen-check";
 import { rateLimitMutationOrRespond } from "@/lib/rate-limit";
@@ -15,7 +15,8 @@ import { complaintCreated } from "@/lib/complaints/events";
 
 export async function GET(request: NextRequest) {
   try {
-    const { userId, buildingId, role } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
 
     const { searchParams } = request.nextUrl;
     const search = searchParams.get("search") ?? undefined;
@@ -38,7 +39,7 @@ export async function GET(request: NextRequest) {
     const { complaints, total } = await listComplaintsPaginated({
       buildingId,
       viewerUserId: userId,
-      isBoardPlus: hasMinimumRole(role, "BOARD_MEMBER"),
+      isBoardPlus: allows(ctx, "view.boardContext"),
       search,
       status: status as ComplaintStatus | undefined,
       categoryId,
