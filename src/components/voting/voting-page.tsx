@@ -59,9 +59,9 @@ interface VotingPageProps {
 export function VotingPage({ initialVotes }: VotingPageProps) {
   const t = useTranslations("voting");
   const tCommon = useTranslations("common");
-  const { hasRole } = useAuth();
+  const { can } = useAuth();
   const router = useRouter();
-  const isBoardPlus = hasRole("BOARD_MEMBER");
+  const isBoardPlus = can("view.boardContext");
 
   const [activeTab, setActiveTab] = useState<"votes" | "meetings">("votes");
   const [votes, setVotes] = useState<VoteSummary[]>(initialVotes.votes as VoteSummary[]);

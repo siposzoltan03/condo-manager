@@ -1,21 +1,22 @@
 "use client";
 
 import { useAuth } from "@/hooks/use-auth";
+import type { Capability } from "@/lib/authz";
 
 interface RoleGuardProps {
-  role: string;
+  capability: Capability;
   children: React.ReactNode;
   fallback?: React.ReactNode;
 }
 
-export function RoleGuard({ role, children, fallback = null }: RoleGuardProps) {
-  const { hasRole, isLoading } = useAuth();
+export function RoleGuard({ capability, children, fallback = null }: RoleGuardProps) {
+  const { can, isLoading } = useAuth();
 
   if (isLoading) {
     return null;
   }
 
-  if (!hasRole(role)) {
+  if (!can(capability)) {
     return <>{fallback}</>;
   }
 
