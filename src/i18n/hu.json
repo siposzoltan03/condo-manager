@@ -2030,7 +2030,8 @@
     "role_SUPER_ADMIN": "Főadminisztrátor",
     "role_ADMIN": "Adminisztrátor",
     "role_BOARD_MEMBER": "Igazgatósági tag",
-    "role_RESIDENT": "Lakástulajdonos",
+    "role_OWNER": "Tulajdonos",
+    "role_AUDITOR": "Számvizsgáló",
     "role_TENANT": "Bérlő",
     "noBuilding": "Nincs kiválasztott épület",
     "switchSuccess": "Épület sikeresen váltva"
