@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { documentPinToggled } from "@/lib/documents/events";
 
@@ -9,9 +9,10 @@ type RouteContext = { params: Promise<{ id: string }> };
 /** Toggle isPinned on a Document. Board+ only. */
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
-    const { userId, buildingId, role } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
 
-    if (!hasMinimumRole(role, "BOARD_MEMBER")) {
+    if (!allows(ctx, "document.publish.public")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

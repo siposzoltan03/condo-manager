@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireBuildingContext } from "@/lib/auth";
-import { requireRole } from "@/lib/rbac";
+import { requireCapability } from "@/lib/authz";
 import { requireNotFrozen } from "@/lib/frozen-check";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
@@ -29,8 +29,9 @@ interface CreateDocumentInput {
 
 export async function createDocument(input: CreateDocumentInput): Promise<ActionResult> {
   try {
-    const { userId, buildingId, role } = await requireBuildingContext();
-    await requireRole(role, "BOARD_MEMBER");
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
+    requireCapability(ctx, "document.publish.public");
     await requireNotFrozen(buildingId);
 
     const {

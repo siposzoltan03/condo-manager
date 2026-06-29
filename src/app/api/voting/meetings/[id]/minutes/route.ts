@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
 import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
-import { requireRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { meetingMinutesUpdated } from "@/lib/voting/events";
 
@@ -9,7 +9,8 @@ type RouteContext = { params: Promise<{ id: string }> };
 
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
-    const { userId, buildingId, role } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
 
     try {
       await requireFeature(buildingId, "voting");
@@ -20,9 +21,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       throw err;
     }
 
-    try {
-      await requireRole(role, "BOARD_MEMBER");
-    } catch {
+    if (!allows(ctx, "vote.editMinutes")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

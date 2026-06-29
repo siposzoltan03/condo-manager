@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
 import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
-import { requireRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { calculateMeetingQuorum } from "@/lib/voting/quorum";
 
@@ -98,7 +98,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
  */
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
-    const { buildingId, role } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
+    const { buildingId } = ctx;
 
     try {
       await requireFeature(buildingId, "voting");
@@ -109,9 +110,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       throw err;
     }
 
-    try {
-      await requireRole(role, "BOARD_MEMBER");
-    } catch {
+    if (!allows(ctx, "vote.start")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -166,7 +165,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
  */
 export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
-    const { buildingId, role } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
+    const { buildingId } = ctx;
 
     try {
       await requireFeature(buildingId, "voting");
@@ -177,9 +177,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       throw err;
     }
 
-    try {
-      await requireRole(role, "BOARD_MEMBER");
-    } catch {
+    if (!allows(ctx, "vote.start")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
