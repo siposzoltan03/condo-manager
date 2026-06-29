@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import { getDashboardContext } from "@/lib/dal";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { getUnitsOverview } from "@/lib/units-dal";
 import { UnitsShell } from "@/components/units/units-shell";
 import { UnitsKpiStrip } from "@/components/units/units-kpis";
@@ -28,7 +28,7 @@ export default async function UnitsPage({ params }: Props) {
   // the building's full unit register. Direct-URL navigation by
   // OWNER / TENANT is redirected to the dashboard.
   const ctx = await getDashboardContext();
-  if (!hasMinimumRole(ctx.role, "BOARD_MEMBER")) {
+  if (!allows(ctx, "units.manage")) {
     redirect(`/${locale}/dashboard`);
   }
 

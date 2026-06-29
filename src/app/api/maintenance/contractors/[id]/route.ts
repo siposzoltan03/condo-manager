@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { getContractorWithStats } from "@/lib/maintenance/contractors";
 
@@ -10,9 +10,9 @@ type RouteContext = {
 
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
-    const { role: activeRole } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
 
-    if (!hasMinimumRole(activeRole, "BOARD_MEMBER")) {
+    if (!allows(ctx, "contractor.view")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -32,9 +32,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
-    const { role: activeRole } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
 
-    if (!hasMinimumRole(activeRole, "ADMIN")) {
+    if (!allows(ctx, "contractor.manage")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -66,9 +66,9 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
 export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
-    const { role: activeRole } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
 
-    if (!hasMinimumRole(activeRole, "ADMIN")) {
+    if (!allows(ctx, "contractor.manage")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

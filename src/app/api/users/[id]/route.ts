@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
-import { requireRole, hasMinimumRole } from "@/lib/rbac";
+import { requireRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
 import { BuildingRole, UnitRelationship } from "@prisma/client";
@@ -54,7 +55,7 @@ export async function PATCH(
       (role !== undefined && isElevatedRole(role)) ||
       isElevatedRole(existingMembership.role)
     ) {
-      if (!hasMinimumRole(activeRole, "SUPER_ADMIN")) {
+      if (!allows({ role: activeRole }, "users.assignRole", { targetRole: "ADMIN" })) {
         return NextResponse.json(
           {
             error:

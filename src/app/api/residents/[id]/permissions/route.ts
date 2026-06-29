@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { getResidentPermissions } from "@/lib/residents-dal";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
 export async function GET(_request: NextRequest, context: RouteContext) {
   try {
-    const { role } = await requireBuildingContext();
-    if (!hasMinimumRole(role, "ADMIN")) {
+    const ctx = await requireBuildingContext();
+    if (!allows(ctx, "users.manage")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     const { id } = await context.params;

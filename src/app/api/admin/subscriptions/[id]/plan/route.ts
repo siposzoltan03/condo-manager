@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 
 /**
@@ -12,9 +12,10 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { userId, role } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
+    const { userId } = ctx;
 
-    if (!hasMinimumRole(role, "SUPER_ADMIN")) {
+    if (!allows(ctx, "platform.subscriptions")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

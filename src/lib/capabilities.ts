@@ -50,6 +50,7 @@ export type Capability =
    *  categories, channel-message moderation, resignation acknowledgement,
    *  pending-agenda handling. Distinct from chair-only representative caps. */
   | "board.manage"
+  | "platform.admin"
   | "platform.impersonate"
   | "platform.featureFlags"
   | "auditor.readAll"
@@ -72,6 +73,7 @@ export interface CapabilityOpts {
 /** Governance caps SUPER_ADMIN holds. Building-legal caps are NOT here —
  *  SUPER_ADMIN gets those only via the impersonation flow. */
 const SUPER_ADMIN_CAPS: ReadonlySet<Capability> = new Set<Capability>([
+  "platform.admin",
   "platform.impersonate",
   "platform.featureFlags",
   "platform.subscriptions",

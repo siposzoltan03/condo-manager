@@ -1,6 +1,6 @@
 import { setRequestLocale } from "next-intl/server";
 import { getCurrentUser } from "@/lib/auth";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import {
   getFeatureCatalog,
   getPlanMatrix,
@@ -19,7 +19,7 @@ export default async function FeatureManagementPage({ params }: Props) {
   setRequestLocale(locale);
 
   const user = await getCurrentUser();
-  if (!user || !hasMinimumRole(user.activeRole, "SUPER_ADMIN")) {
+  if (!user || !allows({ role: user.activeRole }, "platform.admin")) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="rounded-lg bg-red-50 px-6 py-4 text-center">
