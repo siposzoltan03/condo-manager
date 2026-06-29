@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { isValidTransition } from "@/lib/maintenance/tickets";
 import { sendEmail } from "@/lib/email";
 import {
@@ -32,7 +32,7 @@ export async function POST(_request: Request, ctx: RouteContext) {
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (!hasMinimumRole(session.role, "BOARD_MEMBER")) {
+  if (!allows(session, "board.manage")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

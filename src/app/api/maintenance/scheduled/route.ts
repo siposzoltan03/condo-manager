@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
 import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
@@ -32,7 +32,8 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const { buildingId, role } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
+    const { buildingId } = ctx;
 
     try {
       await requireFeature(buildingId, "maintenance");
@@ -43,7 +44,7 @@ export async function POST(request: NextRequest) {
       throw err;
     }
 
-    if (!hasMinimumRole(role, "BOARD_MEMBER")) {
+    if (!allows(ctx, "board.manage")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

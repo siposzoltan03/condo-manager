@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
 import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { createAuditLog } from "@/lib/audit";
 import { notify, NotificationType } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
@@ -13,7 +13,8 @@ type RouteContext = {
 
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
-    const { userId, buildingId, role } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
 
     try {
       await requireFeature(buildingId, "maintenance");
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       throw err;
     }
 
-    if (!hasMinimumRole(role, "BOARD_MEMBER")) {
+    if (!allows(ctx, "ticket.assign")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

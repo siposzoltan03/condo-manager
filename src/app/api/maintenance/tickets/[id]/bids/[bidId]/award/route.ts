@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import {
   awardBid,
   findTicketForAwardRoute,
@@ -28,7 +28,7 @@ export async function POST(_request: Request, ctx: RouteContext) {
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (!hasMinimumRole(userBlock.role, "BOARD_MEMBER")) {
+  if (!allows(userBlock, "ticket.assign")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

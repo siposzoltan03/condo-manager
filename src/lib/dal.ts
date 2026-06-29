@@ -9,7 +9,8 @@ import {
   requirePageFeature,
   requirePageRole,
 } from "@/lib/page-guard";
-import { requireRole, hasMinimumRole } from "@/lib/rbac";
+import { requireRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { requireFeature } from "@/lib/feature-gate";
 import { prisma } from "@/lib/prisma";
 import { calculateMeetingQuorum } from "@/lib/voting/quorum";
@@ -198,9 +199,10 @@ export interface ComplaintsData {
 }
 
 export const getComplaints = cache(async (): Promise<ComplaintsData> => {
-  const { userId, buildingId, role } = await requireBuildingContext();
+  const ctx = await requireBuildingContext();
+  const { userId, buildingId } = ctx;
 
-  const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
+  const isBoardPlus = allows(ctx, "view.boardContext");
   const limit = 20;
 
   const where: Prisma.ComplaintWhereInput = { buildingId };
@@ -412,7 +414,8 @@ export interface MeetingDetailData {
 }
 
 export const getMeetingDetail = cache(async (id: string): Promise<MeetingDetailData> => {
-  const { userId, buildingId, role } = await requirePageContext();
+  const ctx = await requirePageContext();
+  const { userId, buildingId } = ctx;
   await requirePageFeature(buildingId, "voting");
 
   const meeting = await prisma.meeting.findUnique({
@@ -445,7 +448,7 @@ export const getMeetingDetail = cache(async (id: string): Promise<MeetingDetailD
     notFound();
   }
 
-  const canEditMinutes = hasMinimumRole(role, "BOARD_MEMBER");
+  const canEditMinutes = allows(ctx, "vote.editMinutes");
 
   // Calculate vote results with majority-type-aware logic
   const totalBuildingShares = await prisma.unit.findMany({
@@ -615,10 +618,11 @@ export interface DocumentsData {
 }
 
 export const getDocuments = cache(async (): Promise<DocumentsData> => {
-  const { buildingId, role } = await requireBuildingContext();
+  const ctx = await requireBuildingContext();
+  const { buildingId } = ctx;
 
-  const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
-  const isAdmin = hasMinimumRole(role, "ADMIN");
+  const isBoardPlus = allows(ctx, "view.boardContext");
+  const isAdmin = allows(ctx, "view.adminContext");
   const limit = 20;
 
   const where: Record<string, unknown> = {
@@ -825,9 +829,10 @@ export interface ComplaintDetailData {
 
 export const getComplaintDetail = cache(
   async (id: string): Promise<ComplaintDetailData> => {
-    const { userId, buildingId, role } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
 
-    const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
+    const isBoardPlus = allows(ctx, "view.boardContext");
 
     const complaint = await prisma.complaint.findUnique({
       where: { id },
@@ -981,10 +986,11 @@ export interface FinanceOverviewData {
 }
 
 export const getFinanceOverview = cache(async (): Promise<FinanceOverviewData> => {
-  const { userId, buildingId, role } = await requirePageContext();
+  const ctx = await requirePageContext();
+  const { userId, buildingId } = ctx;
   await requirePageFeature(buildingId, "finance");
 
-  const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
+  const isBoardPlus = allows(ctx, "view.building.finance");
 
   // Find unit for current user
   const unitUser = await prisma.unitUser.findFirst({
@@ -1314,7 +1320,8 @@ export interface InvitationsData {
 }
 
 export const getInvitations = cache(async (): Promise<InvitationsData> => {
-  const { buildingId, role } = await requireBuildingContext();
+  const ctx = await requireBuildingContext();
+  const { buildingId, role } = ctx;
   await requireRole(role, "ADMIN");
 
   const invitations = await prisma.invitation.findMany({
@@ -1339,7 +1346,7 @@ export const getInvitations = cache(async (): Promise<InvitationsData> => {
       invitedBy: inv.invitedBy ? { name: inv.invitedBy.name } : null,
       unit: inv.unit ? { number: inv.unit.number } : null,
     })),
-    isAdmin: hasMinimumRole(role, "ADMIN"),
+    isAdmin: allows(ctx, "view.adminContext"),
   };
 });
 

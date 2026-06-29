@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import { getDashboardContext } from "@/lib/dal";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import {
   getVotingOverview,
   getMeetingList,
@@ -37,7 +37,7 @@ export default async function VotingMeetingsPage({ params }: Props) {
     getPendingAgendaInbox(),
   ]);
   const t = await getTranslations({ locale, namespace: "voting" });
-  const isBoardPlus = hasMinimumRole(ctx.role, "BOARD_MEMBER");
+  const isBoardPlus = allows(ctx, "vote.start");
 
   return (
     <VotingShell

@@ -2,7 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { requireBuildingContext } from "@/lib/auth";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -211,9 +211,10 @@ interface OverviewParams {
 
 export const getDocumentsOverview = cache(
   async (params: OverviewParams = {}): Promise<DocumentsOverviewData> => {
-    const { buildingId, role } = await requireBuildingContext();
-    const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
-    const isAdminPlus = hasMinimumRole(role, "ADMIN");
+    const ctx = await requireBuildingContext();
+    const { buildingId, role } = ctx;
+    const isBoardPlus = allows(ctx, "view.boardContext");
+    const isAdminPlus = allows(ctx, "view.adminContext");
 
     const visibilityClause = visibilityWhereForRole(
       role as "OWNER" | "TENANT" | "BOARD_MEMBER" | "ADMIN" | "SUPER_ADMIN",
@@ -450,8 +451,9 @@ export const getDocumentsOverview = cache(
 
 export const getVersionPanel = cache(
   async (documentId: string): Promise<VersionPanelData | null> => {
-    const { buildingId, role } = await requireBuildingContext();
-    const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
+    const ctx = await requireBuildingContext();
+    const { buildingId, role } = ctx;
+    const isBoardPlus = allows(ctx, "view.boardContext");
     const visibilityClause = visibilityWhereForRole(
       role as "OWNER" | "TENANT" | "BOARD_MEMBER" | "ADMIN" | "SUPER_ADMIN",
     );

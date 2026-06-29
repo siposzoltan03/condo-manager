@@ -39,6 +39,17 @@ export type Capability =
   | "document.publish.boardOnly"
   | "residents.viewAll"
   | "residents.viewSameStaircase"
+  // ── Board-/admin-level read context. The generic "is this user board+ / admin+"
+  //    visibility flags (show internal fields, board-only UI) that the legacy
+  //    hasMinimumRole(role,"BOARD_MEMBER"/"ADMIN") encoded. Read-only — they do
+  //    NOT confer representative authority (that still needs isChair).
+  | "view.boardContext"
+  | "view.adminContext"
+  /** Operational board actions that are NOT Tht. § 43 representative acts —
+   *  any board member (or admin) may do them: complaint triage, complaint
+   *  categories, channel-message moderation, resignation acknowledgement,
+   *  pending-agenda handling. Distinct from chair-only representative caps. */
+  | "board.manage"
   | "platform.impersonate"
   | "platform.featureFlags"
   | "auditor.readAll"
@@ -146,6 +157,19 @@ export function can(
       // SUPER_ADMIN is excluded by the early return above; every other
       // role can report a ticket against a building they belong to.
       return true;
+
+    case "view.boardContext":
+      // Board-level read visibility (board member, admin, or auditor peer).
+      return isBoardLevel;
+
+    case "view.adminContext":
+      // Admin-level read visibility.
+      return actor.role === "ADMIN";
+
+    case "board.manage":
+      // Operational board work — any board member or admin (auditors are
+      // read-only oversight, so excluded; not chair-gated).
+      return actor.role === "BOARD_MEMBER" || actor.role === "ADMIN";
 
     case "residents.viewAll":
       return actor.role === "BOARD_MEMBER" || actor.role === "ADMIN";

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import { getComplaints } from "@/lib/dal";
 import { getUnitsOverview } from "@/lib/units-dal";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { requireBuildingContext } from "@/lib/auth";
 import { ComplaintsShell } from "@/components/complaints/complaints-shell";
 import { ComplaintsExplorer } from "@/components/complaints/complaints-explorer";
@@ -27,7 +27,7 @@ export default async function ComplaintsPage({ params }: Props) {
     getUnitsOverview(),
     requireBuildingContext(),
   ]);
-  const isBoardPlus = hasMinimumRole(ctx.role, "BOARD_MEMBER");
+  const isBoardPlus = allows(ctx, "view.boardContext");
 
   const activeCount = data.complaints.filter(
     (c) => c.status !== "RESOLVED" && c.status !== "ESCALATED",

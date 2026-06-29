@@ -1,5 +1,5 @@
 import { setRequestLocale } from "next-intl/server";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { getDashboardContext } from "@/lib/dal";
 import {
   getBoardDashboard,
@@ -23,7 +23,7 @@ export default async function DashboardPage({ params }: Props) {
   setRequestLocale(locale);
 
   const ctx = await getDashboardContext();
-  const isBoardPlus = hasMinimumRole(ctx.role, "BOARD_MEMBER");
+  const isBoardPlus = allows(ctx, "view.boardContext");
 
   if (isBoardPlus) {
     const { buildingId } = await requireBuildingContext();

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { requireBuildingContext } from "@/lib/auth";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import {
   resolveBoardAccess,
   resolveContractorAccess,
@@ -49,8 +49,9 @@ async function resolveAccess(
 
   // Condo side — must be board+ in the publication's building.
   try {
-    const { userId, buildingId, role } = await requireBuildingContext();
-    if (!hasMinimumRole(role, "BOARD_MEMBER")) {
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
+    if (!allows(ctx, "ticket.assign")) {
       return { ok: false, status: 403, error: "Forbidden" };
     }
     const access = await resolveBoardAccess(

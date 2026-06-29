@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
 import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
-import { requireRole, hasMinimumRole } from "@/lib/rbac";
+import { requireRole } from "@/lib/rbac";
 import { allows } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { createHash } from "crypto";
@@ -13,7 +13,7 @@ type RouteContext = { params: Promise<{ id: string }> };
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
     const ctx = await requireBuildingContext();
-    const { userId, buildingId, role } = ctx;
+    const { userId, buildingId } = ctx;
     const limited = await rateLimitMutationOrRespond(userId, "ballot:cast", {
       limit: 10,
       windowSeconds: 60,
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     if (onBehalfOfUnitId) {
       // "Cast on behalf" — organizer/board member votes for another unit
-      const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
+      const isBoardPlus = allows(ctx, "vote.cast");
       if (!isBoardPlus) {
         return NextResponse.json(
           { error: "Only board members can cast votes on behalf of others" },

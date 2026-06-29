@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { DocumentVisibility } from "@prisma/client";
 
@@ -12,7 +12,8 @@ type RouteContext = { params: Promise<{ id: string }> };
  */
 export async function POST(_request: NextRequest, context: RouteContext) {
   try {
-    const { buildingId, role } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
+    const { buildingId } = ctx;
     const { id } = await context.params;
 
     const doc = await prisma.document.findUnique({
@@ -29,13 +30,13 @@ export async function POST(_request: NextRequest, context: RouteContext) {
     }
     if (
       doc.visibility !== DocumentVisibility.PUBLIC &&
-      !hasMinimumRole(role, "BOARD_MEMBER")
+      !allows(ctx, "view.boardContext")
     ) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     if (
       doc.visibility === DocumentVisibility.ADMIN_ONLY &&
-      !hasMinimumRole(role, "ADMIN")
+      !allows(ctx, "view.adminContext")
     ) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }

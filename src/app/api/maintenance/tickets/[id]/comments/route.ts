@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
 import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { notify, NotificationType } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
 
@@ -11,7 +11,8 @@ type RouteContext = {
 
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
-    const { userId, buildingId, role } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
 
     try {
       await requireFeature(buildingId, "maintenance");
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     }
 
     const { id } = await context.params;
-    const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
+    const isBoardPlus = allows(ctx, "view.boardContext");
 
     // Verify ticket exists and belongs to building
     const ticket = await prisma.maintenanceTicket.findUnique({
@@ -59,7 +60,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
-    const { userId, buildingId, role } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
 
     try {
       await requireFeature(buildingId, "maintenance");
@@ -81,7 +83,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       );
     }
 
-    const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
+    const isBoardPlus = allows(ctx, "view.boardContext");
 
     const ticket = await prisma.maintenanceTicket.findUnique({
       where: { id },

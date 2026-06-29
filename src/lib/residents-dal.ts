@@ -2,7 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { requireBuildingContext } from "@/lib/auth";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { mayExposeContactData } from "@/lib/tenant-consent";
 
 // ─── Types ────────────────────────────────────────────────────────────────
@@ -144,9 +144,10 @@ const ROLE_LABELS_HU: Record<BuildingRoleKey, string> = {
 
 export const getResidentsOverview = cache(
   async (): Promise<ResidentsOverviewData> => {
-    const { userId, buildingId, role } = await requireBuildingContext();
-    const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
-    const isAdmin = hasMinimumRole(role, "ADMIN");
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
+    const isBoardPlus = allows(ctx, "view.boardContext");
+    const isAdmin = allows(ctx, "view.adminContext");
 
     const [members, contractors] = await Promise.all([
       prisma.userBuilding.findMany({
@@ -400,8 +401,9 @@ export const getResidentsOverview = cache(
 
 export const getResidentProfile = cache(
   async (residentId: string): Promise<ResidentProfileData | null> => {
-    const { userId, buildingId, role } = await requireBuildingContext();
-    const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
+    const isBoardPlus = allows(ctx, "view.boardContext");
 
     const ub = await prisma.userBuilding.findFirst({
       where: { userId: residentId, buildingId },

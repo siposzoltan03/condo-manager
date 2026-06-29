@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import {
   updateComplaintStatus,
   type NewMeetingInput,
@@ -14,10 +14,11 @@ type RouteContext = {
 
 export async function GET(_request: NextRequest, context: RouteContext) {
   try {
-    const { userId, buildingId, role } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
 
     const { id } = await context.params;
-    const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
+    const isBoardPlus = allows(ctx, "view.boardContext");
 
     const complaint = await findComplaintForViewer({
       id,

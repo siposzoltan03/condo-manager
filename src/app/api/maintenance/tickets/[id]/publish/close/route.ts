@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireBuildingContext } from "@/lib/auth";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { closePublication } from "@/lib/marketplace/publishing";
 import { createAuditLog } from "@/lib/audit";
 
@@ -19,15 +19,14 @@ interface RouteContext {
  * handles bid-side lifecycle.
  */
 export async function POST(request: NextRequest, ctx: RouteContext) {
-  let userId: string;
-  let buildingId: string;
-  let role: string;
+  let actor: Awaited<ReturnType<typeof requireBuildingContext>>;
   try {
-    ({ userId, buildingId, role } = await requireBuildingContext());
+    actor = await requireBuildingContext();
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (!hasMinimumRole(role, "BOARD_MEMBER")) {
+  const { userId, buildingId } = actor;
+  if (!allows(actor, "ticket.assign")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

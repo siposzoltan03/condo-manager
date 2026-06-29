@@ -1,17 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
-import { requireRole, hasMinimumRole } from "@/lib/rbac";
+import { requireRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { DocumentVisibility } from "@prisma/client";
 import { documentCategoryCreated } from "@/lib/documents/events";
 
 export async function GET(request: NextRequest) {
   try {
-    const { userId, buildingId, role } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
+    const { buildingId } = ctx;
 
     // Determine which visibilities user can see
-    const isAdmin = hasMinimumRole(role, "ADMIN");
-    const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
+    const isAdmin = allows(ctx, "view.adminContext");
+    const isBoardPlus = allows(ctx, "view.boardContext");
 
     let allowedVisibilities: DocumentVisibility[];
     if (isAdmin) {

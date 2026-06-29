@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
-import { hasMinimumRole } from "@/lib/rbac";
 import { allows } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { Prisma, DocumentVisibility } from "@prisma/client";
@@ -8,7 +7,8 @@ import { documentCreated } from "@/lib/documents/events";
 
 export async function GET(request: NextRequest) {
   try {
-    const { userId, buildingId, role } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
+    const { buildingId } = ctx;
 
     const { searchParams } = request.nextUrl;
     const search = searchParams.get("search") ?? undefined;
@@ -31,8 +31,8 @@ export async function GET(request: NextRequest) {
     where.isArchived = archived === "true" ? true : false;
 
     // Visibility filtering based on role
-    const isAdmin = hasMinimumRole(role, "ADMIN");
-    const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
+    const isAdmin = allows(ctx, "view.adminContext");
+    const isBoardPlus = allows(ctx, "view.boardContext");
 
     if (!isAdmin && !isBoardPlus) {
       // Regular users can only see PUBLIC

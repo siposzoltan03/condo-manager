@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
 import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
 import {
@@ -14,7 +14,8 @@ import { generateTrackingNumber } from "@/lib/maintenance/tickets";
 
 export async function GET(request: NextRequest) {
   try {
-    const { userId, buildingId, role } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
 
     try {
       await requireFeature(buildingId, "maintenance");
@@ -36,7 +37,7 @@ export async function GET(request: NextRequest) {
     const limit = isNaN(rawLimit) || rawLimit < 1 ? 20 : Math.min(rawLimit, 100);
     const skip = (page - 1) * limit;
 
-    const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
+    const isBoardPlus = allows(ctx, "view.boardContext");
 
     const where: Prisma.MaintenanceTicketWhereInput = { buildingId };
 

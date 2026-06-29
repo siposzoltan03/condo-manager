@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
 import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { TicketStatus } from "@prisma/client";
 import { isValidTransition } from "@/lib/maintenance/tickets";
 import {
@@ -17,7 +17,8 @@ type RouteContext = {
 
 export async function GET(_request: NextRequest, context: RouteContext) {
   try {
-    const { userId, buildingId, role } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
 
     try {
       await requireFeature(buildingId, "maintenance");
@@ -32,7 +33,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
     }
 
     const { id } = await context.params;
-    const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
+    const isBoardPlus = allows(ctx, "view.boardContext");
 
     const ticket = await findTicketForDetail({
       id,
@@ -61,7 +62,8 @@ export async function GET(_request: NextRequest, context: RouteContext) {
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
-    const { userId, buildingId, role } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
 
     try {
       await requireFeature(buildingId, "maintenance");
@@ -75,7 +77,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       throw err;
     }
 
-    if (!hasMinimumRole(role, "BOARD_MEMBER")) {
+    if (!allows(ctx, "board.manage")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

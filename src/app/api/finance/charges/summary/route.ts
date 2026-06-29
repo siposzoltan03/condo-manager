@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
 import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { Prisma } from "@prisma/client";
 import {
   findUnitInBuilding,
@@ -17,7 +17,8 @@ const EMPTY_SUMMARY = {
 
 export async function GET(request: NextRequest) {
   try {
-    const { userId, buildingId, role } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
 
     try {
       await requireFeature(buildingId, "finance");
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = request.nextUrl;
     const unitIdParam = searchParams.get("unitId") ?? undefined;
-    const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
+    const isBoardPlus = allows(ctx, "view.building.finance");
 
     // Resolve target unit. Board can scope by unitId; residents fall
     // back to their own first unit in the active building.

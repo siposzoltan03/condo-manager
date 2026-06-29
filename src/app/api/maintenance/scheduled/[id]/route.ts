@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
 import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 
 type RouteContext = {
@@ -10,7 +10,8 @@ type RouteContext = {
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
-    const { buildingId, role } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
+    const { buildingId } = ctx;
 
     try {
       await requireFeature(buildingId, "maintenance");
@@ -21,7 +22,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       throw err;
     }
 
-    if (!hasMinimumRole(role, "BOARD_MEMBER")) {
+    if (!allows(ctx, "board.manage")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -69,7 +70,8 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
 export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
-    const { buildingId, role } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
+    const { buildingId } = ctx;
 
     try {
       await requireFeature(buildingId, "maintenance");
@@ -80,7 +82,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       throw err;
     }
 
-    if (!hasMinimumRole(role, "BOARD_MEMBER")) {
+    if (!allows(ctx, "board.manage")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
