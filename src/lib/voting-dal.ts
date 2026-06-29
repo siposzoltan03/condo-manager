@@ -31,7 +31,15 @@ export interface ActiveVoteData {
   /** Number of units that have cast a ballot. */
   unitsVoted: number;
   totalUnits: number;
-  options: { id: string; label: string; sortOrder: number }[];
+  options: {
+    id: string;
+    label: string;
+    sortOrder: number;
+    /** Set when this is a contractor-award vote option (null for "Egyik sem"). */
+    bid: { amount: number; etaDays: number } | null;
+  }[];
+  /** True when the vote decides a marketplace bid award (options are bid cards). */
+  isAwardVote: boolean;
   /** The current user's combined ownership share across all owned units. */
   userOwnershipShare: number;
   /** Whether the current user has already cast on this vote (for any of their owned units). */
@@ -169,7 +177,10 @@ export const getVotingOverview = cache(async (): Promise<VotingOverviewData> => 
       prisma.vote.findMany({
         where: { buildingId, status: "OPEN", deadline: { gte: now } },
         include: {
-          options: { orderBy: { sortOrder: "asc" } },
+          options: {
+            orderBy: { sortOrder: "asc" },
+            include: { bid: { select: { amount: true, etaDays: true } } },
+          },
           ballots: { select: { weight: true, optionId: true, unitId: true } },
         },
         orderBy: { deadline: "asc" },
@@ -255,10 +266,14 @@ export const getVotingOverview = cache(async (): Promise<VotingOverviewData> => 
       currentSupportPct,
       unitsVoted,
       totalUnits,
+      isAwardVote: activeRow.linkedPublicationId != null,
       options: activeRow.options.map((o) => ({
         id: o.id,
         label: o.label,
         sortOrder: o.sortOrder,
+        bid: o.bid
+          ? { amount: Number(o.bid.amount), etaDays: o.bid.etaDays }
+          : null,
       })),
       userOwnershipShare,
       hasUserCast,

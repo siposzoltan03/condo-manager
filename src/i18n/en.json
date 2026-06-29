@@ -1534,7 +1534,9 @@
       "secret": "secret ballot",
       "submit": "Cast",
       "casting": "Casting…",
-      "alreadyCast": "Already cast"
+      "alreadyCast": "Already cast",
+      "bidEta": "Completion: {days} days",
+      "bidNone": "I support none of the bids"
     },
     "ballotErrors": {
       "submitFailed": "Couldn't record your ballot. Please try again."
@@ -1768,6 +1770,9 @@
     "confirmCloseVote": "Are you sure you want to close this vote? No more ballots can be cast after closing.",
     "voteClosed": "Vote closed",
     "voteOpen": "Vote open",
+    "awardedBanner": "Automatically awarded: {name} — {amount} Ft",
+    "awardNone": "“None of these” won — no award. The board can decide again.",
+    "awardNoQuorum": "Not quorate — the vote did not decide.",
     "yourWeight": "Your voting weight",
     "submitVote": "Submit Vote",
     "submitting": "Submitting...",

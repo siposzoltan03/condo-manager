@@ -1534,7 +1534,9 @@
       "secret": "titkos szavazás",
       "submit": "Leadás",
       "casting": "Leadás…",
-      "alreadyCast": "Már leadtad"
+      "alreadyCast": "Már leadtad",
+      "bidEta": "Vállalt határidő: {days} nap",
+      "bidNone": "Egyik ajánlatot sem támogatom"
     },
     "ballotErrors": {
       "submitFailed": "Most nem sikerült rögzíteni a szavazatod. Próbáld újra."
@@ -1768,6 +1770,9 @@
     "confirmCloseVote": "Biztosan le szeretné zárni a szavazást? A lezárás után nem lehet több szavazatot leadni.",
     "voteClosed": "Szavazás lezárva",
     "voteOpen": "Szavazás nyitva",
+    "awardedBanner": "Automatikusan odaítélve: {name} — {amount} Ft",
+    "awardNone": "„Egyik sem” nyert — nincs odaítélés. A board újra dönthet.",
+    "awardNoQuorum": "Határozatképtelen — a szavazás nem hozott döntést.",
     "yourWeight": "Az Ön szavazati súlya",
     "submitVote": "Szavazat leadása",
     "submitting": "Feldolgozás...",

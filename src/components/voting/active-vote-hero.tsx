@@ -316,17 +316,77 @@ export function ActiveVoteHero({ vote }: Props) {
         )}
 
         <div
-          className="grid gap-2.5 items-stretch"
-          style={{
-            gridTemplateColumns:
-              vote.options.length === 3
-                ? "1fr 1fr 1fr auto"
-                : `repeat(${vote.options.length}, 1fr) auto`,
-          }}
+          className={vote.isAwardVote ? "flex flex-col gap-2.5" : "grid gap-2.5 items-stretch"}
+          style={
+            vote.isAwardVote
+              ? undefined
+              : {
+                  gridTemplateColumns:
+                    vote.options.length === 3
+                      ? "1fr 1fr 1fr auto"
+                      : `repeat(${vote.options.length}, 1fr) auto`,
+                }
+          }
         >
           {vote.options.map((opt, i) => {
-            const tone = toneFor(i);
             const isSelected = picked === opt.id;
+
+            // Contractor-award vote: render each option as a bid card.
+            if (vote.isAwardVote) {
+              const disabled =
+                vote.hasUserCast || vote.userOwnershipShare === 0 || submitting;
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => setPicked(opt.id)}
+                  className="transition-all text-left"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                    padding: "14px 16px",
+                    borderRadius: "12px",
+                    border: `1.5px solid ${isSelected ? "var(--color-ochre)" : "color-mix(in srgb, var(--color-bg) 20%, transparent)"}`,
+                    background: isSelected
+                      ? "color-mix(in srgb, var(--color-ochre) 18%, transparent)"
+                      : "transparent",
+                    color: "var(--color-bg)",
+                    cursor:
+                      vote.hasUserCast || vote.userOwnershipShare === 0
+                        ? "not-allowed"
+                        : "pointer",
+                    opacity: vote.userOwnershipShare === 0 ? 0.5 : 1,
+                  }}
+                >
+                  <span
+                    aria-hidden
+                    style={{
+                      width: 18,
+                      height: 18,
+                      borderRadius: "50%",
+                      flexShrink: 0,
+                      border: `2px solid ${isSelected ? "var(--color-ochre)" : "color-mix(in srgb, var(--color-bg) 35%, transparent)"}`,
+                      background: isSelected ? "var(--color-ochre)" : "transparent",
+                    }}
+                  />
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ fontSize: "14px", fontWeight: 700 }}>{opt.label}</span>
+                    <span style={{ display: "block", fontSize: "12px", opacity: 0.7 }}>
+                      {opt.bid ? t("hero.bidEta", { days: opt.bid.etaDays }) : t("hero.bidNone")}
+                    </span>
+                  </span>
+                  {opt.bid && (
+                    <span style={{ fontSize: "15px", fontWeight: 800, whiteSpace: "nowrap" }}>
+                      {new Intl.NumberFormat("hu-HU").format(opt.bid.amount)} Ft
+                    </span>
+                  )}
+                </button>
+              );
+            }
+
+            const tone = toneFor(i);
             const sel = isSelected
               ? tone === "yes"
                 ? { bg: "var(--color-moss-2)", color: "var(--color-ink)", border: "var(--color-moss-2)" }
