@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
-import { requireRole, hasMinimumRole } from "@/lib/rbac";
+import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { Prisma, DocumentVisibility } from "@prisma/client";
 import { documentCreated } from "@/lib/documents/events";
@@ -149,11 +150,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId, buildingId, role } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
 
-    try {
-      await requireRole(role, "BOARD_MEMBER");
-    } catch {
+    if (!allows(ctx, "document.publish.public")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

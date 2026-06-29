@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireBuildingContext } from "@/lib/auth";
-import { requireRole } from "@/lib/rbac";
+import { requireCapability } from "@/lib/authz";
 import { requireFeature } from "@/lib/feature-gate";
 import { createAuditLog } from "@/lib/audit";
 import { notify, NotificationType } from "@/lib/notifications";
@@ -28,8 +28,9 @@ interface CreateVoteInput {
 
 export async function createVote(input: CreateVoteInput): Promise<ActionResult> {
   try {
-    const { userId, buildingId, role } = await requireBuildingContext();
-    await requireRole(role, "BOARD_MEMBER");
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
+    requireCapability(ctx, "vote.start");
     await requireFeature(buildingId, "voting");
 
     const { title, description, voteType, isSecret, majorityType, quorumRequired, deadline, meetingId, options } = input;
@@ -104,8 +105,9 @@ export async function saveMinutes(
   minutes: string
 ): Promise<ActionResult> {
   try {
-    const { userId, buildingId, role } = await requireBuildingContext();
-    await requireRole(role, "BOARD_MEMBER");
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
+    requireCapability(ctx, "vote.editMinutes");
     await requireFeature(buildingId, "voting");
 
     const meeting = await prisma.meeting.findUnique({
@@ -159,8 +161,9 @@ export async function signMeetingMinutes(
   signatureRole: MinutesSignatureRoleInput,
 ): Promise<ActionResult> {
   try {
-    const { userId, buildingId, role } = await requireBuildingContext();
-    await requireRole(role, "BOARD_MEMBER");
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
+    requireCapability(ctx, "vote.editMinutes");
     await requireFeature(buildingId, "voting");
 
     const meeting = await prisma.meeting.findUnique({

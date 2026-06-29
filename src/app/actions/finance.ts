@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireBuildingContext } from "@/lib/auth";
 import { requireRole, hasMinimumRole } from "@/lib/rbac";
+import { requireCapability } from "@/lib/authz";
 import { requireNotFrozen } from "@/lib/frozen-check";
 import { requireFeature } from "@/lib/feature-gate";
 import { createAuditLog } from "@/lib/audit";
@@ -24,8 +25,9 @@ const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 
 export async function importCharges(rows: ImportRow[]): Promise<ImportResult> {
   try {
-    const { userId, buildingId, role } = await requireBuildingContext();
-    await requireRole(role, "BOARD_MEMBER");
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
+    requireCapability(ctx, "manage.budget");
     await requireNotFrozen(buildingId);
     await requireFeature(buildingId, "finance");
 
