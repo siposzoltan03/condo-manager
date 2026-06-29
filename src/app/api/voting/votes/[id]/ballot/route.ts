@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
 import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
 import { requireRole, hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { createHash } from "crypto";
 import { rateLimitMutationOrRespond } from "@/lib/rate-limit";
@@ -11,7 +12,8 @@ type RouteContext = { params: Promise<{ id: string }> };
 
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
-    const { userId, buildingId, role } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId, role } = ctx;
     const limited = await rateLimitMutationOrRespond(userId, "ballot:cast", {
       limit: 10,
       windowSeconds: 60,
@@ -138,9 +140,15 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
       unitId = proxyForUnitId;
     } else {
-      // Self-voting
+      // Self-voting — only owners may cast (Tht. § 38); tenants are excluded.
+      if (!allows(ctx, "vote.cast")) {
+        return NextResponse.json(
+          { error: "Only owners can cast a vote" },
+          { status: 403 }
+        );
+      }
       const userUnit = await prisma.unitUser.findFirst({
-        where: { userId, unit: { buildingId } },
+        where: { userId, relationship: "OWNER", unit: { buildingId } },
         select: { unitId: true },
       });
       if (!userUnit) {

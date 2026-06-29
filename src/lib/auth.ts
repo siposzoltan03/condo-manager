@@ -21,5 +21,12 @@ export async function requireBuildingContext() {
     userId: user.id,
     buildingId: user.activeBuildingId,
     role: user.activeRole,
+    // ActorContext flags for the ACTIVE building — already hydrated into the
+    // session (auth-options.ts) and re-hydrated on building switch. Enables
+    // can(actor, capability) at call-sites without extra DB lookups.
+    isChair: user.isChair ?? false,
+    isProfessional: user.isProfessional ?? false,
+    ownsAnyUnit: user.ownsAnyUnit ?? false,
+    isAuditor: user.isAuditor ?? false,
   };
 }
