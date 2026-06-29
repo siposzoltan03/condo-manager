@@ -1,5 +1,6 @@
 import { Job } from "bullmq";
 import { PrismaClient } from "@prisma/client";
+import { resolveAwardVote } from "../../src/lib/marketplace";
 
 const prisma = new PrismaClient();
 
@@ -10,7 +11,14 @@ export async function processVotingJob(job: Job): Promise<void> {
 
       const vote = await prisma.vote.findUnique({
         where: { id: voteId },
-        select: { id: true, status: true, title: true, deadline: true },
+        select: {
+          id: true,
+          status: true,
+          title: true,
+          deadline: true,
+          linkedPublicationId: true,
+          createdById: true,
+        },
       });
 
       if (!vote) {
@@ -30,6 +38,17 @@ export async function processVotingJob(job: Job): Promise<void> {
       });
 
       console.log(`Vote ${voteId} ("${vote.title}") auto-closed at deadline.`);
+
+      // Contractor-award vote: tally + auto-award the winning bid (or unfreeze
+      // the publication on no-quorum / "none"). Best-effort.
+      if (vote.linkedPublicationId) {
+        try {
+          const outcome = await resolveAwardVote(vote.id, vote.createdById);
+          console.log(`Award vote ${voteId} resolved:`, outcome);
+        } catch (err) {
+          console.error(`Auto-award on close failed for ${voteId}:`, err);
+        }
+      }
 
       // Send notifications to all active users
       const users = await prisma.user.findMany({

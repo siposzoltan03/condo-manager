@@ -22,6 +22,9 @@ const { dispatchMock } = vi.hoisted(() => ({ dispatchMock: vi.fn() }));
 vi.mock("@/lib/marketplace/award-notify", () => ({
   dispatchAwardOutcome: dispatchMock,
 }));
+vi.mock("@/lib/queue", () => ({
+  votingQueue: { add: vi.fn().mockResolvedValue(undefined) },
+}));
 
 const { createAwardVote, resolveAwardVote } = await import(
   "@/lib/marketplace/award-vote"
