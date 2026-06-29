@@ -192,6 +192,17 @@ describe("can() — board/admin read context", () => {
     expect(can(actor({ role: "ADMIN" }), "platform.admin")).toBe(false);
     expect(can(actor({ role: "BOARD_MEMBER", isChair: true }), "platform.admin")).toBe(false);
   });
+
+  it("audit.read: admin + super only", () => {
+    expect(can(actor({ role: "ADMIN" }), "audit.read")).toBe(true);
+    expect(can(actor({ role: "SUPER_ADMIN" }), "audit.read")).toBe(true);
+    expect(can(actor({ role: "BOARD_MEMBER", isChair: true }), "audit.read")).toBe(false);
+  });
+
+  it("building.manage: super-admin only", () => {
+    expect(can(actor({ role: "SUPER_ADMIN" }), "building.manage")).toBe(true);
+    expect(can(actor({ role: "ADMIN" }), "building.manage")).toBe(false);
+  });
 });
 
 describe("can() — governance: users.manage / contractor.manage", () => {

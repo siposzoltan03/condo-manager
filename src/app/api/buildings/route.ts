@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser, requireBuildingContext } from "@/lib/auth";
-import { requireRole } from "@/lib/rbac";
+import { requireCapability } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
@@ -67,10 +67,10 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const { role: activeRole } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
 
     try {
-      await requireRole(activeRole, "SUPER_ADMIN");
+      requireCapability(ctx, "building.manage");
     } catch {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }

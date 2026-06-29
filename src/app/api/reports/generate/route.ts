@@ -11,7 +11,7 @@ import {
   computeMinutesHash,
   computeAuditSliceHash,
 } from "@/lib/reports/version-hash";
-import { requireRole } from "@/lib/rbac";
+import { requireCapability, type BuildingActor } from "@/lib/authz";
 import {
   findVoteBuildingScope,
   findMeetingBuildingScope,
@@ -147,7 +147,7 @@ async function resolveTarget(opts: {
 async function applyKindGating(
   kind: ReportKind,
   buildingId: string,
-  role: string,
+  ctx: BuildingActor,
 ): Promise<NextResponse | null> {
   try {
     if (
@@ -162,9 +162,9 @@ async function applyKindGating(
       kind === "utility-statement"
     ) {
       await requireFeature(buildingId, "finance");
-      await requireRole(role, "BOARD_MEMBER");
+      requireCapability(ctx, "view.building.finance");
     } else if (kind === "audit-slice") {
-      await requireRole(role, "ADMIN");
+      requireCapability(ctx, "view.adminContext");
     }
     return null;
   } catch (err) {
@@ -192,7 +192,8 @@ async function applyKindGating(
  */
 export async function POST(request: NextRequest) {
   try {
-    const { userId, buildingId, role } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
 
     const body = parseBody(await request.json().catch(() => null));
     if (!body) {
@@ -200,7 +201,7 @@ export async function POST(request: NextRequest) {
     }
     const { kind, refId } = body;
 
-    const gate = await applyKindGating(kind, buildingId, role);
+    const gate = await applyKindGating(kind, buildingId, ctx);
     if (gate) return gate;
 
     const resolved = await resolveTarget({ kind, refId, buildingId });

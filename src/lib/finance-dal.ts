@@ -3,7 +3,7 @@ import { cache } from "react";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireBuildingContext } from "@/lib/auth";
-import { requireRole } from "@/lib/rbac";
+import { requireCapability } from "@/lib/authz";
 
 // ─── Shared types ─────────────────────────────────────────────────────────
 
@@ -247,8 +247,9 @@ function ledgerRow(e: {
 
 export const getFinanceOverviewBoard = cache(
   async (): Promise<FinanceOverviewBoardData> => {
-    const { buildingId, role } = await requireBuildingContext();
-    await requireRole(role, "BOARD_MEMBER");
+    const ctx = await requireBuildingContext();
+    const { buildingId } = ctx;
+    requireCapability(ctx, "view.building.finance");
 
     const now = new Date();
     const yearStart = new Date(now.getFullYear(), 0, 1);
@@ -359,8 +360,9 @@ export interface FinanceLedgerData {
 
 export const getFinanceLedger = cache(
   async (page = 1, pageSize = 30, accountId?: string): Promise<FinanceLedgerData> => {
-    const { buildingId, role } = await requireBuildingContext();
-    await requireRole(role, "BOARD_MEMBER");
+    const ctx = await requireBuildingContext();
+    const { buildingId } = ctx;
+    requireCapability(ctx, "view.building.finance");
 
     const where = accountId
       ? {
@@ -420,8 +422,9 @@ export interface FinanceUnitsData {
 }
 
 export const getFinanceUnits = cache(async (): Promise<FinanceUnitsData> => {
-  const { buildingId, role } = await requireBuildingContext();
-  await requireRole(role, "BOARD_MEMBER");
+  const ctx = await requireBuildingContext();
+  const { buildingId } = ctx;
+  requireCapability(ctx, "view.building.finance");
 
   const year = new Date().getFullYear();
   const monthKeys = Array.from({ length: 12 }, (_, i) =>
@@ -517,8 +520,9 @@ export interface FinanceBudgetData {
 }
 
 export const getFinanceBudget = cache(async (): Promise<FinanceBudgetData> => {
-  const { buildingId, role } = await requireBuildingContext();
-  await requireRole(role, "BOARD_MEMBER");
+  const ctx = await requireBuildingContext();
+  const { buildingId } = ctx;
+  requireCapability(ctx, "view.building.finance");
 
   const year = new Date().getFullYear();
   const yearStart = new Date(year, 0, 1);

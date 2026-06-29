@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
-import { requireRole } from "@/lib/rbac";
-import { allows } from "@/lib/authz";
+import { allows, requireCapability } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { documentUpdated, documentDeleted } from "@/lib/documents/events";
 
@@ -142,10 +141,11 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
 export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
-    const { userId, buildingId, role } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
 
     try {
-      await requireRole(role, "ADMIN");
+      requireCapability(ctx, "view.adminContext");
     } catch {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
