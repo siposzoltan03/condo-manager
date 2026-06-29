@@ -5,6 +5,7 @@ import { allows } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { calculateQuorum, calculateResults, calculateMeetingQuorum, calculateVoteResult } from "@/lib/voting/quorum";
 import { voteUpdated } from "@/lib/voting/events";
+import { resolveAwardVote } from "@/lib/marketplace";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -164,7 +165,23 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       newValue: data,
     });
 
-    return NextResponse.json(updated);
+    // Auto-award: if a contractor-award vote just closed, tally it and
+    // award the winning bid (or unfreeze the publication on no-quorum /
+    // "none"). Best-effort — a failure here must not fail the close.
+    let award: Awaited<ReturnType<typeof resolveAwardVote>> | null = null;
+    if (
+      data.status === "CLOSED" &&
+      existing.status !== "CLOSED" &&
+      existing.linkedPublicationId
+    ) {
+      try {
+        award = await resolveAwardVote(id, userId);
+      } catch (err) {
+        console.error("Auto-award on vote close failed:", err);
+      }
+    }
+
+    return NextResponse.json({ ...updated, award });
   } catch (error) {
     console.error("Failed to update vote:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

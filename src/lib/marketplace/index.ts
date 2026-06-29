@@ -37,6 +37,16 @@ export {
   type OpenPublicationsFilter,
 } from "./publishing";
 
+export { dispatchAwardOutcome } from "./award-notify";
+
+export {
+  createAwardVote,
+  resolveAwardVote,
+  AWARD_VOTE_QUORUM,
+  type CreateAwardVoteResult,
+  type ResolveAwardVoteResult,
+} from "./award-vote";
+
 export {
   resolveBoardAccess,
   resolveContractorAccess,
