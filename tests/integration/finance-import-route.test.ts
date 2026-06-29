@@ -51,6 +51,7 @@ describe("POST /api/finance/import", () => {
       userId: board.id,
       buildingId: building.id,
       role: "BOARD_MEMBER",
+      isChair: true, // import → manage.budget (representative authority)
     });
 
     const req = new NextRequest("http://test/api/finance/import", {
@@ -101,6 +102,7 @@ describe("POST /api/finance/import", () => {
       userId: board.id,
       buildingId: building.id,
       role: "BOARD_MEMBER",
+      isChair: true, // import → manage.budget (representative authority)
     });
 
     const req = new NextRequest("http://test/api/finance/import", {
@@ -130,6 +132,7 @@ describe("POST /api/finance/import", () => {
       userId: board.id,
       buildingId: building.id,
       role: "BOARD_MEMBER",
+      isChair: true, // import → manage.budget (representative authority)
     });
 
     const req = new NextRequest("http://test/api/finance/import", {

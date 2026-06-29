@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { requireFeature } from "@/lib/feature-gate";
 import { listLedgerEntriesForExport } from "@/lib/finance-dal";
 
 export async function GET(request: NextRequest) {
   try {
-    const { buildingId, role } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
+    const { buildingId } = ctx;
 
-    if (!hasMinimumRole(role, "BOARD_MEMBER")) {
+    if (!allows(ctx, "view.building.finance")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
