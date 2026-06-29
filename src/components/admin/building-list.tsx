@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Building2, Plus, Pencil, Trash2, X } from "lucide-react";
 import { useConfirm } from "@/components/shared/confirm-dialog";
+import { ViewAsUserButton } from "./view-as-user-button";
 import type { BuildingsData, BuildingItemData } from "@/lib/dal";
 
 interface BuildingFormData {
@@ -169,6 +170,10 @@ export function BuildingList({ initialData }: BuildingListProps) {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
+                      <ViewAsUserButton
+                        buildingId={building.id}
+                        buildingName={building.name}
+                      />
                       <button
                         onClick={() => openEdit(building)}
                         className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-blue-600 transition-colors"

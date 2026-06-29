@@ -2025,6 +2025,19 @@
     "previous": "Előző",
     "next": "Következő"
   },
+  "impersonation": {
+    "viewAsUser": "Megtekintés felhasználóként",
+    "pickMember": "Válassz tagot",
+    "searchMembers": "Tag keresése név vagy e-mail szerint…",
+    "noMembers": "Nincs találat",
+    "readOnlyNote": "Csak megtekintés — semmilyen módosítás nem végezhető; a munkamenet naplózott.",
+    "cancel": "Mégse",
+    "viewAsName": "Megtekintés {name}-ként",
+    "viewingAs": "Megtekintés: {name} ({role}) — {building}",
+    "readOnly": "csak olvasható",
+    "loggedInAs": "Bejelentkezve: {name} (superadmin) — minden megtekintés naplózva",
+    "exit": "Kilépés"
+  },
   "building": {
     "switchBuilding": "Épület váltása",
     "role_SUPER_ADMIN": "Főadminisztrátor",

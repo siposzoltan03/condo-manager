@@ -71,6 +71,26 @@ function isPublicApiRoute(pathname: string): boolean {
 export default auth((req) => {
   const { pathname } = req.nextUrl;
 
+  // Read-only impersonation safety net: while a SUPER_ADMIN is impersonating a
+  // member (read-only), block EVERY mutating request — API routes AND page
+  // server-action POSTs — regardless of whether the target route has been
+  // migrated to can(). Allow only NextAuth (incl. the session update that exits
+  // impersonation) and the impersonation endpoints themselves.
+  const impersonating = !!(
+    req.auth?.user as { impersonating?: unknown } | undefined
+  )?.impersonating;
+  if (impersonating && req.method !== "GET" && req.method !== "HEAD") {
+    const allowed =
+      pathname.startsWith("/api/auth") ||
+      pathname.startsWith("/api/impersonation");
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "Read-only while impersonating" },
+        { status: 403 },
+      );
+    }
+  }
+
   // API routes
   if (pathname.startsWith("/api")) {
     if (isPublicApiRoute(pathname)) {

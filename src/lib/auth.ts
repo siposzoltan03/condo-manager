@@ -16,17 +16,28 @@ export async function getCurrentUser() {
 export async function requireBuildingContext() {
   const user = await getCurrentUser();
   if (!user) throw new Error("Unauthorized");
-  if (!user.activeBuildingId) throw new Error("No building selected");
+
+  // SUPER_ADMIN read-only impersonation: when active, evaluate authorization AND
+  // data as the impersonated member (their userId, role, flags) so reads return
+  // exactly what that user sees — while keeping the real superadmin id as
+  // `realUserId` for audit. Writes are blocked globally by middleware.
+  const imp = user.impersonating;
+  const buildingId = imp?.buildingId ?? user.activeBuildingId;
+  if (!buildingId) throw new Error("No building selected");
+
   return {
-    userId: user.id,
-    buildingId: user.activeBuildingId,
-    role: user.activeRole,
-    // ActorContext flags for the ACTIVE building — already hydrated into the
-    // session (auth-options.ts) and re-hydrated on building switch. Enables
-    // can(actor, capability) at call-sites without extra DB lookups.
-    isChair: user.isChair ?? false,
-    isProfessional: user.isProfessional ?? false,
-    ownsAnyUnit: user.ownsAnyUnit ?? false,
-    isAuditor: user.isAuditor ?? false,
+    userId: imp?.userId ?? user.id,
+    buildingId,
+    role: imp?.role ?? user.activeRole,
+    // ActorContext flags — already hydrated into the session (auth-options.ts).
+    // Enables can(actor, capability) at call-sites without extra DB lookups.
+    isChair: (imp ? imp.isChair : user.isChair) ?? false,
+    isProfessional: (imp ? false : user.isProfessional) ?? false,
+    ownsAnyUnit: (imp ? imp.ownsAnyUnit : user.ownsAnyUnit) ?? false,
+    isAuditor: (imp ? imp.isAuditor : user.isAuditor) ?? false,
+    /** True when the active context is an impersonation (read-only). */
+    impersonating: !!imp,
+    /** The real superadmin id — equals userId unless impersonating. For audit. */
+    realUserId: user.id,
   };
 }

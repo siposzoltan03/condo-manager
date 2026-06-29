@@ -352,6 +352,18 @@ export const authOptions = {
           }
           // If no match found, ignore the update (prevents privilege escalation)
         }
+
+        // SUPER_ADMIN read-only impersonation: set/clear the context. The
+        // /api/impersonation endpoints are the real guard (they validate the
+        // target member + compute its flags); here we additionally require the
+        // real role to be SUPER_ADMIN before accepting it onto the token.
+        if ("impersonating" in updateData) {
+          if (updateData.impersonating === null) {
+            token.impersonating = undefined;
+          } else if (updateData.impersonating && token.role === "SUPER_ADMIN") {
+            token.impersonating = updateData.impersonating;
+          }
+        }
       }
 
       return token;
@@ -385,6 +397,8 @@ export const authOptions = {
         session.user.contractorOrgPlan = token.contractorOrgPlan as string | undefined;
         session.user.contractorOrgName = token.contractorOrgName as string | undefined;
         session.user.contractorRole = token.contractorRole as string | undefined;
+        session.user.impersonating =
+          token.impersonating as typeof session.user.impersonating;
       }
       return session;
     },
