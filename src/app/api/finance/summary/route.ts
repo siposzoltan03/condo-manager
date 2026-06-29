@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
 import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { Prisma } from "@prisma/client";
 import { getBuildingFinancialSummary } from "@/lib/finance-dal";
 
@@ -12,7 +12,8 @@ const toNumber = (d: Prisma.Decimal | null): number =>
 
 export async function GET(request: NextRequest) {
   try {
-    const { buildingId, role } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
+    const { buildingId } = ctx;
 
     try {
       await requireFeature(buildingId, "finance");
@@ -26,7 +27,7 @@ export async function GET(request: NextRequest) {
       throw err;
     }
 
-    if (!hasMinimumRole(role, "BOARD_MEMBER")) {
+    if (!allows(ctx, "view.building.finance")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

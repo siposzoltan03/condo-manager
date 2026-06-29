@@ -5,14 +5,13 @@ import { prisma } from "@/lib/prisma";
 import { makeBuilding, makeUser } from "../fixtures";
 
 /**
- * Role-denial coverage for the board-only finance reads. Existing finance tests
- * cover the happy path + cross-tenant isolation but never assert that OWNER /
- * TENANT are rejected. These routes gate on hasMinimumRole(role, "BOARD_MEMBER")
- * — the legacy flat hierarchy (src/lib/rbac.ts).
+ * Role gating for the board-only finance reads. These now use
+ * can(actor, "view.building.finance") (BOARD_MEMBER / ADMIN / AUDITOR) — the
+ * legacy hasMinimumRole gate was migrated to the capability matrix.
  *
- * Note: SUPER_ADMIN PASSES this gate (hierarchy level 5 >= 3) even though the
- * can() capability matrix grants SUPER_ADMIN no building-level powers. That's a
- * known legacy↔can() migration gap; we assert the ACTUAL behavior here.
+ * Note: SUPER_ADMIN is now DENIED (403) — the matrix grants it no building
+ * powers (strict can(); building impersonation is a separate future flow).
+ * This is the post-migration behavior (was 200 under the legacy hierarchy).
  */
 
 const { requireBuildingContextMock } = vi.hoisted(() => ({
@@ -50,7 +49,7 @@ const LADDER: { role: BuildingRole; expected: number }[] = [
   { role: "OWNER", expected: 403 },
   { role: "BOARD_MEMBER", expected: 200 },
   { role: "ADMIN", expected: 200 },
-  { role: "SUPER_ADMIN", expected: 200 }, // legacy hierarchy lets superadmin through
+  { role: "SUPER_ADMIN", expected: 403 }, // strict can(): no building powers
 ];
 
 async function asRole(role: BuildingRole) {
