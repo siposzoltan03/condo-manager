@@ -10,19 +10,18 @@ export { can } from "./capabilities";
 export type { ActorContext, Capability, CapabilityOpts } from "./capabilities";
 
 /**
- * Building-capability authorization, layered on the can() matrix
- * (src/lib/capabilities.ts). This is the canonical gate for BUILDING-LEVEL
- * actions — it replaces the legacy `hasMinimumRole` flat hierarchy at those
- * call-sites.
+ * Capability authorization, layered on the can() matrix
+ * (src/lib/capabilities.ts). This is the canonical authorization gate across
+ * the whole app — it fully replaced the former `hasMinimumRole` / `requireRole`
+ * flat hierarchy (now deleted).
  *
- * STRICT semantics: SUPER_ADMIN is NOT special-cased here — the matrix grants
- * it no building powers (building impersonation is a separate future flow).
- *
- * OUT OF SCOPE (stays on hasMinimumRole / src/lib/rbac.ts): platform & user
- * governance — users, units, buildings, invitations, audit-logs, the admin
- * console, contractor CRUD, and the asymmetric escalation checks (an ADMIN
- * must not grant ADMIN/SUPER_ADMIN). Those are legitimately role-ranked and
- * have no capability mapping.
+ * Two role models live in the matrix:
+ *  - BUILDING-LEVEL caps (finance, voting, maintenance, …): SUPER_ADMIN is NOT
+ *    special-cased — it holds no building powers (building impersonation is a
+ *    separate flow).
+ *  - GOVERNANCE caps (users, units, buildings, invitations, audit, admin
+ *    console, contractor CRUD) + the relational `users.assignRole` escalation:
+ *    SUPER_ADMIN + ADMIN hold these (see SUPER_ADMIN_CAPS in capabilities.ts).
  */
 
 /** The subset of requireBuildingContext()'s result that feeds the matrix. */
