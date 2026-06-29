@@ -88,6 +88,33 @@ export function VoteResultCard({ vote, canClose, onClosed }: VoteResultCardProps
         </span>
       </div>
 
+      {/* Auto-award outcome banner (contractor-award votes) */}
+      {vote.isAwardVote && vote.award && (
+        <div
+          className="mb-3 rounded-lg px-3 py-2.5 text-sm font-medium"
+          style={
+            vote.award.outcome === "AWARDED"
+              ? {
+                  background: "color-mix(in srgb, var(--color-moss) 16%, transparent)",
+                  color: "var(--color-moss)",
+                }
+              : {
+                  background: "color-mix(in srgb, var(--color-ochre) 18%, transparent)",
+                  color: "var(--color-ochre)",
+                }
+          }
+        >
+          {vote.award.outcome === "AWARDED"
+            ? t("awardedBanner", {
+                name: vote.award.winnerLabel ?? "",
+                amount: new Intl.NumberFormat("hu-HU").format(vote.award.winnerAmount ?? 0),
+              })
+            : vote.award.outcome === "NONE"
+              ? t("awardNone")
+              : t("awardNoQuorum")}
+        </div>
+      )}
+
       {/* Stacked bar */}
       {vote.totalWeight > 0 && (
         <div className="mb-3">

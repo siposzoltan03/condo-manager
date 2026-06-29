@@ -351,6 +351,16 @@ export interface MeetingVoteResult {
   totalWeight: number;
   ballotCount: number;
   passed: boolean | null;
+  /** True when this vote decides a marketplace bid award. */
+  isAwardVote: boolean;
+  /** Auto-award outcome, computed for a CLOSED award vote (else null). */
+  award:
+    | {
+        outcome: "AWARDED" | "NONE" | "NO_QUORUM";
+        winnerLabel: string | null;
+        winnerAmount: number | null;
+      }
+    | null;
 }
 
 export interface MeetingAttendee {
@@ -415,7 +425,10 @@ export const getMeetingDetail = cache(async (id: string): Promise<MeetingDetailD
       },
       votes: {
         include: {
-          options: { orderBy: { sortOrder: "asc" as const } },
+          options: {
+            orderBy: { sortOrder: "asc" as const },
+            include: { bid: { select: { amount: true } } },
+          },
           ballots: { select: { optionId: true, weight: true } },
           _count: { select: { ballots: true } },
         },
@@ -490,6 +503,31 @@ export const getMeetingDetail = cache(async (id: string): Promise<MeetingDetailD
       }
     }
 
+    // Auto-award outcome for a closed contractor-award vote (mirrors
+    // resolveAwardVote: 50% participation quorum, plurality winner with a bid).
+    const isAwardVote = v.linkedPublicationId != null;
+    let award: MeetingVoteResult["award"] = null;
+    if (isAwardVote && v.status === "CLOSED") {
+      const AWARD_QUORUM = 0.5;
+      if (totalBuildingShares <= 0 || totalWeight / totalBuildingShares < AWARD_QUORUM) {
+        award = { outcome: "NO_QUORUM", winnerLabel: null, winnerAmount: null };
+      } else {
+        const top = [...v.options].sort(
+          (a, b) => (optionWeights.get(b.id) ?? 0) - (optionWeights.get(a.id) ?? 0),
+        )[0];
+        const topWeight = top ? (optionWeights.get(top.id) ?? 0) : 0;
+        if (!top || topWeight <= 0 || !top.bid) {
+          award = { outcome: "NONE", winnerLabel: null, winnerAmount: null };
+        } else {
+          award = {
+            outcome: "AWARDED",
+            winnerLabel: top.label,
+            winnerAmount: Number(top.bid.amount),
+          };
+        }
+      }
+    }
+
     return {
       id: v.id,
       title: v.title,
@@ -507,6 +545,8 @@ export const getMeetingDetail = cache(async (id: string): Promise<MeetingDetailD
       totalWeight,
       ballotCount: v._count.ballots,
       passed,
+      isAwardVote,
+      award,
     };
   });
 
