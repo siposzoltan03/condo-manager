@@ -4,7 +4,11 @@ import { cache } from "react";
 import { notFound } from "next/navigation";
 import { Prisma } from "@prisma/client";
 import { requireBuildingContext } from "@/lib/auth";
-import { requirePageContext, requirePageFeature } from "@/lib/page-guard";
+import {
+  requirePageContext,
+  requirePageFeature,
+  requirePageRole,
+} from "@/lib/page-guard";
 import { requireRole, hasMinimumRole } from "@/lib/rbac";
 import { requireFeature } from "@/lib/feature-gate";
 import { prisma } from "@/lib/prisma";
@@ -287,8 +291,8 @@ export interface VotesData {
 }
 
 export const getVotes = cache(async (): Promise<VotesData> => {
-  const { buildingId } = await requireBuildingContext();
-  await requireFeature(buildingId, "voting");
+  const { buildingId } = await requirePageContext();
+  await requirePageFeature(buildingId, "voting");
 
   const limit = 20;
   const where = { buildingId };
@@ -937,8 +941,8 @@ export interface FinanceOverviewData {
 }
 
 export const getFinanceOverview = cache(async (): Promise<FinanceOverviewData> => {
-  const { userId, buildingId, role } = await requireBuildingContext();
-  await requireFeature(buildingId, "finance");
+  const { userId, buildingId, role } = await requirePageContext();
+  await requirePageFeature(buildingId, "finance");
 
   const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
 
@@ -1042,9 +1046,9 @@ export interface BuildingFinanceData {
 }
 
 export const getBuildingFinance = cache(async (): Promise<BuildingFinanceData> => {
-  const { buildingId, role } = await requireBuildingContext();
-  await requireRole(role, "BOARD_MEMBER");
-  await requireFeature(buildingId, "finance");
+  const { buildingId, role } = await requirePageContext();
+  requirePageRole(role, "BOARD_MEMBER");
+  await requirePageFeature(buildingId, "finance");
 
   const currentYear = new Date().getFullYear();
   const fromDate = new Date(`${currentYear}-01-01`);
