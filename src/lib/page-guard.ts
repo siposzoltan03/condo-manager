@@ -1,6 +1,7 @@
 import { unauthorized, forbidden } from "next/navigation";
 import { requireBuildingContext } from "@/lib/auth";
 import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
+import { hasMinimumRole } from "@/lib/rbac";
 
 /**
  * Page-facing auth guards. The shared `requireBuildingContext` /
@@ -38,5 +39,12 @@ export async function requirePageFeature(
       forbidden();
     }
     throw err;
+  }
+}
+
+/** Renders the 403 page when the role is below `minimumRole`. */
+export function requirePageRole(role: string, minimumRole: string): void {
+  if (!hasMinimumRole(role, minimumRole)) {
+    forbidden();
   }
 }
