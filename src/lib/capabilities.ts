@@ -1,8 +1,9 @@
 import type { BuildingRole } from "@prisma/client";
 
 /**
- * Capability matrix for the building-level role model. Replaces the flat
- * `hasMinimumRole()` hierarchy with action-keyed authorization.
+ * Capability matrix for the building-level role model — the single source of
+ * authorization truth (action-keyed). It replaced the former flat role
+ * hierarchy, which has been removed.
  *
  * Plan ref: docs/plans/2026-04-27-roles-legal-alignment.md, Phase 1.
  *

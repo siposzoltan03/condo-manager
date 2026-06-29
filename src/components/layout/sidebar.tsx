@@ -155,14 +155,12 @@ const Icons = {
 
 // ── Nav structure ──────────────────────────────────────────────────────────
 
-// AUDITOR visibility note (Phase 2 / Phase 3 truth table):
-//   AUDITOR is ranked at BOARD_MEMBER's level in ROLE_HIERARCHY (3), so
-//   any item gated at `minimumRole: "TENANT" | "OWNER" | "BOARD_MEMBER"`
-//   shows up for auditors as well. That matches the plan's read-only
-//   tier — auditors *see* the surfaces but cannot mutate.
-//   Per-action write enforcement is at the API endpoints (via `can()`),
-//   not in the sidebar. Items gated at `minimumRole: "ADMIN"` or
-//   "SUPER_ADMIN" stay hidden from AUDITOR.
+// Visibility note: each item/section declares `capabilities[]`; it shows if
+// the actor has ANY of them (canAny), or always when none are listed. Auditors
+// hold the board-level *read* caps (view.boardContext, contractor.view,
+// units.manage) so they see those surfaces, but not the admin/platform caps.
+// Per-action write enforcement lives at the API endpoints (via `can()`), not
+// in the sidebar — this only controls what's shown.
 const sections: NavSection[] = [
   {
     label: "navSection.workshop",
