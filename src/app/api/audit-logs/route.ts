@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
-import { requireRole } from "@/lib/rbac";
+import { requireCapability } from "@/lib/authz";
 import { getAuditLogs } from "@/lib/audit";
 
 export async function GET(request: NextRequest) {
   try {
-    const { buildingId, role: activeRole } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
+    const { buildingId } = ctx;
 
     try {
-      await requireRole(activeRole, "ADMIN");
+      requireCapability(ctx, "audit.read");
     } catch {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }

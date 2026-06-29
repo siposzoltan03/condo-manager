@@ -3,8 +3,7 @@
 import { revalidatePath } from "next/cache";
 import crypto from "crypto";
 import { requireBuildingContext } from "@/lib/auth";
-import { requireRole } from "@/lib/rbac";
-import { allows } from "@/lib/authz";
+import { allows, requireCapability } from "@/lib/authz";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
 import { BuildingRole, UnitRelationship } from "@prisma/client";
@@ -38,8 +37,9 @@ interface UpdateUserInput {
 
 export async function createUser(input: CreateUserInput): Promise<ActionResult> {
   try {
-    const { userId: currentUserId, buildingId, role: activeRole } = await requireBuildingContext();
-    await requireRole(activeRole, "ADMIN");
+    const ctx = await requireBuildingContext();
+    const { userId: currentUserId, buildingId, role: activeRole } = ctx;
+    requireCapability(ctx, "users.manage");
 
     const { email, name, role, unitId, temporaryPassword, isPrimaryContact, relationship, contactConsent } = input;
 
@@ -133,8 +133,9 @@ export async function createUser(input: CreateUserInput): Promise<ActionResult> 
 
 export async function updateUser(id: string, input: UpdateUserInput): Promise<ActionResult> {
   try {
-    const { userId: currentUserId, buildingId, role: activeRole } = await requireBuildingContext();
-    await requireRole(activeRole, "ADMIN");
+    const ctx = await requireBuildingContext();
+    const { userId: currentUserId, buildingId, role: activeRole } = ctx;
+    requireCapability(ctx, "users.manage");
 
     const userBuilding = await prisma.userBuilding.findFirst({
       where: { userId: id, buildingId },
@@ -241,8 +242,9 @@ export async function updateUser(id: string, input: UpdateUserInput): Promise<Ac
 
 export async function toggleUserActive(id: string): Promise<ActionResult> {
   try {
-    const { userId: currentUserId, buildingId, role: activeRole } = await requireBuildingContext();
-    await requireRole(activeRole, "ADMIN");
+    const ctx = await requireBuildingContext();
+    const { userId: currentUserId, buildingId } = ctx;
+    requireCapability(ctx, "users.manage");
 
     const userBuilding = await prisma.userBuilding.findFirst({
       where: { userId: id, buildingId },
@@ -295,8 +297,9 @@ const TRUTHY = new Set(["true", "yes", "1", "igen"]);
 
 export async function importUsers(rows: ImportRow[]): Promise<ImportResultType> {
   try {
-    const { userId: currentUserId, buildingId, role: activeRole } = await requireBuildingContext();
-    await requireRole(activeRole, "ADMIN");
+    const ctx = await requireBuildingContext();
+    const { userId: currentUserId, buildingId, role: activeRole } = ctx;
+    requireCapability(ctx, "users.manage");
 
     // Build unit number → id map
     const units = await prisma.unit.findMany({

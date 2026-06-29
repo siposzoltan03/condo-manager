@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { requireBuildingContext } from "@/lib/auth";
-import { requireRole } from "@/lib/rbac";
 import { requireCapability } from "@/lib/authz";
 import { requireNotFrozen } from "@/lib/frozen-check";
 import { requireFeature } from "@/lib/feature-gate";
@@ -99,8 +98,9 @@ const VALID_ACCOUNT_TYPES = ["ASSET", "LIABILITY", "INCOME", "EXPENSE"];
 
 export async function importAccounts(rows: ImportRow[]): Promise<ImportResult> {
   try {
-    const { userId, buildingId, role } = await requireBuildingContext();
-    await requireRole(role, "ADMIN");
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
+    requireCapability(ctx, "view.adminContext");
     await requireFeature(buildingId, "finance");
 
     // Get existing accounts

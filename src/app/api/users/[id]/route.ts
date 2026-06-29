@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
-import { requireRole } from "@/lib/rbac";
-import { allows } from "@/lib/authz";
+import { allows, requireCapability } from "@/lib/authz";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
 import { BuildingRole, UnitRelationship } from "@prisma/client";
@@ -11,10 +10,11 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { userId: currentUserId, buildingId, role: activeRole } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
+    const { userId: currentUserId, buildingId, role: activeRole } = ctx;
 
     try {
-      await requireRole(activeRole, "ADMIN");
+      requireCapability(ctx, "users.manage");
     } catch {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }

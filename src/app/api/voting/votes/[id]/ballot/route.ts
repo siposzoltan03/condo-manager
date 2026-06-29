@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
 import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
-import { requireRole } from "@/lib/rbac";
 import { allows } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { createHash } from "crypto";

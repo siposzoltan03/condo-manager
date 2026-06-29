@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireBuildingContext } from "@/lib/auth";
-import { requireRole } from "@/lib/rbac";
+import { requireCapability } from "@/lib/authz";
 import { requireNotFrozen } from "@/lib/frozen-check";
 import { checkUnitLimit } from "@/lib/plan-limits";
 import { createAuditLog } from "@/lib/audit";
@@ -25,8 +25,9 @@ interface UnitInput {
 
 export async function createUnit(input: UnitInput): Promise<ActionResult> {
   try {
-    const { userId, buildingId, role } = await requireBuildingContext();
-    await requireRole(role, "ADMIN");
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
+    requireCapability(ctx, "units.manage");
     await requireNotFrozen(buildingId);
 
     const { allowed, current, max } = await checkUnitLimit(buildingId);
@@ -90,8 +91,9 @@ export async function createUnit(input: UnitInput): Promise<ActionResult> {
 
 export async function updateUnit(id: string, input: Partial<UnitInput>): Promise<ActionResult> {
   try {
-    const { userId, buildingId, role } = await requireBuildingContext();
-    await requireRole(role, "ADMIN");
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
+    requireCapability(ctx, "units.manage");
     await requireNotFrozen(buildingId);
 
     const existing = await prisma.unit.findUnique({
@@ -190,8 +192,9 @@ export async function updateUnit(id: string, input: Partial<UnitInput>): Promise
 
 export async function deleteUnit(id: string): Promise<ActionResult> {
   try {
-    const { userId, buildingId, role } = await requireBuildingContext();
-    await requireRole(role, "ADMIN");
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
+    requireCapability(ctx, "units.manage");
     await requireNotFrozen(buildingId);
 
     const unit = await prisma.unit.findUnique({
@@ -259,8 +262,9 @@ interface ImportResultType {
 
 export async function importUnits(rows: ImportRow[]): Promise<ImportResultType> {
   try {
-    const { userId, buildingId, role } = await requireBuildingContext();
-    await requireRole(role, "ADMIN");
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
+    requireCapability(ctx, "units.manage");
     await requireNotFrozen(buildingId);
 
     const { allowed, current, max } = await checkUnitLimit(buildingId);

@@ -61,6 +61,8 @@ export type Capability =
   | "units.manage"
   | "contractor.view"
   | "contractor.manage"
+  | "building.manage"
+  | "audit.read"
   | "platform.subscriptions";
 
 /** Optional relational context for capabilities that compare the actor to a
@@ -82,6 +84,8 @@ const SUPER_ADMIN_CAPS: ReadonlySet<Capability> = new Set<Capability>([
   "units.manage",
   "contractor.view",
   "contractor.manage",
+  "building.manage",
+  "audit.read",
 ]);
 
 export interface ActorContext {
@@ -206,6 +210,14 @@ export function can(
 
     case "contractor.manage":
       return actor.role === "ADMIN";
+
+    case "audit.read":
+      // Audit-log access — admin (super via the early return above).
+      return actor.role === "ADMIN";
+
+    case "building.manage":
+      // Building CRUD — platform-level, SUPER_ADMIN only (handled above).
+      return false;
 
     case "platform.subscriptions":
       // Platform plan overrides — SUPER_ADMIN only (handled above).

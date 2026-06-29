@@ -9,8 +9,7 @@ import {
   requirePageFeature,
   requirePageCapability,
 } from "@/lib/page-guard";
-import { requireRole } from "@/lib/rbac";
-import { allows } from "@/lib/authz";
+import { allows, requireCapability } from "@/lib/authz";
 import { requireFeature } from "@/lib/feature-gate";
 import { prisma } from "@/lib/prisma";
 import { calculateMeetingQuorum } from "@/lib/voting/quorum";
@@ -34,8 +33,9 @@ export interface UnitsData {
 }
 
 export const getUnits = cache(async (): Promise<UnitsData> => {
-  const { buildingId, role } = await requireBuildingContext();
-  await requireRole(role, "ADMIN");
+  const ctx = await requireBuildingContext();
+  const { buildingId } = ctx;
+  requireCapability(ctx, "view.adminContext");
 
   const [units, building] = await Promise.all([
     prisma.unit.findMany({
@@ -103,8 +103,9 @@ export interface UsersData {
 }
 
 export const getUsers = cache(async (): Promise<UsersData> => {
-  const { buildingId, role } = await requireBuildingContext();
-  await requireRole(role, "ADMIN");
+  const ctx = await requireBuildingContext();
+  const { buildingId } = ctx;
+  requireCapability(ctx, "users.manage");
 
   const limit = 20;
   const where = { buildingId };
@@ -701,8 +702,9 @@ export interface AdminDashboardData {
 }
 
 export const getAdminDashboard = cache(async (): Promise<AdminDashboardData> => {
-  const { buildingId, role } = await requireBuildingContext();
-  await requireRole(role, "BOARD_MEMBER");
+  const ctx = await requireBuildingContext();
+  const { buildingId } = ctx;
+  requireCapability(ctx, "view.boardContext");
 
   const [totalResidents, totalUnits, openComplaintsCount, overduePaymentsCount, pendingMaintenanceCount] =
     await Promise.all([
@@ -1322,8 +1324,8 @@ export interface InvitationsData {
 
 export const getInvitations = cache(async (): Promise<InvitationsData> => {
   const ctx = await requireBuildingContext();
-  const { buildingId, role } = ctx;
-  await requireRole(role, "ADMIN");
+  const { buildingId } = ctx;
+  requireCapability(ctx, "users.manage");
 
   const invitations = await prisma.invitation.findMany({
     where: { buildingId },

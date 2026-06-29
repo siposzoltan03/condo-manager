@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
 import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
-import { requireRole } from "@/lib/rbac";
+import { requireCapability } from "@/lib/authz";
 import {
   findChargeForBuildingScopedUpdate,
   markChargeAsPaid,
@@ -13,7 +13,8 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { userId, buildingId, role } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
 
     try {
       await requireFeature(buildingId, "finance");
@@ -28,7 +29,7 @@ export async function PATCH(
     }
 
     try {
-      await requireRole(role, "BOARD_MEMBER");
+      requireCapability(ctx, "board.manage");
     } catch {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }

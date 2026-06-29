@@ -3,7 +3,7 @@ import { cache } from "react";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireBuildingContext } from "@/lib/auth";
-import { requireRole } from "@/lib/rbac";
+import { requireCapability } from "@/lib/authz";
 
 // ─── Board dashboard data ──────────────────────────────────────────────────
 
@@ -126,8 +126,9 @@ function monthLabel(d: Date): string {
 // ─── Main loader ───────────────────────────────────────────────────────────
 
 export const getBoardDashboard = cache(async (): Promise<BoardDashboardData> => {
-  const { buildingId, role } = await requireBuildingContext();
-  await requireRole(role, "BOARD_MEMBER");
+  const ctx = await requireBuildingContext();
+  const { buildingId } = ctx;
+  requireCapability(ctx, "view.building.finance");
 
   // Compute month-window boundaries.
   const now = new Date();

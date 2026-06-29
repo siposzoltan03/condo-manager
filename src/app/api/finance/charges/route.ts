@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
 import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
-import { requireRole } from "@/lib/rbac";
-import { allows } from "@/lib/authz";
+import { allows, requireCapability } from "@/lib/authz";
 import {
   findUnitInBuilding,
   listBuildingUnitIds,
@@ -88,7 +87,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId, buildingId, role } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
 
     try {
       await requireFeature(buildingId, "finance");
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      await requireRole(role, "BOARD_MEMBER");
+      requireCapability(ctx, "board.manage");
     } catch {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }

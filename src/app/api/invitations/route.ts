@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
-import { requireRole } from "@/lib/rbac";
+import { requireCapability } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { generateInvitationToken, getInvitationExpiryDate } from "@/lib/invitation";
 import { BuildingRole, InvitationStatus } from "@prisma/client";
@@ -11,10 +11,11 @@ import { BuildingRole, InvitationStatus } from "@prisma/client";
  */
 export async function POST(request: NextRequest) {
   try {
-    const { userId, buildingId, role } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
 
     try {
-      await requireRole(role, "ADMIN");
+      requireCapability(ctx, "users.manage");
     } catch {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -148,10 +149,11 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
-    const { buildingId, role } = await requireBuildingContext();
+    const ctx = await requireBuildingContext();
+    const { buildingId } = ctx;
 
     try {
-      await requireRole(role, "ADMIN");
+      requireCapability(ctx, "users.manage");
     } catch {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
