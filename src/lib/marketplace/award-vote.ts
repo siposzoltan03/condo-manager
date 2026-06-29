@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { votingQueue } from "@/lib/queue";
 import { awardBid } from "./bidding";
 import { dispatchAwardOutcome } from "./award-notify";
 
@@ -39,7 +40,7 @@ export async function createAwardVote(input: {
   buildingId: string;
   createdByUserId: string;
 }): Promise<CreateAwardVoteResult> {
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     const pub = await tx.marketplacePublication.findUnique({
       where: { id: input.publicationId },
       include: {
@@ -121,8 +122,26 @@ export async function createAwardVote(input: {
       },
     });
 
-    return { ok: true as const, voteId: vote.id };
+    return { ok: true as const, voteId: vote.id, deadline: meeting.date };
   });
+
+  if (result.ok) {
+    // Schedule the deadline auto-close (+ auto-award) the same way the votes
+    // route does, so award votes close at the deadline even with no manual
+    // close. Best-effort — the votes-close cron is the safety net if this fails.
+    try {
+      const delay = Math.max(0, result.deadline.getTime() - Date.now());
+      await votingQueue.add(
+        "vote-auto-close",
+        { voteId: result.voteId },
+        { delay, jobId: `vote-close-${result.voteId}` },
+      );
+    } catch (err) {
+      console.error("Failed to schedule award-vote auto-close:", err);
+    }
+    return { ok: true, voteId: result.voteId };
+  }
+  return result;
 }
 
 export type ResolveAwardVoteResult =
