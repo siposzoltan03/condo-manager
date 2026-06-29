@@ -2030,7 +2030,8 @@
     "role_SUPER_ADMIN": "Super Admin",
     "role_ADMIN": "Admin",
     "role_BOARD_MEMBER": "Board Member",
-    "role_RESIDENT": "Resident",
+    "role_OWNER": "Owner",
+    "role_AUDITOR": "Auditor",
     "role_TENANT": "Tenant",
     "noBuilding": "No building selected",
     "switchSuccess": "Switched building successfully"
