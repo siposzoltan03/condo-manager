@@ -1,8 +1,10 @@
 import "server-only";
 
 import { cache } from "react";
+import { notFound } from "next/navigation";
 import { Prisma } from "@prisma/client";
 import { requireBuildingContext } from "@/lib/auth";
+import { requirePageContext, requirePageFeature } from "@/lib/page-guard";
 import { requireRole, hasMinimumRole } from "@/lib/rbac";
 import { requireFeature } from "@/lib/feature-gate";
 import { prisma } from "@/lib/prisma";
@@ -396,8 +398,8 @@ export interface MeetingDetailData {
 }
 
 export const getMeetingDetail = cache(async (id: string): Promise<MeetingDetailData> => {
-  const { userId, buildingId, role } = await requireBuildingContext();
-  await requireFeature(buildingId, "voting");
+  const { userId, buildingId, role } = await requirePageContext();
+  await requirePageFeature(buildingId, "voting");
 
   const meeting = await prisma.meeting.findUnique({
     where: { id },
@@ -421,8 +423,9 @@ export const getMeetingDetail = cache(async (id: string): Promise<MeetingDetailD
     },
   });
 
+  // Missing or cross-tenant → 404 (don't leak existence across buildings).
   if (!meeting || meeting.buildingId !== buildingId) {
-    throw new Error("Meeting not found");
+    notFound();
   }
 
   const canEditMinutes = hasMinimumRole(role, "BOARD_MEMBER");
@@ -812,11 +815,12 @@ export const getComplaintDetail = cache(
     });
 
     if (!complaint || complaint.buildingId !== buildingId) {
-      throw new Error("Complaint not found");
+      notFound();
     }
 
+    // Private complaint hidden from non-board non-authors — mask as 404.
     if (!isBoardPlus && complaint.isPrivate && complaint.authorId !== userId) {
-      throw new Error("Complaint not found");
+      notFound();
     }
 
     const visibleNotes = isBoardPlus

@@ -44,6 +44,10 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: "2mb",
     },
+    // Enables unauthorized()/forbidden() + their unauthorized.tsx /
+    // forbidden.tsx boundaries, so page-facing auth failures render
+    // dedicated 401/403 pages (API routes still return JSON).
+    authInterrupts: true,
   },
   async headers() {
     return [
