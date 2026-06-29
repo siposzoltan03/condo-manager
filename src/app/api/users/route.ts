@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
-import { requireRole, hasMinimumRole } from "@/lib/rbac";
+import { requireRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
@@ -158,10 +159,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Only SUPER_ADMIN can assign SUPER_ADMIN or ADMIN roles
-    if (
-      (role === "SUPER_ADMIN" || role === "ADMIN") &&
-      !hasMinimumRole(activeRole, "SUPER_ADMIN")
-    ) {
+    if (!allows({ role: activeRole }, "users.assignRole", { targetRole: role })) {
       return NextResponse.json(
         { error: "Only SUPER_ADMIN can assign ADMIN or SUPER_ADMIN roles" },
         { status: 403 }

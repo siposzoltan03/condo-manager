@@ -1,16 +1,17 @@
 import "server-only";
 import { NextResponse } from "next/server";
 import { requireBuildingContext } from "./auth";
-import { hasMinimumRole } from "./rbac";
+import { allows } from "./authz";
 import { prisma } from "./prisma";
 
 /**
- * Asserts the caller is SUPER_ADMIN. Returns the context on success, or throws
- * an error tagged with an HTTP status that {@link adminErrorResponse} maps.
+ * Asserts the caller is a platform admin (SUPER_ADMIN). Returns the context on
+ * success, or throws an error tagged with an HTTP status that
+ * {@link adminErrorResponse} maps.
  */
 export async function requireSuperAdmin() {
   const ctx = await requireBuildingContext();
-  if (!hasMinimumRole(ctx.role, "SUPER_ADMIN")) {
+  if (!allows(ctx, "platform.admin")) {
     throw Object.assign(new Error("Forbidden"), { status: 403 });
   }
   return ctx;

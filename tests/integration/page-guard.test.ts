@@ -26,7 +26,7 @@ vi.mock("@/lib/feature-gate", () => ({
   FeatureGateError: FakeFeatureGateError,
 }));
 
-const { requirePageContext, requirePageFeature, requirePageRole } =
+const { requirePageContext, requirePageFeature, requirePageCapability } =
   await import("@/lib/page-guard");
 
 beforeEach(() => {
@@ -74,12 +74,12 @@ describe("requirePageFeature", () => {
   });
 });
 
-describe("requirePageRole", () => {
-  it("renders 403 when the role is too low", async () => {
-    expect(await signalOf(() => requirePageRole("TENANT", "BOARD_MEMBER"))).toMatch(/403|forbidden/i);
+describe("requirePageCapability", () => {
+  it("renders 403 when the actor lacks the capability", async () => {
+    expect(await signalOf(() => requirePageCapability({ role: "TENANT" }, "view.boardContext"))).toMatch(/403|forbidden/i);
   });
 
-  it("passes when the role is sufficient", async () => {
-    expect(await signalOf(() => requirePageRole("ADMIN", "BOARD_MEMBER"))).toBe("(no throw)");
+  it("passes when the actor has the capability", async () => {
+    expect(await signalOf(() => requirePageCapability({ role: "ADMIN" }, "view.boardContext"))).toBe("(no throw)");
   });
 });

@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import crypto from "crypto";
 import { requireBuildingContext } from "@/lib/auth";
-import { requireRole, hasMinimumRole } from "@/lib/rbac";
+import { requireRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
 import { BuildingRole, UnitRelationship } from "@prisma/client";
@@ -50,10 +51,7 @@ export async function createUser(input: CreateUserInput): Promise<ActionResult> 
       return { error: "Invalid role" };
     }
 
-    if (
-      (role === "SUPER_ADMIN" || role === "ADMIN") &&
-      !hasMinimumRole(activeRole, "SUPER_ADMIN")
-    ) {
+    if (!allows({ role: activeRole }, "users.assignRole", { targetRole: role as BuildingRole })) {
       return { error: "Only SUPER_ADMIN can assign ADMIN or SUPER_ADMIN roles" };
     }
 
@@ -155,10 +153,11 @@ export async function updateUser(id: string, input: UpdateUserInput): Promise<Ac
       if (!Object.values(BuildingRole).includes(input.role as BuildingRole)) {
         return { error: "Invalid role" };
       }
+      // Block changing TO or FROM an elevated role unless the actor may
+      // assign that role (only SUPER_ADMIN may touch ADMIN/SUPER_ADMIN).
       if (
-        (input.role === "SUPER_ADMIN" || input.role === "ADMIN" ||
-         userBuilding.role === "SUPER_ADMIN" || userBuilding.role === "ADMIN") &&
-        !hasMinimumRole(activeRole, "SUPER_ADMIN")
+        !allows({ role: activeRole }, "users.assignRole", { targetRole: input.role as BuildingRole }) ||
+        !allows({ role: activeRole }, "users.assignRole", { targetRole: userBuilding.role })
       ) {
         return { error: "Only SUPER_ADMIN can change ADMIN or SUPER_ADMIN roles" };
       }
@@ -344,7 +343,7 @@ export async function importUsers(rows: ImportRow[]): Promise<ImportResultType> 
         if (!unitId) { errors.push({ row: rowNum, message: `Unit ${unitNumber} not found` }); continue; }
 
         // RBAC: only SUPER_ADMIN can assign ADMIN+
-        if ((role === "SUPER_ADMIN" || role === "ADMIN") && !hasMinimumRole(activeRole, "SUPER_ADMIN")) {
+        if (!allows({ role: activeRole }, "users.assignRole", { targetRole: role as BuildingRole })) {
           errors.push({ row: rowNum, message: "Only SUPER_ADMIN can assign ADMIN roles" });
           continue;
         }

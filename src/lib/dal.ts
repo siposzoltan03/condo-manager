@@ -7,7 +7,7 @@ import { requireBuildingContext } from "@/lib/auth";
 import {
   requirePageContext,
   requirePageFeature,
-  requirePageRole,
+  requirePageCapability,
 } from "@/lib/page-guard";
 import { requireRole } from "@/lib/rbac";
 import { allows } from "@/lib/authz";
@@ -1092,8 +1092,9 @@ export interface BuildingFinanceData {
 }
 
 export const getBuildingFinance = cache(async (): Promise<BuildingFinanceData> => {
-  const { buildingId, role } = await requirePageContext();
-  requirePageRole(role, "BOARD_MEMBER");
+  const ctx = await requirePageContext();
+  const { buildingId, role } = ctx;
+  requirePageCapability(ctx, "view.building.finance");
   await requirePageFeature(buildingId, "finance");
 
   const currentYear = new Date().getFullYear();

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireBuildingContext } from "@/lib/auth";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 import { createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
 
@@ -22,8 +22,9 @@ export async function updateBoardPermission(input: {
   granted: boolean;
 }): Promise<ActionResult> {
   try {
-    const { userId, role } = await requireBuildingContext();
-    if (!hasMinimumRole(role, "ADMIN")) {
+    const ctx = await requireBuildingContext();
+    const { userId } = ctx;
+    if (!allows(ctx, "users.manage")) {
       return { error: "Forbidden — admin only" };
     }
 
@@ -37,8 +38,7 @@ export async function updateBoardPermission(input: {
       return { error: "Membership not found" };
     }
 
-    // Verify the same building scope as the calling admin.
-    const ctx = await requireBuildingContext();
+    // Verify the same building scope as the calling admin (ctx from above).
     if (ub.buildingId !== ctx.buildingId) {
       return { error: "Membership not in active building" };
     }

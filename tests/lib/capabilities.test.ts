@@ -31,6 +31,7 @@ describe("can() — SUPER_ADMIN scoping", () => {
     // Platform + governance (app administration).
     expect(can(a, "platform.impersonate")).toBe(true);
     expect(can(a, "platform.featureFlags")).toBe(true);
+    expect(can(a, "platform.admin")).toBe(true);
     expect(can(a, "platform.subscriptions")).toBe(true);
     expect(can(a, "users.manage")).toBe(true);
     expect(can(a, "users.assignRole", { targetRole: "SUPER_ADMIN" })).toBe(true);
@@ -185,6 +186,11 @@ describe("can() — board/admin read context", () => {
     expect(can(actor({ role: "ADMIN" }), "view.adminContext")).toBe(true);
     expect(can(actor({ role: "BOARD_MEMBER", isChair: true }), "view.adminContext")).toBe(false);
     expect(can(actor({ role: "SUPER_ADMIN" }), "view.adminContext")).toBe(false);
+  });
+
+  it("platform.admin: super-admin only (ADMIN does not hold it)", () => {
+    expect(can(actor({ role: "ADMIN" }), "platform.admin")).toBe(false);
+    expect(can(actor({ role: "BOARD_MEMBER", isChair: true }), "platform.admin")).toBe(false);
   });
 });
 

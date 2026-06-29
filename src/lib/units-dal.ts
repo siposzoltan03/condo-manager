@@ -2,7 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { requireBuildingContext } from "@/lib/auth";
-import { hasMinimumRole } from "@/lib/rbac";
+import { allows } from "@/lib/authz";
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -142,8 +142,9 @@ function occupancyOf(
 
 export const getUnitsOverview = cache(
   async (): Promise<UnitsOverviewData> => {
-    const { buildingId, role } = await requireBuildingContext();
-    const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
+    const ctx = await requireBuildingContext();
+    const { buildingId } = ctx;
+    const isBoardPlus = allows(ctx, "units.manage");
 
     const building = await prisma.building.findUnique({
       where: { id: buildingId },
@@ -275,8 +276,9 @@ export const getUnitsOverview = cache(
 
 export const getUnitDetail = cache(
   async (unitId: string): Promise<UnitDetailData | null> => {
-    const { buildingId, role } = await requireBuildingContext();
-    const isBoardPlus = hasMinimumRole(role, "BOARD_MEMBER");
+    const ctx = await requireBuildingContext();
+    const { buildingId } = ctx;
+    const isBoardPlus = allows(ctx, "units.manage");
 
     const unit = await prisma.unit.findUnique({
       where: { id: unitId },
