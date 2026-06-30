@@ -87,6 +87,15 @@ export function AssemblyPresenter({
     }
   }
 
+  async function markQuestion(qid: string) {
+    await fetch(`/api/voting/meetings/${meeting.id}/questions/${qid}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "ADDRESSED" }),
+    });
+    router.refresh();
+  }
+
   // ── SETUP ──────────────────────────────────────────────────────────────
   if (meeting.liveStatus !== "LIVE") {
     const closed = meeting.liveStatus === "CLOSED";
@@ -247,8 +256,44 @@ export function AssemblyPresenter({
             </div>
           </div>
           <div className="px-5 py-4">
-            <span className="font-mono text-[10.5px] uppercase tracking-widest" style={{ color: "var(--color-muted)" }}>{t("questionsTitle")}</span>
-            <p className="mt-3 text-[12.5px] text-center" style={{ color: "var(--color-muted)" }}>{t("questionsSoon")}</p>
+            {(() => {
+              const pending = meeting.questions.filter((q) => q.status === "PENDING");
+              return (
+                <>
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-[10.5px] uppercase tracking-widest" style={{ color: "var(--color-muted)" }}>{t("questionsTitle")}</span>
+                    <span className="font-mono text-[10.5px] rounded-full px-2 py-0.5" style={{ background: "color-mix(in srgb, var(--color-ink) 7%, transparent)", color: "var(--color-ink-soft)" }}>{pending.length}</span>
+                  </div>
+                  {pending.length === 0 ? (
+                    <p className="mt-3 text-[12.5px] text-center" style={{ color: "var(--color-muted)" }}>{t("questionsEmpty")}</p>
+                  ) : (
+                    <div className="mt-3 flex flex-col">
+                      {pending.map((q) => (
+                        <div key={q.id} className="flex gap-2.5 py-2.5" style={{ borderTop: "1px solid color-mix(in srgb, var(--color-ink) 6%, transparent)" }}>
+                          <span className="grid place-items-center rounded-lg font-display text-[11px] font-semibold shrink-0"
+                            style={{ width: 28, height: 28, background: q.type === "HAND" ? "var(--color-moss)" : "var(--color-ochre)", color: q.type === "HAND" ? "#f5f2e6" : "var(--color-ink)" }}>
+                            {q.userName.split(" ").map((s) => s[0]).slice(0, 2).join("")}
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-[13px] font-semibold">
+                              {q.userName} <span className="font-mono text-[10px] font-normal" style={{ color: "var(--color-muted)" }}>{q.agendaIndex + 1}. {t("pointShort")}</span>
+                            </div>
+                            <div className="text-[12.5px] mt-0.5" style={{ color: "var(--color-ink-soft)" }}>
+                              {q.type === "HAND" ? t("raisedHand") : q.body}
+                            </div>
+                          </div>
+                          <button onClick={() => markQuestion(q.id)}
+                            className="self-center font-mono text-[10px] uppercase tracking-wider rounded-md px-2 py-1 shrink-0"
+                            style={{ border: "1px solid color-mix(in srgb, var(--color-ink) 12%, transparent)", color: "var(--color-ink-soft)" }}>
+                            {q.type === "HAND" ? t("grantFloor") : t("markRead")}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
         </aside>
       </div>

@@ -2097,7 +2097,17 @@
     "companionTallyHidden": "The result is hidden until close.",
     "companionAsk": "Question",
     "companionRaiseHand": "Raise hand",
-    "soon": "Soon"
+    "soon": "Soon",
+    "pointShort": "point",
+    "raisedHand": "Raised a hand to speak",
+    "grantFloor": "Grant",
+    "markRead": "Read out",
+    "questionsEmpty": "No questions.",
+    "askPlaceholder": "Type your question…",
+    "send": "Send",
+    "cancel": "Cancel",
+    "questionSent": "Question sent to the chair",
+    "handSent": "Hand raised"
   },
   "impersonation": {
     "viewAsUser": "View as user",

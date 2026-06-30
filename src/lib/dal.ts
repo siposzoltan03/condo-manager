@@ -419,6 +419,18 @@ export interface MeetingDetailData {
   canSignMinutes: boolean;
   /** Pre-resolved current user id for "have I already signed?" check. */
   currentUserId: string;
+  /** Live Q&A items (questions + raise-hand), oldest first. */
+  questions: MeetingQuestionItem[];
+}
+
+export interface MeetingQuestionItem {
+  id: string;
+  type: "QUESTION" | "HAND";
+  body: string | null;
+  userName: string;
+  agendaIndex: number;
+  status: "PENDING" | "ADDRESSED";
+  createdAt: string;
 }
 
 export const getMeetingDetail = cache(async (id: string): Promise<MeetingDetailData> => {
@@ -433,6 +445,10 @@ export const getMeetingDetail = cache(async (id: string): Promise<MeetingDetailD
       minutesUpdatedBy: { select: { name: true } },
       rsvps: {
         include: { user: { select: { id: true, name: true } } },
+      },
+      questions: {
+        include: { user: { select: { name: true } } },
+        orderBy: { createdAt: "asc" as const },
       },
       votes: {
         include: {
@@ -599,6 +615,15 @@ export const getMeetingDetail = cache(async (id: string): Promise<MeetingDetailD
     })),
     canSignMinutes: canEditMinutes,
     currentUserId: userId,
+    questions: meeting.questions.map((q) => ({
+      id: q.id,
+      type: q.type,
+      body: q.body,
+      userName: q.user.name,
+      agendaIndex: q.agendaIndex,
+      status: q.status,
+      createdAt: q.createdAt.toISOString(),
+    })),
   };
 });
 

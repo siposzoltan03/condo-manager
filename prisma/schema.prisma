@@ -695,6 +695,7 @@ model User {
   meetingsCreated         Meeting[]                   @relation("MeetingCreator")
   minutesEdited           Meeting[]                   @relation("MinutesEditor")
   meetingRsvps            MeetingRsvp[]
+  meetingQuestions        MeetingQuestion[]
   votesCreated            Vote[]                      @relation("VoteCreator")
   ballots                 Ballot[]                    @relation("BallotVoter")
   ballotsCastOnBehalf     Ballot[]                    @relation("BallotCaster")
@@ -1729,6 +1730,8 @@ model Meeting {
   rsvps              MeetingRsvp[]
   attendances        MeetingAttendance[]
   votes              Vote[]
+  /// Live Q&A — questions + raise-hand requests from attendees.
+  questions          MeetingQuestion[]
   /// Pending agenda items (resignations + escalated complaints) attached
   /// to this meeting. Source-of-truth for meeting agenda integration.
   pendingAgenda      PendingAgendaItem[]
@@ -1740,6 +1743,35 @@ model Meeting {
   @@index([date])
   @@index([createdById])
   @@index([buildingId])
+}
+
+enum MeetingQuestionType {
+  QUESTION
+  HAND
+}
+
+enum MeetingQuestionStatus {
+  PENDING
+  ADDRESSED
+}
+
+/// Live Q&A item raised by an attendee during an assembly — either a typed
+/// question or a raise-hand request to speak. Logged into the minutes.
+model MeetingQuestion {
+  id          String                @id @default(cuid())
+  meeting     Meeting               @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  meetingId   String
+  user        User                  @relation(fields: [userId], references: [id])
+  userId      String
+  type        MeetingQuestionType
+  /// Question text; null for a raise-hand request.
+  body        String?               @db.Text
+  /// Agenda point index this was raised at.
+  agendaIndex Int                   @default(0)
+  status      MeetingQuestionStatus @default(PENDING)
+  createdAt   DateTime              @default(now())
+
+  @@index([meetingId, status])
 }
 
 model MeetingRsvp {
