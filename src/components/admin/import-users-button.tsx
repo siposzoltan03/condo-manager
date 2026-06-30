@@ -34,7 +34,7 @@ export function ImportUsersButton() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 rounded-lg border border-[#c4c6cf]/40 bg-white px-4 py-2.5 text-sm font-medium text-[#002045] hover:bg-[#f2f3ff] transition-colors"
+        className="inline-flex items-center gap-2 rounded-lg border border-tile-a bg-card px-4 py-2.5 text-sm font-medium text-blue hover:bg-bg-3 transition-colors"
       >
         <FileSpreadsheet className="h-4 w-4" />
         {t("importUsers")}

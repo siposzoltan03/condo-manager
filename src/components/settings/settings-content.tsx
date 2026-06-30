@@ -54,7 +54,7 @@ export function SettingsContent() {
   if (loading) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
-        <p className="text-slate-500">{t("loading")}</p>
+        <p className="text-muted">{t("loading")}</p>
       </div>
     );
   }
@@ -62,8 +62,8 @@ export function SettingsContent() {
   if (error || !profile) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
-        <div className="rounded-lg bg-red-50 px-6 py-4 text-center">
-          <p className="text-sm text-red-700">{error || t("error")}</p>
+        <div className="rounded-lg bg-danger/10 px-6 py-4 text-center">
+          <p className="text-sm text-danger">{error || t("error")}</p>
         </div>
       </div>
     );
@@ -72,8 +72,8 @@ export function SettingsContent() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">{tSettings("title")}</h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <h1 className="text-2xl font-bold text-ink">{tSettings("title")}</h1>
+        <p className="mt-1 text-sm text-muted">
           {tSettings("subtitle")}
         </p>
       </div>
@@ -90,8 +90,8 @@ export function SettingsContent() {
                 onClick={() => setActiveTab(tab.key)}
                 className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors text-left ${
                   isActive
-                    ? "bg-blue-50 text-blue-700"
-                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                    ? "bg-blue/10 text-blue"
+                    : "text-ink-soft hover:bg-bg-2 hover:text-ink"
                 }`}
               >
                 <Icon className="h-5 w-5 shrink-0" />
@@ -102,7 +102,7 @@ export function SettingsContent() {
         </nav>
 
         {/* Tab content */}
-        <div className="flex-1 rounded-xl border border-slate-200 bg-white p-6 shadow-sm lg:p-8">
+        <div className="flex-1 rounded-xl border border-tile-a bg-card p-6 shadow-sm lg:p-8">
           {activeTab === "profile" && (
             <ProfileTab profile={profile} onUpdate={fetchProfile} />
           )}

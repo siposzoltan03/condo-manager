@@ -69,39 +69,39 @@ export function CheckoutSuccess() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-bg-3">
       <PublicNav />
 
       <div className="mx-auto max-w-lg px-4 py-20 sm:px-6">
         {status === "loading" && (
-          <div className="rounded-xl border border-slate-200 bg-white p-10 text-center shadow-sm">
-            <Loader2 className="mx-auto h-10 w-10 animate-spin text-[#002045]" />
-            <p className="mt-4 text-sm font-medium text-slate-600">{t("verifying")}</p>
+          <div className="rounded-xl border border-tile-a bg-card p-10 text-center shadow-sm">
+            <Loader2 className="mx-auto h-10 w-10 animate-spin text-moss" />
+            <p className="mt-4 text-sm font-medium text-ink-soft">{t("verifying")}</p>
           </div>
         )}
 
         {status === "success" && (
-          <div className="rounded-xl border border-slate-200 bg-white p-10 text-center shadow-sm">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-              <CheckCircle2 className="h-8 w-8 text-green-600" />
+          <div className="rounded-xl border border-tile-a bg-card p-10 text-center shadow-sm">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-good/15">
+              <CheckCircle2 className="h-8 w-8 text-good" />
             </div>
-            <h1 className="mt-6 text-2xl font-extrabold text-slate-900">
+            <h1 className="mt-6 text-2xl font-extrabold text-ink">
               {t("successTitle")}
             </h1>
-            <p className="mt-2 text-sm text-slate-600">{t("successMessage")}</p>
+            <p className="mt-2 text-sm text-ink-soft">{t("successMessage")}</p>
 
             {result.planName && (
-              <div className="mt-4 inline-block rounded-full bg-[#002045]/10 px-4 py-1">
-                <span className="text-sm font-semibold text-[#002045]">
+              <div className="mt-4 inline-block rounded-full bg-moss/10 px-4 py-1">
+                <span className="text-sm font-semibold text-moss">
                   {result.planName}
                 </span>
               </div>
             )}
 
-            <div className="mt-6 rounded-lg bg-slate-50 p-4 text-left">
-              <p className="text-sm text-slate-700">{t("checkEmail")}</p>
+            <div className="mt-6 rounded-lg bg-bg-3 p-4 text-left">
+              <p className="text-sm text-ink-soft">{t("checkEmail")}</p>
               {result.email && (
-                <p className="mt-2 text-sm text-slate-600">
+                <p className="mt-2 text-sm text-ink-soft">
                   {t("emailSentTo", { email: result.email })}
                 </p>
               )}
@@ -110,7 +110,7 @@ export function CheckoutSuccess() {
             <div className="mt-8">
               <Link
                 href="/login"
-                className="inline-block rounded-lg bg-[#002045] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#003060]"
+                className="inline-block rounded-lg bg-moss px-6 py-3 text-sm font-semibold text-card transition hover:opacity-90"
               >
                 {t("goToLogin")}
               </Link>
@@ -119,27 +119,27 @@ export function CheckoutSuccess() {
         )}
 
         {status === "error" && (
-          <div className="rounded-xl border border-slate-200 bg-white p-10 text-center shadow-sm">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
-              <AlertCircle className="h-8 w-8 text-red-600" />
+          <div className="rounded-xl border border-tile-a bg-card p-10 text-center shadow-sm">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-danger/15">
+              <AlertCircle className="h-8 w-8 text-danger" />
             </div>
-            <h1 className="mt-6 text-2xl font-extrabold text-slate-900">
+            <h1 className="mt-6 text-2xl font-extrabold text-ink">
               {t("errorTitle")}
             </h1>
-            <p className="mt-2 text-sm text-slate-600">{t("errorMessage")}</p>
+            <p className="mt-2 text-sm text-ink-soft">{t("errorMessage")}</p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
               {sessionId && (
                 <button
                   onClick={handleRetry}
-                  className="rounded-lg bg-[#002045] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#003060]"
+                  className="rounded-lg bg-moss px-6 py-3 text-sm font-semibold text-card transition hover:opacity-90"
                 >
                   {t("retry")}
                 </button>
               )}
               <a
                 href="mailto:support@condomanager.com"
-                className="rounded-lg border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                className="rounded-lg border border-tile-a px-6 py-3 text-sm font-semibold text-ink-soft transition hover:bg-bg-3"
               >
                 {t("contactSupport")}
               </a>

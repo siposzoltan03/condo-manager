@@ -39,50 +39,50 @@ export function UpgradeModal({
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative z-10 w-full max-w-sm rounded-xl bg-white p-6 shadow-xl">
+      <div className="relative z-10 w-full max-w-sm rounded-xl bg-card p-6 shadow-xl">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 rounded-lg p-1 text-slate-400 hover:text-slate-600 transition-colors"
+          className="absolute top-4 right-4 rounded-lg p-1 text-muted hover:text-ink-soft transition-colors"
         >
           <X className="h-5 w-5" />
         </button>
 
         <div className="flex flex-col items-center text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-amber-50 mb-4">
-            <Sparkles className="h-7 w-7 text-amber-500" />
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-ochre/15 mb-4">
+            <Sparkles className="h-7 w-7 text-ochre" />
           </div>
 
-          <h2 className="text-xl font-bold text-slate-900 mb-2">
+          <h2 className="text-xl font-bold text-ink mb-2">
             {t("upgradeTitle")}
           </h2>
 
-          <p className="text-sm text-slate-600 mb-2">
+          <p className="text-sm text-ink-soft mb-2">
             {t("upgradeDescription")}
           </p>
 
-          <p className="text-sm font-medium text-slate-900 mb-1">
+          <p className="text-sm font-medium text-ink mb-1">
             {featureName}
           </p>
 
-          <p className="text-xs text-slate-500 mb-1">
+          <p className="text-xs text-muted mb-1">
             {t("availableOn", { plan: t(requiredPlanKey) })}
           </p>
 
-          <p className="text-xs text-slate-400 mb-6">
+          <p className="text-xs text-muted mb-6">
             {t("currentPlan", { plan: t(currentPlanKey) })}
           </p>
 
           <div className="flex w-full gap-3">
             <button
               onClick={onClose}
-              className="flex-1 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+              className="flex-1 rounded-lg border border-tile-a px-4 py-2.5 text-sm font-medium text-ink-soft hover:bg-bg-3 transition-colors"
             >
               {t("dismiss")}
             </button>
             <Link
               href="/settings"
               onClick={onClose}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-blue px-4 py-2.5 text-sm font-medium text-card hover:opacity-90 transition-colors"
             >
               {t("upgradeButton")}
               <ArrowUpRight className="h-4 w-4" />

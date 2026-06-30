@@ -238,33 +238,33 @@ export function ImportDialog({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="w-full max-w-2xl bg-white rounded-xl shadow-2xl mx-4 overflow-hidden border border-[#c4c6cf]/20 max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 backdrop-blur-sm">
+      <div className="w-full max-w-2xl bg-card rounded-xl shadow-2xl mx-4 overflow-hidden border border-tile-a/20 max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-8 py-5 border-b border-[#c4c6cf]/10 shrink-0">
+        <div className="flex items-center justify-between px-8 py-5 border-b border-tile-a/10 shrink-0">
           <div>
-            <h2 className="text-lg font-bold font-manrope text-[#131b2e]">{title}</h2>
-            {description && <p className="text-sm text-[#515f74] mt-0.5">{description}</p>}
+            <h2 className="text-lg font-bold font-manrope text-ink">{title}</h2>
+            {description && <p className="text-sm text-ink-soft mt-0.5">{description}</p>}
           </div>
-          <button onClick={handleClose} className="text-[#43474e] hover:text-[#131b2e] p-1">
+          <button onClick={handleClose} className="text-ink-soft hover:text-ink p-1">
             <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Steps indicator */}
-        <div className="flex items-center gap-2 px-8 py-3 border-b border-[#c4c6cf]/10 text-xs font-medium shrink-0">
+        <div className="flex items-center gap-2 px-8 py-3 border-b border-tile-a/10 text-xs font-medium shrink-0">
           {(["upload", "mapping", "preview", "result"] as Step[]).map((s, i) => (
             <span
               key={s}
               className={`flex items-center gap-1 ${
-                s === step ? "text-[#002045] font-bold" : "text-[#74777f]"
+                s === step ? "text-blue font-bold" : "text-muted"
               }`}
             >
               <span className={`inline-flex items-center justify-center h-5 w-5 rounded-full text-[10px] ${
-                s === step ? "bg-[#002045] text-white" : "bg-[#eaedff] text-[#515f74]"
+                s === step ? "bg-blue text-card" : "bg-bg-2 text-ink-soft"
               }`}>{i + 1}</span>
               {t(`step${s.charAt(0).toUpperCase() + s.slice(1)}`)}
-              {i < 3 && <ChevronRight className="h-3 w-3 text-[#c4c6cf] ml-1" />}
+              {i < 3 && <ChevronRight className="h-3 w-3 text-tile-a ml-1" />}
             </span>
           ))}
         </div>
@@ -272,7 +272,7 @@ export function ImportDialog({
         {/* Content */}
         <div className="flex-1 overflow-y-auto px-8 py-6">
           {error && (
-            <div className="mb-4 flex items-center gap-2 rounded-lg bg-[#ffdad6] px-4 py-3 text-sm font-medium text-[#93000a]">
+            <div className="mb-4 flex items-center gap-2 rounded-lg bg-danger/10 px-4 py-3 text-sm font-medium text-danger">
               <AlertTriangle className="h-4 w-4 shrink-0" />
               {error}
             </div>
@@ -282,17 +282,17 @@ export function ImportDialog({
           {step === "upload" && (
             <div
               className={`border-2 border-dashed rounded-xl p-12 text-center transition-colors ${
-                dragActive ? "border-[#002045] bg-[#f2f3ff]" : "border-[#c4c6cf] bg-[#faf8ff]"
+                dragActive ? "border-blue bg-blue/10" : "border-tile-a bg-bg-3"
               }`}
               onDragEnter={(e) => { e.preventDefault(); setDragActive(true); }}
               onDragLeave={() => setDragActive(false)}
               onDragOver={(e) => e.preventDefault()}
               onDrop={handleDrop}
             >
-              <FileSpreadsheet className="h-12 w-12 text-[#515f74] mx-auto mb-4" />
-              <p className="text-sm font-medium text-[#131b2e] mb-1">{t("dropFileHere")}</p>
-              <p className="text-xs text-[#74777f] mb-4">{t("acceptedFormats")}: .xlsx, .csv</p>
-              <label className="inline-flex items-center gap-2 rounded-lg bg-[#002045] px-4 py-2.5 text-sm font-bold text-white cursor-pointer hover:opacity-90 transition-all">
+              <FileSpreadsheet className="h-12 w-12 text-ink-soft mx-auto mb-4" />
+              <p className="text-sm font-medium text-ink mb-1">{t("dropFileHere")}</p>
+              <p className="text-xs text-muted mb-4">{t("acceptedFormats")}: .xlsx, .csv</p>
+              <label className="inline-flex items-center gap-2 rounded-lg bg-blue px-4 py-2.5 text-sm font-bold text-card cursor-pointer hover:opacity-90 transition-all">
                 <Upload className="h-4 w-4" />
                 {t("chooseFile")}
                 <input
@@ -308,8 +308,8 @@ export function ImportDialog({
           {/* Step: Column Mapping */}
           {step === "mapping" && (
             <div>
-              <p className="text-sm text-[#515f74] mb-4">
-                {t("mapColumnsDesc")} <span className="font-medium text-[#131b2e]">{fileName}</span> ({fileRows.length} {t("rows")})
+              <p className="text-sm text-ink-soft mb-4">
+                {t("mapColumnsDesc")} <span className="font-medium text-ink">{fileName}</span> ({fileRows.length} {t("rows")})
               </p>
               <div className="space-y-3">
                 {config.fields.map((field) => {
@@ -317,9 +317,9 @@ export function ImportDialog({
                   return (
                     <div key={field.key} className="flex items-center gap-4">
                       <div className="w-40 shrink-0">
-                        <span className="text-sm font-medium text-[#131b2e]">
+                        <span className="text-sm font-medium text-ink">
                           {field.label}
-                          {field.required && <span className="text-[#ba1a1a] ml-0.5">*</span>}
+                          {field.required && <span className="text-danger ml-0.5">*</span>}
                         </span>
                       </div>
                       <select
@@ -330,7 +330,7 @@ export function ImportDialog({
                           if (oldHeader) updateMapping(oldHeader, null);
                           if (e.target.value) updateMapping(e.target.value, field.key);
                         }}
-                        className="flex-1 rounded-lg border border-[#c4c6cf]/40 bg-[#f2f3ff] px-3 py-2 text-sm text-[#131b2e] focus:ring-2 focus:ring-[#002045] outline-none"
+                        className="flex-1 rounded-lg border border-tile-a/40 bg-bg-3 px-3 py-2 text-sm text-ink focus:ring-2 focus:ring-blue outline-none"
                       >
                         <option value="">{t("unmapped")}</option>
                         {fileHeaders.map((h) => (
@@ -347,36 +347,36 @@ export function ImportDialog({
           {/* Step: Preview */}
           {step === "preview" && (
             <div>
-              <p className="text-sm text-[#515f74] mb-4">{t("previewDesc")}</p>
-              <div className="overflow-x-auto rounded-lg border border-[#c4c6cf]/20">
+              <p className="text-sm text-ink-soft mb-4">{t("previewDesc")}</p>
+              <div className="overflow-x-auto rounded-lg border border-tile-a/20">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="bg-[#f2f3ff] border-b border-[#c4c6cf]/10">
-                      <th className="px-3 py-2 text-left text-xs font-bold text-[#515f74]">#</th>
+                    <tr className="bg-bg-3 border-b border-tile-a/10">
+                      <th className="px-3 py-2 text-left text-xs font-bold text-ink-soft">#</th>
                       {config.fields.map((f) => (
-                        <th key={f.key} className="px-3 py-2 text-left text-xs font-bold text-[#515f74]">
+                        <th key={f.key} className="px-3 py-2 text-left text-xs font-bold text-ink-soft">
                           {f.label}
                         </th>
                       ))}
-                      <th className="px-3 py-2 text-left text-xs font-bold text-[#515f74]">{t("status")}</th>
+                      <th className="px-3 py-2 text-left text-xs font-bold text-ink-soft">{t("status")}</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#c4c6cf]/10">
+                  <tbody className="divide-y divide-tile-a/10">
                     {getPreviewRows().map((row, i) => {
                       const errors = validateRow(row);
                       return (
-                        <tr key={i} className="hover:bg-[#eaedff]/20">
-                          <td className="px-3 py-2 text-[#74777f]">{i + 1}</td>
+                        <tr key={i} className="hover:bg-bg-2/20">
+                          <td className="px-3 py-2 text-muted">{i + 1}</td>
                           {config.fields.map((f) => (
-                            <td key={f.key} className="px-3 py-2 text-[#131b2e] max-w-[200px] truncate">
-                              {row[f.key] || <span className="text-[#c4c6cf] italic">—</span>}
+                            <td key={f.key} className="px-3 py-2 text-ink max-w-[200px] truncate">
+                              {row[f.key] || <span className="text-tile-a italic">—</span>}
                             </td>
                           ))}
                           <td className="px-3 py-2">
                             {errors.length === 0 ? (
-                              <Check className="h-4 w-4 text-emerald-600" />
+                              <Check className="h-4 w-4 text-good" />
                             ) : (
-                              <span className="text-xs text-[#93000a]" title={errors.join(", ")}>
+                              <span className="text-xs text-danger" title={errors.join(", ")}>
                                 <AlertTriangle className="h-4 w-4 inline" /> {errors.length}
                               </span>
                             )}
@@ -387,7 +387,7 @@ export function ImportDialog({
                   </tbody>
                 </table>
               </div>
-              <p className="mt-3 text-xs text-[#74777f]">
+              <p className="mt-3 text-xs text-muted">
                 {t("showingPreview", { count: Math.min(PREVIEW_ROWS, fileRows.length), total: fileRows.length })}
               </p>
             </div>
@@ -397,42 +397,42 @@ export function ImportDialog({
           {step === "result" && result && (
             <div className="text-center py-4">
               <div className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ${
-                result.errors.length === 0 ? "bg-emerald-50" : "bg-[#ffddba]"
+                result.errors.length === 0 ? "bg-good/10" : "bg-ochre/15"
               }`}>
                 {result.errors.length === 0 ? (
-                  <Check className="h-8 w-8 text-emerald-600" />
+                  <Check className="h-8 w-8 text-good" />
                 ) : (
-                  <AlertTriangle className="h-8 w-8 text-[#633f0f]" />
+                  <AlertTriangle className="h-8 w-8 text-ochre" />
                 )}
               </div>
-              <h3 className="text-lg font-bold text-[#131b2e] mb-2">{t("importComplete")}</h3>
+              <h3 className="text-lg font-bold text-ink mb-2">{t("importComplete")}</h3>
               <div className="flex justify-center gap-6 text-sm mb-4">
                 <div>
-                  <p className="text-2xl font-extrabold text-emerald-600">{result.created}</p>
-                  <p className="text-[#515f74]">{t("created")}</p>
+                  <p className="text-2xl font-extrabold text-good">{result.created}</p>
+                  <p className="text-ink-soft">{t("created")}</p>
                 </div>
                 {result.skipped > 0 && (
                   <div>
-                    <p className="text-2xl font-extrabold text-[#515f74]">{result.skipped}</p>
-                    <p className="text-[#515f74]">{t("skipped")}</p>
+                    <p className="text-2xl font-extrabold text-ink-soft">{result.skipped}</p>
+                    <p className="text-ink-soft">{t("skipped")}</p>
                   </div>
                 )}
                 {result.errors.length > 0 && (
                   <div>
-                    <p className="text-2xl font-extrabold text-[#93000a]">{result.errors.length}</p>
-                    <p className="text-[#515f74]">{t("errorsCount")}</p>
+                    <p className="text-2xl font-extrabold text-danger">{result.errors.length}</p>
+                    <p className="text-ink-soft">{t("errorsCount")}</p>
                   </div>
                 )}
               </div>
               {result.errors.length > 0 && (
-                <div className="text-left mt-4 rounded-lg bg-[#ffdad6]/30 p-4 max-h-40 overflow-y-auto">
+                <div className="text-left mt-4 rounded-lg bg-danger/10 p-4 max-h-40 overflow-y-auto">
                   {result.errors.slice(0, 20).map((e, i) => (
-                    <p key={i} className="text-xs text-[#93000a] mb-1">
+                    <p key={i} className="text-xs text-danger mb-1">
                       Row {e.row}: {e.message}
                     </p>
                   ))}
                   {result.errors.length > 20 && (
-                    <p className="text-xs text-[#74777f] mt-2">
+                    <p className="text-xs text-muted mt-2">
                       ...and {result.errors.length - 20} more errors
                     </p>
                   )}
@@ -443,12 +443,12 @@ export function ImportDialog({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-8 py-4 border-t border-[#c4c6cf]/10 bg-[#f2f3ff]/50 shrink-0">
+        <div className="flex items-center justify-between px-8 py-4 border-t border-tile-a/10 bg-bg-3/50 shrink-0">
           <div>
             {step !== "upload" && step !== "result" && (
               <button
                 onClick={() => setStep(step === "preview" ? "mapping" : "upload")}
-                className="inline-flex items-center gap-1 text-sm font-medium text-[#515f74] hover:text-[#131b2e]"
+                className="inline-flex items-center gap-1 text-sm font-medium text-ink-soft hover:text-ink"
               >
                 <ChevronLeft className="h-4 w-4" />
                 {t("back")}
@@ -459,7 +459,7 @@ export function ImportDialog({
             {step === "result" ? (
               <button
                 onClick={handleClose}
-                className="rounded-lg bg-[#002045] px-6 py-2.5 text-sm font-bold text-white hover:opacity-90 transition-all"
+                className="rounded-lg bg-blue px-6 py-2.5 text-sm font-bold text-card hover:opacity-90 transition-all"
               >
                 {t("close")}
               </button>
@@ -467,7 +467,7 @@ export function ImportDialog({
               <button
                 onClick={() => setStep("preview")}
                 disabled={!canProceedToPreview()}
-                className="inline-flex items-center gap-1 rounded-lg bg-[#002045] px-6 py-2.5 text-sm font-bold text-white hover:opacity-90 disabled:opacity-40 transition-all"
+                className="inline-flex items-center gap-1 rounded-lg bg-blue px-6 py-2.5 text-sm font-bold text-card hover:opacity-90 disabled:opacity-40 transition-all"
               >
                 {t("next")}
                 <ChevronRight className="h-4 w-4" />
@@ -476,7 +476,7 @@ export function ImportDialog({
               <button
                 onClick={handleImport}
                 disabled={importing}
-                className="inline-flex items-center gap-2 rounded-lg bg-[#002045] px-6 py-2.5 text-sm font-bold text-white hover:opacity-90 disabled:opacity-40 transition-all"
+                className="inline-flex items-center gap-2 rounded-lg bg-blue px-6 py-2.5 text-sm font-bold text-card hover:opacity-90 disabled:opacity-40 transition-all"
               >
                 {importing ? (
                   <>

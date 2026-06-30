@@ -57,26 +57,26 @@ export function ResetPasswordForm() {
   return (
     <div
       className="flex min-h-screen items-center justify-center px-4"
-      style={{ backgroundColor: "#faf8ff" }}
+      style={{ backgroundColor: "var(--color-bg-3)" }}
     >
       <div className="w-full max-w-md">
-        <div className="rounded-xl bg-white p-10 shadow-xl">
+        <div className="rounded-xl bg-card p-10 shadow-xl">
           {success ? (
             <div className="text-center">
-              <CheckCircle className="mx-auto h-12 w-12" style={{ color: "#002045" }} />
+              <CheckCircle className="mx-auto h-12 w-12" style={{ color: "var(--color-moss)" }} />
               <h1
-                className="mt-4 text-2xl font-extrabold"
-                style={{ color: "#002045", fontFamily: "var(--font-manrope), sans-serif" }}
+                className="mt-4 text-2xl font-extrabold font-display"
+                style={{ color: "var(--color-moss)" }}
               >
                 {t("resetPassword")}
               </h1>
-              <p className="mt-3 text-sm" style={{ color: "#43474e" }}>
+              <p className="mt-3 text-sm" style={{ color: "var(--color-ink-soft)" }}>
                 {t("resetSuccess")}
               </p>
               <Link
                 href="/login"
-                className="mt-6 inline-flex items-center justify-center gap-2 rounded-lg py-3 px-6 text-sm font-bold text-white shadow transition-opacity hover:opacity-90"
-                style={{ backgroundColor: "#002045" }}
+                className="mt-6 inline-flex items-center justify-center gap-2 rounded-lg py-3 px-6 text-sm font-bold text-card shadow transition-opacity hover:opacity-90"
+                style={{ backgroundColor: "var(--color-moss)" }}
               >
                 {t("signIn")}
               </Link>
@@ -84,23 +84,23 @@ export function ResetPasswordForm() {
           ) : (
             <>
               <h1
-                className="text-2xl font-extrabold"
-                style={{ color: "#002045", fontFamily: "var(--font-manrope), sans-serif" }}
+                className="text-2xl font-extrabold font-display"
+                style={{ color: "var(--color-moss)" }}
               >
                 {t("resetPassword")}
               </h1>
-              <p className="mt-2 text-sm" style={{ color: "#43474e" }}>
+              <p className="mt-2 text-sm" style={{ color: "var(--color-ink-soft)" }}>
                 {t("resetPasswordDesc")}
               </p>
 
               {!token && (
-                <div className="mt-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+                <div className="mt-4 rounded-lg bg-danger/10 border border-danger/30 px-4 py-3 text-sm text-danger">
                   {t("invalidToken")}
                 </div>
               )}
 
               {error && (
-                <div className="mt-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+                <div className="mt-4 rounded-lg bg-danger/10 border border-danger/30 px-4 py-3 text-sm text-danger">
                   {error}
                 </div>
               )}
@@ -110,7 +110,7 @@ export function ResetPasswordForm() {
                   <label
                     htmlFor="password"
                     className="block text-xs font-semibold uppercase tracking-wider"
-                    style={{ color: "#43474e" }}
+                    style={{ color: "var(--color-ink-soft)" }}
                   >
                     {t("newPassword")}
                   </label>
@@ -122,13 +122,13 @@ export function ResetPasswordForm() {
                       minLength={8}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="block w-full rounded-lg border border-transparent py-4 px-5 pr-12 text-sm outline-none transition-colors focus:border-[#002045] focus:ring-1 focus:ring-[#002045]"
-                      style={{ backgroundColor: "#f2f3ff", color: "#131b2e" }}
+                      className="block w-full rounded-lg border border-transparent py-4 px-5 pr-12 text-sm outline-none transition-colors focus:border-moss focus:ring-1 focus:ring-moss"
+                      style={{ backgroundColor: "var(--color-bg-3)", color: "var(--color-ink)" }}
                       placeholder="••••••••"
                     />
                     <Lock
                       className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5"
-                      style={{ color: "#43474e" }}
+                      style={{ color: "var(--color-ink-soft)" }}
                     />
                   </div>
                 </div>
@@ -137,7 +137,7 @@ export function ResetPasswordForm() {
                   <label
                     htmlFor="confirmPassword"
                     className="block text-xs font-semibold uppercase tracking-wider"
-                    style={{ color: "#43474e" }}
+                    style={{ color: "var(--color-ink-soft)" }}
                   >
                     {t("confirmPassword")}
                   </label>
@@ -149,13 +149,13 @@ export function ResetPasswordForm() {
                       minLength={8}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="block w-full rounded-lg border border-transparent py-4 px-5 pr-12 text-sm outline-none transition-colors focus:border-[#002045] focus:ring-1 focus:ring-[#002045]"
-                      style={{ backgroundColor: "#f2f3ff", color: "#131b2e" }}
+                      className="block w-full rounded-lg border border-transparent py-4 px-5 pr-12 text-sm outline-none transition-colors focus:border-moss focus:ring-1 focus:ring-moss"
+                      style={{ backgroundColor: "var(--color-bg-3)", color: "var(--color-ink)" }}
                       placeholder="••••••••"
                     />
                     <Lock
                       className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5"
-                      style={{ color: "#43474e" }}
+                      style={{ color: "var(--color-ink-soft)" }}
                     />
                   </div>
                 </div>
@@ -163,8 +163,8 @@ export function ResetPasswordForm() {
                 <button
                   type="submit"
                   disabled={loading || !token}
-                  className="flex w-full items-center justify-center rounded-lg py-4 text-sm font-bold text-white shadow transition-opacity hover:opacity-90 disabled:opacity-60"
-                  style={{ backgroundColor: "#002045" }}
+                  className="flex w-full items-center justify-center rounded-lg py-4 text-sm font-bold text-card shadow transition-opacity hover:opacity-90 disabled:opacity-60"
+                  style={{ backgroundColor: "var(--color-moss)" }}
                 >
                   {loading ? (
                     <Loader2 className="h-5 w-5 animate-spin" />
@@ -178,7 +178,7 @@ export function ResetPasswordForm() {
                 <Link
                   href="/login"
                   className="inline-flex items-center gap-2 text-sm font-medium hover:underline"
-                  style={{ color: "#002045" }}
+                  style={{ color: "var(--color-moss)" }}
                 >
                   <ArrowLeft className="h-4 w-4" />
                   {tCommon("login")}

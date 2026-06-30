@@ -61,37 +61,37 @@ export function CheckoutRedirect({ planSlug }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-bg-3">
       <PublicNav />
 
       <div className="mx-auto max-w-md px-4 py-20 sm:px-6">
         {loading ? (
-          <div className="rounded-xl border border-slate-200 bg-white p-10 text-center shadow-sm">
-            <Loader2 className="mx-auto h-8 w-8 animate-spin text-[#002045]" />
-            <p className="mt-4 text-sm font-medium text-slate-600">
+          <div className="rounded-xl border border-tile-a bg-card p-10 text-center shadow-sm">
+            <Loader2 className="mx-auto h-8 w-8 animate-spin text-moss" />
+            <p className="mt-4 text-sm font-medium text-ink-soft">
               {t("redirecting")}
             </p>
           </div>
         ) : (
-          <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
-            <h1 className="text-2xl font-extrabold text-slate-900">
+          <div className="rounded-xl border border-tile-a bg-card p-8 shadow-sm">
+            <h1 className="text-2xl font-extrabold text-ink">
               {t("title")}
             </h1>
-            <p className="mt-2 text-sm text-slate-600">
+            <p className="mt-2 text-sm text-ink-soft">
               {t("subtitle", { plan: planSlug })}
             </p>
 
             {error && (
-              <div className="mt-4 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3">
-                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
-                <p className="text-sm text-red-700">{error}</p>
+              <div className="mt-4 flex items-start gap-2 rounded-lg border border-danger/30 bg-danger/10 p-3">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-danger" />
+                <p className="text-sm text-danger">{error}</p>
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="mt-6">
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-slate-700"
+                className="block text-sm font-medium text-ink-soft"
               >
                 {t("enterEmail")}
               </label>
@@ -102,20 +102,20 @@ export function CheckoutRedirect({ planSlug }: Props) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-[#002045] focus:outline-none focus:ring-1 focus:ring-[#002045]"
+                className="mt-1 block w-full rounded-lg border border-tile-a px-3 py-2 text-sm shadow-sm focus:border-moss focus:outline-none focus:ring-1 focus:ring-moss"
               />
               <button
                 type="submit"
-                className="mt-4 w-full rounded-lg bg-[#002045] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#003060]"
+                className="mt-4 w-full rounded-lg bg-moss px-4 py-3 text-sm font-semibold text-card transition hover:opacity-90"
               >
                 {t("continueToPayment")}
               </button>
             </form>
 
-            <p className="mt-4 text-center text-xs text-slate-500">
+            <p className="mt-4 text-center text-xs text-muted">
               <Link
                 href="/pricing"
-                className="text-[#002045] underline transition hover:text-[#003060]"
+                className="text-moss underline transition hover:opacity-80"
               >
                 {t("backToPricing")}
               </Link>

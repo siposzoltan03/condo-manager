@@ -21,10 +21,10 @@ interface Props {
 }
 
 const ROLE_COLORS: Record<string, string> = {
-  ADMIN: "bg-purple-100 text-purple-700",
-  BOARD_MEMBER: "bg-blue-100 text-blue-700",
-  RESIDENT: "bg-green-100 text-green-700",
-  TENANT: "bg-slate-100 text-slate-700",
+  ADMIN: "bg-ochre/15 text-ochre",
+  BOARD_MEMBER: "bg-blue/10 text-blue",
+  RESIDENT: "bg-good/15 text-good",
+  TENANT: "bg-bg-2 text-ink-soft",
 };
 
 export function AcceptInvitationForm({ token }: Props) {
@@ -142,30 +142,30 @@ export function AcceptInvitationForm({ token }: Props) {
 
   if (loading) {
     return (
-      <div className="rounded-xl bg-white p-10 shadow-xl flex items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
+      <div className="rounded-xl bg-card p-10 shadow-xl flex items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-tile-a border-t-moss" />
       </div>
     );
   }
 
   if (errorState) {
     return (
-      <div className="rounded-xl bg-white p-10 shadow-xl">
+      <div className="rounded-xl bg-card p-10 shadow-xl">
         <div className="flex flex-col items-center text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-50 mb-4">
-            <AlertTriangle className="h-7 w-7 text-red-500" />
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-danger/10 mb-4">
+            <AlertTriangle className="h-7 w-7 text-danger" />
           </div>
           <h1
-            className="text-2xl font-extrabold mb-2"
-            style={{ color: "#002045", fontFamily: "var(--font-manrope), sans-serif" }}
+            className="text-2xl font-extrabold mb-2 font-display"
+            style={{ color: "var(--color-moss)" }}
           >
             {errorState.type === "expired" ? t("expiredTitle") : t("invalidTitle")}
           </h1>
-          <p className="text-sm mb-4" style={{ color: "#43474e" }}>
+          <p className="text-sm mb-4" style={{ color: "var(--color-ink-soft)" }}>
             {errorState.message}
           </p>
           {errorState.type === "expired" && (
-            <p className="text-xs" style={{ color: "#515f74" }}>
+            <p className="text-xs" style={{ color: "var(--color-muted)" }}>
               {errorState.invitationType === "ADMIN_SETUP"
                 ? t("expiredAdminMessage")
                 : t("expiredUserMessage")}
@@ -182,25 +182,25 @@ export function AcceptInvitationForm({ token }: Props) {
     ? invitation.role.replace("_", " ")
     : null;
   const roleColor = invitation.role
-    ? ROLE_COLORS[invitation.role] ?? "bg-slate-100 text-slate-700"
+    ? ROLE_COLORS[invitation.role] ?? "bg-bg-2 text-ink-soft"
     : null;
 
   return (
-    <div className="rounded-xl bg-white p-10 shadow-xl">
+    <div className="rounded-xl bg-card p-10 shadow-xl">
       <div className="mb-8">
         <h1
-          className="text-3xl font-extrabold"
-          style={{ color: "#002045", fontFamily: "var(--font-manrope), sans-serif" }}
+          className="text-3xl font-extrabold font-display"
+          style={{ color: "var(--color-moss)" }}
         >
           {t("acceptTitle")}
         </h1>
-        <p className="mt-2 text-sm" style={{ color: "#43474e" }}>
+        <p className="mt-2 text-sm" style={{ color: "var(--color-ink-soft)" }}>
           {invitation.type === "ADMIN_SETUP"
             ? t("acceptAdminDesc")
             : t("acceptUserDesc")}
         </p>
         {invitation.buildingName && (
-          <p className="mt-1 text-sm font-medium" style={{ color: "#002045" }}>
+          <p className="mt-1 text-sm font-medium" style={{ color: "var(--color-moss)" }}>
             {invitation.buildingName}
           </p>
         )}
@@ -208,7 +208,7 @@ export function AcceptInvitationForm({ token }: Props) {
 
       <form onSubmit={handleSubmit} className="space-y-5">
         {formError && (
-          <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+          <div className="rounded-lg bg-danger/10 border border-danger/30 px-4 py-3 text-sm text-danger">
             {formError}
           </div>
         )}
@@ -217,7 +217,7 @@ export function AcceptInvitationForm({ token }: Props) {
         <div>
           <label
             className="block text-xs font-semibold uppercase tracking-wider"
-            style={{ color: "#43474e" }}
+            style={{ color: "var(--color-ink-soft)" }}
           >
             {tCommon("email")}
           </label>
@@ -227,11 +227,11 @@ export function AcceptInvitationForm({ token }: Props) {
               value={invitation.email}
               readOnly
               className="block w-full rounded-lg border border-transparent py-4 px-5 pr-12 text-sm outline-none cursor-not-allowed opacity-70"
-              style={{ backgroundColor: "#f2f3ff", color: "#131b2e" }}
+              style={{ backgroundColor: "var(--color-bg-3)", color: "var(--color-ink)" }}
             />
             <Mail
               className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5"
-              style={{ color: "#43474e" }}
+              style={{ color: "var(--color-ink-soft)" }}
             />
           </div>
         </div>
@@ -241,7 +241,7 @@ export function AcceptInvitationForm({ token }: Props) {
           <div>
             <label
               className="block text-xs font-semibold uppercase tracking-wider mb-2"
-              style={{ color: "#43474e" }}
+              style={{ color: "var(--color-ink-soft)" }}
             >
               {t("roleLabel")}
             </label>
@@ -249,7 +249,7 @@ export function AcceptInvitationForm({ token }: Props) {
               {roleLabel}
             </span>
             {invitation.unitNumber && (
-              <span className="ml-2 inline-block rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+              <span className="ml-2 inline-block rounded-full bg-bg-2 px-3 py-1 text-xs font-semibold text-ink-soft">
                 Unit {invitation.unitNumber}
               </span>
             )}
@@ -261,7 +261,7 @@ export function AcceptInvitationForm({ token }: Props) {
           <label
             htmlFor="name"
             className="block text-xs font-semibold uppercase tracking-wider"
-            style={{ color: "#43474e" }}
+            style={{ color: "var(--color-ink-soft)" }}
           >
             {t("nameLabel")}
           </label>
@@ -272,13 +272,13 @@ export function AcceptInvitationForm({ token }: Props) {
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="block w-full rounded-lg border border-transparent py-4 px-5 pr-12 text-sm outline-none transition-colors focus:border-[#002045] focus:ring-1 focus:ring-[#002045]"
-              style={{ backgroundColor: "#f2f3ff", color: "#131b2e" }}
+              className="block w-full rounded-lg border border-transparent py-4 px-5 pr-12 text-sm outline-none transition-colors focus:border-moss focus:ring-1 focus:ring-moss"
+              style={{ backgroundColor: "var(--color-bg-3)", color: "var(--color-ink)" }}
               placeholder={t("namePlaceholder")}
             />
             <User
               className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5"
-              style={{ color: "#43474e" }}
+              style={{ color: "var(--color-ink-soft)" }}
             />
           </div>
         </div>
@@ -288,7 +288,7 @@ export function AcceptInvitationForm({ token }: Props) {
           <label
             htmlFor="password"
             className="block text-xs font-semibold uppercase tracking-wider"
-            style={{ color: "#43474e" }}
+            style={{ color: "var(--color-ink-soft)" }}
           >
             {t("passwordLabel")}
           </label>
@@ -300,13 +300,13 @@ export function AcceptInvitationForm({ token }: Props) {
               minLength={8}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="block w-full rounded-lg border border-transparent py-4 px-5 pr-12 text-sm outline-none transition-colors focus:border-[#002045] focus:ring-1 focus:ring-[#002045]"
-              style={{ backgroundColor: "#f2f3ff", color: "#131b2e" }}
+              className="block w-full rounded-lg border border-transparent py-4 px-5 pr-12 text-sm outline-none transition-colors focus:border-moss focus:ring-1 focus:ring-moss"
+              style={{ backgroundColor: "var(--color-bg-3)", color: "var(--color-ink)" }}
               placeholder="••••••••"
             />
             <Lock
               className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5"
-              style={{ color: "#43474e" }}
+              style={{ color: "var(--color-ink-soft)" }}
             />
           </div>
         </div>
@@ -316,7 +316,7 @@ export function AcceptInvitationForm({ token }: Props) {
           <label
             htmlFor="confirmPassword"
             className="block text-xs font-semibold uppercase tracking-wider"
-            style={{ color: "#43474e" }}
+            style={{ color: "var(--color-ink-soft)" }}
           >
             {t("confirmPasswordLabel")}
           </label>
@@ -328,13 +328,13 @@ export function AcceptInvitationForm({ token }: Props) {
               minLength={8}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="block w-full rounded-lg border border-transparent py-4 px-5 pr-12 text-sm outline-none transition-colors focus:border-[#002045] focus:ring-1 focus:ring-[#002045]"
-              style={{ backgroundColor: "#f2f3ff", color: "#131b2e" }}
+              className="block w-full rounded-lg border border-transparent py-4 px-5 pr-12 text-sm outline-none transition-colors focus:border-moss focus:ring-1 focus:ring-moss"
+              style={{ backgroundColor: "var(--color-bg-3)", color: "var(--color-ink)" }}
               placeholder="••••••••"
             />
             <Lock
               className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5"
-              style={{ color: "#43474e" }}
+              style={{ color: "var(--color-ink-soft)" }}
             />
           </div>
         </div>
@@ -345,15 +345,15 @@ export function AcceptInvitationForm({ token }: Props) {
         {invitation.relationship === "TENANT" && (
           <div
             className="border-t pt-5 mt-5"
-            style={{ borderColor: "#c4c6cf" }}
+            style={{ borderColor: "var(--color-tile-a)" }}
           >
             <p
               className="text-xs font-semibold uppercase tracking-wider mb-2"
-              style={{ color: "#43474e" }}
+              style={{ color: "var(--color-ink-soft)" }}
             >
               {t("tenantConsentTitle")}
             </p>
-            <label className="flex gap-3 items-start text-sm" style={{ color: "#1f2024" }}>
+            <label className="flex gap-3 items-start text-sm" style={{ color: "var(--color-ink)" }}>
               <input
                 type="checkbox"
                 checked={contactConsent}
@@ -369,8 +369,8 @@ export function AcceptInvitationForm({ token }: Props) {
         {/* ADMIN_SETUP: Building fields */}
         {invitation.type === "ADMIN_SETUP" && (
           <>
-            <div className="border-t pt-5 mt-5" style={{ borderColor: "#c4c6cf" }}>
-              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#43474e" }}>
+            <div className="border-t pt-5 mt-5" style={{ borderColor: "var(--color-tile-a)" }}>
+              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "var(--color-ink-soft)" }}>
                 {t("buildingDetails")}
               </p>
             </div>
@@ -379,7 +379,7 @@ export function AcceptInvitationForm({ token }: Props) {
               <label
                 htmlFor="buildingName"
                 className="block text-xs font-semibold uppercase tracking-wider"
-                style={{ color: "#43474e" }}
+                style={{ color: "var(--color-ink-soft)" }}
               >
                 {t("buildingNameLabel")}
               </label>
@@ -390,13 +390,13 @@ export function AcceptInvitationForm({ token }: Props) {
                   required
                   value={buildingName}
                   onChange={(e) => setBuildingName(e.target.value)}
-                  className="block w-full rounded-lg border border-transparent py-4 px-5 pr-12 text-sm outline-none transition-colors focus:border-[#002045] focus:ring-1 focus:ring-[#002045]"
-                  style={{ backgroundColor: "#f2f3ff", color: "#131b2e" }}
+                  className="block w-full rounded-lg border border-transparent py-4 px-5 pr-12 text-sm outline-none transition-colors focus:border-moss focus:ring-1 focus:ring-moss"
+                  style={{ backgroundColor: "var(--color-bg-3)", color: "var(--color-ink)" }}
                   placeholder={t("buildingNamePlaceholder")}
                 />
                 <Building2
                   className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5"
-                  style={{ color: "#43474e" }}
+                  style={{ color: "var(--color-ink-soft)" }}
                 />
               </div>
             </div>
@@ -405,7 +405,7 @@ export function AcceptInvitationForm({ token }: Props) {
               <label
                 htmlFor="buildingAddress"
                 className="block text-xs font-semibold uppercase tracking-wider"
-                style={{ color: "#43474e" }}
+                style={{ color: "var(--color-ink-soft)" }}
               >
                 {t("buildingAddressLabel")}
               </label>
@@ -416,13 +416,13 @@ export function AcceptInvitationForm({ token }: Props) {
                   required
                   value={buildingAddress}
                   onChange={(e) => setBuildingAddress(e.target.value)}
-                  className="block w-full rounded-lg border border-transparent py-4 px-5 pr-12 text-sm outline-none transition-colors focus:border-[#002045] focus:ring-1 focus:ring-[#002045]"
-                  style={{ backgroundColor: "#f2f3ff", color: "#131b2e" }}
+                  className="block w-full rounded-lg border border-transparent py-4 px-5 pr-12 text-sm outline-none transition-colors focus:border-moss focus:ring-1 focus:ring-moss"
+                  style={{ backgroundColor: "var(--color-bg-3)", color: "var(--color-ink)" }}
                   placeholder={t("buildingAddressPlaceholder")}
                 />
                 <MapPin
                   className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5"
-                  style={{ color: "#43474e" }}
+                  style={{ color: "var(--color-ink-soft)" }}
                 />
               </div>
             </div>
@@ -432,7 +432,7 @@ export function AcceptInvitationForm({ token }: Props) {
                 <label
                   htmlFor="buildingCity"
                   className="block text-xs font-semibold uppercase tracking-wider"
-                  style={{ color: "#43474e" }}
+                  style={{ color: "var(--color-ink-soft)" }}
                 >
                   {t("buildingCityLabel")}
                 </label>
@@ -442,8 +442,8 @@ export function AcceptInvitationForm({ token }: Props) {
                   required
                   value={buildingCity}
                   onChange={(e) => setBuildingCity(e.target.value)}
-                  className="mt-2 block w-full rounded-lg border border-transparent py-4 px-5 text-sm outline-none transition-colors focus:border-[#002045] focus:ring-1 focus:ring-[#002045]"
-                  style={{ backgroundColor: "#f2f3ff", color: "#131b2e" }}
+                  className="mt-2 block w-full rounded-lg border border-transparent py-4 px-5 text-sm outline-none transition-colors focus:border-moss focus:ring-1 focus:ring-moss"
+                  style={{ backgroundColor: "var(--color-bg-3)", color: "var(--color-ink)" }}
                   placeholder={t("buildingCityPlaceholder")}
                 />
               </div>
@@ -451,7 +451,7 @@ export function AcceptInvitationForm({ token }: Props) {
                 <label
                   htmlFor="buildingZipCode"
                   className="block text-xs font-semibold uppercase tracking-wider"
-                  style={{ color: "#43474e" }}
+                  style={{ color: "var(--color-ink-soft)" }}
                 >
                   {t("buildingZipCodeLabel")}
                 </label>
@@ -461,8 +461,8 @@ export function AcceptInvitationForm({ token }: Props) {
                   required
                   value={buildingZipCode}
                   onChange={(e) => setBuildingZipCode(e.target.value)}
-                  className="mt-2 block w-full rounded-lg border border-transparent py-4 px-5 text-sm outline-none transition-colors focus:border-[#002045] focus:ring-1 focus:ring-[#002045]"
-                  style={{ backgroundColor: "#f2f3ff", color: "#131b2e" }}
+                  className="mt-2 block w-full rounded-lg border border-transparent py-4 px-5 text-sm outline-none transition-colors focus:border-moss focus:ring-1 focus:ring-moss"
+                  style={{ backgroundColor: "var(--color-bg-3)", color: "var(--color-ink)" }}
                   placeholder={t("buildingZipCodePlaceholder")}
                 />
               </div>
@@ -474,8 +474,8 @@ export function AcceptInvitationForm({ token }: Props) {
         <button
           type="submit"
           disabled={submitting}
-          className="flex w-full items-center justify-center rounded-lg py-4 text-sm font-bold text-white shadow transition-opacity hover:opacity-90 disabled:opacity-60"
-          style={{ backgroundColor: "#002045" }}
+          className="flex w-full items-center justify-center rounded-lg py-4 text-sm font-bold text-card shadow transition-opacity hover:opacity-90 disabled:opacity-60"
+          style={{ backgroundColor: "var(--color-moss)" }}
         >
           {submitting ? (
             <Loader2 className="h-5 w-5 animate-spin" />

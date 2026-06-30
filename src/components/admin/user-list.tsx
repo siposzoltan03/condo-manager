@@ -37,11 +37,11 @@ interface UsersResponse {
 }
 
 const ROLE_COLORS: Record<string, string> = {
-  SUPER_ADMIN: "bg-red-100 text-red-800",
-  ADMIN: "bg-purple-100 text-purple-800",
-  BOARD_MEMBER: "bg-blue-100 text-blue-800",
-  RESIDENT: "bg-green-100 text-green-800",
-  TENANT: "bg-slate-100 text-slate-700",
+  SUPER_ADMIN: "bg-danger/15 text-danger",
+  ADMIN: "bg-ochre/15 text-ochre",
+  BOARD_MEMBER: "bg-blue/15 text-blue",
+  RESIDENT: "bg-good/15 text-good",
+  TENANT: "bg-bg-2 text-ink-soft",
 };
 
 const ROLE_KEYS: Record<string, string> = {
@@ -168,8 +168,8 @@ export function UserList({ initialData }: UserListProps) {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">{tUsers("title")}</h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <h1 className="text-2xl font-bold text-ink">{tUsers("title")}</h1>
+          <p className="mt-1 text-sm text-muted">
             {tUsers("totalCount", { count: total })}
           </p>
         </div>
@@ -177,7 +177,7 @@ export function UserList({ initialData }: UserListProps) {
           <ImportUsersButton />
           <button
             onClick={handleCreateUser}
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center gap-2 rounded-lg bg-blue px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-blue/90 transition-colors"
           >
             <Plus className="h-4 w-4" />
             {tUsers("createUser")}
@@ -188,19 +188,19 @@ export function UserList({ initialData }: UserListProps) {
       {/* Filters */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
           <input
             type="text"
             placeholder={tUsers("searchPlaceholder")}
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            className="w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded-lg border border-tile-a bg-card py-2.5 pl-10 pr-4 text-sm text-ink placeholder:text-muted focus:border-blue focus:outline-none focus:ring-1 focus:ring-blue"
           />
         </div>
         <select
           value={roleFilter}
           onChange={(e) => handleRoleFilterChange(e.target.value)}
-          className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="rounded-lg border border-tile-a bg-card px-4 py-2.5 text-sm text-ink-soft focus:border-blue focus:outline-none focus:ring-1 focus:ring-blue"
         >
           <option value="">{tUsers("allRoles")}</option>
           {ALL_ROLES.map((role) => (
@@ -213,47 +213,47 @@ export function UserList({ initialData }: UserListProps) {
 
       {/* Error */}
       {error && (
-        <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-lg bg-danger/10 px-4 py-3 text-sm text-danger">
           {error}
         </div>
       )}
 
       {/* Table */}
-      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-lg border border-tile-a bg-card shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-200 bg-slate-50">
-                <th className="px-6 py-3.5 text-left font-semibold text-slate-700">
+              <tr className="border-b border-tile-a bg-bg-3">
+                <th className="px-6 py-3.5 text-left font-semibold text-ink-soft">
                   {tUsers("name")}
                 </th>
-                <th className="px-6 py-3.5 text-left font-semibold text-slate-700">
+                <th className="px-6 py-3.5 text-left font-semibold text-ink-soft">
                   {tUsers("email")}
                 </th>
-                <th className="px-6 py-3.5 text-left font-semibold text-slate-700">
+                <th className="px-6 py-3.5 text-left font-semibold text-ink-soft">
                   {tUsers("unit")}
                 </th>
-                <th className="px-6 py-3.5 text-left font-semibold text-slate-700">
+                <th className="px-6 py-3.5 text-left font-semibold text-ink-soft">
                   {tUsers("role")}
                 </th>
-                <th className="px-6 py-3.5 text-left font-semibold text-slate-700">
+                <th className="px-6 py-3.5 text-left font-semibold text-ink-soft">
                   {tUsers("status")}
                 </th>
-                <th className="px-6 py-3.5 text-right font-semibold text-slate-700">
+                <th className="px-6 py-3.5 text-right font-semibold text-ink-soft">
                   {tUsers("actions")}
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-tile-a">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
+                  <td colSpan={6} className="px-6 py-12 text-center text-muted">
                     {t("loading")}
                   </td>
                 </tr>
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
+                  <td colSpan={6} className="px-6 py-12 text-center text-muted">
                     {tUsers("noUsers")}
                   </td>
                 </tr>
@@ -261,19 +261,19 @@ export function UserList({ initialData }: UserListProps) {
                 users.map((user) => (
                   <tr
                     key={user.id}
-                    className="hover:bg-slate-50 transition-colors"
+                    className="hover:bg-bg-3 transition-colors"
                   >
-                    <td className="px-6 py-4 font-medium text-slate-900">
+                    <td className="px-6 py-4 font-medium text-ink">
                       {user.name}
                     </td>
-                    <td className="px-6 py-4 text-slate-600">{user.email}</td>
-                    <td className="px-6 py-4 text-slate-600">
+                    <td className="px-6 py-4 text-ink-soft">{user.email}</td>
+                    <td className="px-6 py-4 text-ink-soft">
                       {user.unit?.number ?? "-"}
                     </td>
                     <td className="px-6 py-4">
                       <span
                         className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                          ROLE_COLORS[user.role] ?? "bg-slate-100 text-slate-700"
+                          ROLE_COLORS[user.role] ?? "bg-bg-2 text-ink-soft"
                         }`}
                       >
                         {ROLE_KEYS[user.role] ? tUsers(ROLE_KEYS[user.role]) : user.role}
@@ -283,8 +283,8 @@ export function UserList({ initialData }: UserListProps) {
                       <span
                         className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
                           user.isActive
-                            ? "bg-emerald-100 text-emerald-800"
-                            : "bg-amber-100 text-amber-800"
+                            ? "bg-good/15 text-good"
+                            : "bg-ochre/15 text-ochre"
                         }`}
                       >
                         {user.isActive ? tUsers("active") : tUsers("inactive")}
@@ -294,7 +294,7 @@ export function UserList({ initialData }: UserListProps) {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleEditUser(user)}
-                          className="rounded-md px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 transition-colors"
+                          className="rounded-md px-3 py-1.5 text-xs font-medium text-blue hover:bg-blue/10 transition-colors"
                         >
                           {t("edit")}
                         </button>
@@ -302,8 +302,8 @@ export function UserList({ initialData }: UserListProps) {
                           onClick={() => handleToggleActive(user)}
                           className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
                             user.isActive
-                              ? "text-amber-600 hover:bg-amber-50"
-                              : "text-emerald-600 hover:bg-emerald-50"
+                              ? "text-ochre hover:bg-ochre/15"
+                              : "text-good hover:bg-good/10"
                           }`}
                         >
                           {user.isActive ? tUsers("deactivate") : tUsers("activate")}
@@ -319,15 +319,15 @@ export function UserList({ initialData }: UserListProps) {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-slate-200 bg-white px-6 py-3">
-            <p className="text-sm text-slate-600">
+          <div className="flex items-center justify-between border-t border-tile-a bg-card px-6 py-3">
+            <p className="text-sm text-ink-soft">
               {tUsers("pageOf", { page, totalPages })}
             </p>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => { setHasInteracted(true); setPage((p) => Math.max(1, p - 1)); }}
                 disabled={page === 1}
-                className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="inline-flex items-center gap-1 rounded-md border border-tile-a bg-card px-3 py-1.5 text-xs font-medium text-ink-soft hover:bg-bg-3 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronLeft className="h-3.5 w-3.5" />
                 {tUsers("previous")}
@@ -335,7 +335,7 @@ export function UserList({ initialData }: UserListProps) {
               <button
                 onClick={() => { setHasInteracted(true); setPage((p) => Math.min(totalPages, p + 1)); }}
                 disabled={page === totalPages}
-                className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="inline-flex items-center gap-1 rounded-md border border-tile-a bg-card px-3 py-1.5 text-xs font-medium text-ink-soft hover:bg-bg-3 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {tUsers("next")}
                 <ChevronRight className="h-3.5 w-3.5" />
