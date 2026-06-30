@@ -80,4 +80,32 @@ describe("proxy voting", () => {
     const after = await (await voteGET(new NextRequest("http://test/x"), params(vote.id))).json();
     expect(after.proxyUnits[0].votedOptionId).toBe(option.id);
   });
+
+  it("casts for ALL of a grantor's units via proxyForGrantorId", async () => {
+    const { building, grantor, grantee, grantorUnit, vote, option } = await scenario();
+    // Give the grantor a second owned unit in the building.
+    const grantorUnit2 = await prisma.unit.create({
+      data: { number: "2b", floor: 2, ownershipShare: "0.1500", size: "40.00", buildingId: building.id },
+    });
+    await prisma.unitUser.create({
+      data: { userId: grantor.id, unitId: grantorUnit2.id, relationship: "OWNER", isPrimaryContact: false },
+    });
+    asGrantee(building.id, grantee.id);
+
+    // Both of the grantor's units surface as proxied.
+    const detail = await (await voteGET(new NextRequest("http://test/x"), params(vote.id))).json();
+    expect(detail.proxyUnits).toHaveLength(2);
+    expect(detail.proxyUnits.every((u: { grantorId: string }) => u.grantorId === grantor.id)).toBe(true);
+
+    // One action casts for the grantor's whole holding.
+    const res = await ballotPOST(
+      new NextRequest("http://test/x", { method: "POST", body: JSON.stringify({ optionId: option.id, proxyForGrantorId: grantor.id }) }),
+      params(vote.id),
+    );
+    expect(res.status).toBe(201);
+    expect((await res.json()).count).toBe(2);
+
+    const ballots = await prisma.ballot.findMany({ where: { voteId: vote.id } });
+    expect(new Set(ballots.map((b) => b.unitId))).toEqual(new Set([grantorUnit.id, grantorUnit2.id]));
+  });
 });

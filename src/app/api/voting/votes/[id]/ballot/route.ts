@@ -31,7 +31,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     const { id: voteId } = await context.params;
     const body = await request.json();
-    const { optionId, proxyForUnitId, onBehalfOfUnitId } = body;
+    const { optionId, proxyForUnitId, proxyForGrantorId, onBehalfOfUnitId } = body;
 
     if (!optionId) {
       return NextResponse.json(
@@ -91,8 +91,34 @@ export async function POST(request: NextRequest, context: RouteContext) {
         select: { userId: true },
       });
       targets = [{ unitId: onBehalfOfUnitId, ballotUserId: vote.isSecret ? null : unitOwner?.userId ?? null }];
+    } else if (proxyForGrantorId) {
+      // Proxy voting — grantee casts for ALL of one grantor's owner-units in a
+      // single action (the grantor instructs one way for their whole holding).
+      const now = new Date();
+      const proxy = await prisma.proxyAssignment.findFirst({
+        where: {
+          granteeId: userId,
+          grantorId: proxyForGrantorId,
+          validFrom: { lte: now },
+          AND: [
+            { OR: [{ voteId: voteId }, { voteId: null }] },
+            { OR: [{ validUntil: null }, { validUntil: { gte: now } }] },
+          ],
+        },
+      });
+      if (!proxy) {
+        return NextResponse.json({ error: "No valid proxy assignment found" }, { status: 403 });
+      }
+      const grantorUnits = await prisma.unitUser.findMany({
+        where: { userId: proxyForGrantorId, relationship: "OWNER", unit: { buildingId } },
+        select: { unitId: true },
+      });
+      if (grantorUnits.length === 0) {
+        return NextResponse.json({ error: "No unit found in this building" }, { status: 400 });
+      }
+      targets = grantorUnits.map((u) => ({ unitId: u.unitId, ballotUserId: vote.isSecret ? null : userId }));
     } else if (proxyForUnitId) {
-      // Proxy voting — grantee casts for the grantor's unit.
+      // Proxy voting — grantee casts for a single grantor unit.
       const userUnit = await prisma.unitUser.findFirst({
         where: { userId, unit: { buildingId } },
         select: { unitId: true },
@@ -206,7 +232,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       newValue: {
         voteId,
         unitIds: created.map((c) => c.unitId),
-        isProxy: !!proxyForUnitId,
+        isProxy: !!proxyForUnitId || !!proxyForGrantorId,
         isOnBehalf: !!onBehalfOfUnitId,
         isSecret: vote.isSecret,
       },

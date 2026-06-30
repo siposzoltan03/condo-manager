@@ -83,6 +83,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         ],
       },
       select: {
+        grantorId: true,
         grantor: {
           select: {
             name: true,
@@ -97,7 +98,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
     const proxyUnitMap = new Map<
       string,
-      { unitId: string; unitNumber: string; grantorName: string; weight: number }
+      { unitId: string; unitNumber: string; grantorId: string; grantorName: string; weight: number }
     >();
     for (const pa of proxyAssignments) {
       for (const uu of pa.grantor.unitUsers) {
@@ -105,6 +106,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
           proxyUnitMap.set(uu.unit.id, {
             unitId: uu.unit.id,
             unitNumber: uu.unit.number,
+            grantorId: pa.grantorId,
             grantorName: pa.grantor.name,
             weight: Number(uu.unit.ownershipShare),
           });

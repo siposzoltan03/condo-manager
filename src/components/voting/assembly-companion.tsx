@@ -29,6 +29,7 @@ function parseAgenda(raw: unknown): AgendaItem[] {
 interface ProxyUnit {
   unitId: string;
   unitNumber: string;
+  grantorId: string;
   grantorName: string;
   weight: number;
   votedOptionId: string | null;
@@ -145,16 +146,17 @@ export function AssemblyCompanion({
     }
   }
 
-  // Cast on behalf of a unit the user holds a proxy (meghatalmazás) for.
-  async function castProxy(unitId: string) {
-    const optionId = proxyPicked[unitId];
+  // Cast on behalf of all units the user holds a proxy (meghatalmazás) for from
+  // one grantor — a single grantor instructs one way for their whole holding.
+  async function castProxyGrantor(grantorId: string) {
+    const optionId = proxyPicked[grantorId];
     if (!optionId || !voteId || proxyBusy) return;
-    setProxyBusy(unitId);
+    setProxyBusy(grantorId);
     try {
       const res = await fetch(`/api/voting/votes/${voteId}/ballot`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ optionId, proxyForUnitId: unitId }),
+        body: JSON.stringify({ optionId, proxyForGrantorId: grantorId }),
       });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
@@ -272,24 +274,39 @@ export function AssemblyCompanion({
             <div className="font-mono text-[10.5px] uppercase tracking-wider mb-3" style={{ color: "var(--color-muted)" }}>
               {t("companionProxyTitle")}
             </div>
-            {detail.proxyUnits.map((pu) => {
-              const voted = detail.options.find((o) => o.id === pu.votedOptionId);
+            {Object.values(
+              detail.proxyUnits.reduce(
+                (acc, pu) => {
+                  (acc[pu.grantorId] ??= { grantorId: pu.grantorId, grantorName: pu.grantorName, units: [] }).units.push(pu);
+                  return acc;
+                },
+                {} as Record<string, { grantorId: string; grantorName: string; units: ProxyUnit[] }>,
+              ),
+            ).map((g) => {
+              const totalWeight = g.units.reduce((s, u) => s + u.weight, 0);
+              const pending = g.units.filter((u) => !u.votedOptionId);
+              const allVoted = pending.length === 0;
+              const votedFirst = g.units.find((u) => u.votedOptionId);
+              const votedOpt = votedFirst ? detail.options.find((o) => o.id === votedFirst.votedOptionId) : undefined;
               return (
-                <div key={pu.unitId} className="mb-3.5 pb-3.5" style={{ borderBottom: "1px solid color-mix(in srgb, var(--color-ink) 7%, transparent)" }}>
+                <div key={g.grantorId} className="mb-3.5 pb-3.5" style={{ borderBottom: "1px solid color-mix(in srgb, var(--color-ink) 7%, transparent)" }}>
                   <div className="text-[13px] font-semibold mb-2">
-                    {pu.grantorName} <span className="font-mono text-[11px] font-normal" style={{ color: "var(--color-muted)" }}>· {pu.unitNumber} · {(pu.weight * 100).toFixed(2)}%</span>
+                    {g.grantorName}{" "}
+                    <span className="font-mono text-[11px] font-normal" style={{ color: "var(--color-muted)" }}>
+                      · {g.units.length === 1 ? g.units[0].unitNumber : t("companionProxyUnitCount", { n: g.units.length })} · {(totalWeight * 100).toFixed(2)}%
+                    </span>
                   </div>
-                  {voted ? (
+                  {allVoted ? (
                     <div className="flex items-center gap-2 rounded-lg px-3 py-2 text-[13px] font-semibold" style={{ background: "color-mix(in srgb, var(--color-moss) 14%, transparent)", color: "var(--color-moss)" }}>
-                      ✓ {t("companionVoted", { label: voted.label })}
+                      ✓ {t("companionVoted", { label: votedOpt?.label ?? "" })}
                     </div>
                   ) : (
                     <>
                       <div className="flex flex-wrap gap-1.5 mb-2">
                         {detail.options.map((o) => {
-                          const sel = proxyPicked[pu.unitId] === o.id;
+                          const sel = proxyPicked[g.grantorId] === o.id;
                           return (
-                            <button key={o.id} onClick={() => setProxyPicked((p) => ({ ...p, [pu.unitId]: o.id }))}
+                            <button key={o.id} onClick={() => setProxyPicked((p) => ({ ...p, [g.grantorId]: o.id }))}
                               className="rounded-lg px-3 py-2 text-[13px] font-semibold"
                               style={{
                                 border: `1.5px solid ${sel ? "var(--color-ink)" : "color-mix(in srgb, var(--color-ink) 14%, transparent)"}`,
@@ -300,10 +317,12 @@ export function AssemblyCompanion({
                           );
                         })}
                       </div>
-                      <button onClick={() => castProxy(pu.unitId)} disabled={!proxyPicked[pu.unitId] || proxyBusy === pu.unitId}
+                      <button onClick={() => castProxyGrantor(g.grantorId)} disabled={!proxyPicked[g.grantorId] || proxyBusy === g.grantorId}
                         className="w-full rounded-lg py-2.5 text-[13px] font-bold disabled:opacity-50"
                         style={{ background: "var(--color-ink)", color: "var(--color-bg)" }}>
-                        {t("companionProxyCast", { name: pu.grantorName })}
+                        {g.units.length > 1
+                          ? t("companionProxyCastAll", { name: g.grantorName, n: pending.length })
+                          : t("companionProxyCast", { name: g.grantorName })}
                       </button>
                     </>
                   )}

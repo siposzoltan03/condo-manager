@@ -2100,6 +2100,8 @@
     "companionVoted": "Szavazata rögzítve · {label}",
     "companionProxyTitle": "Meghatalmazással",
     "companionProxyCast": "Leadom {name} nevében",
+    "companionProxyCastAll": "Leadom {name} nevében ({n} albetét)",
+    "companionProxyUnitCount": "{n} albetét",
     "castVote": "Szavazat leadása",
     "companionTallyHidden": "Az eredmény a lezárásig rejtett.",
     "companionAsk": "Kérdés",
