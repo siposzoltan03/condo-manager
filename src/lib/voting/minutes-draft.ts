@@ -36,6 +36,15 @@ function fmtDateTime(iso: string | null): string {
   });
 }
 
+function fmtDate(iso: string | null): string {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString("hu-HU", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
 function pct(part: number, whole: number): string {
   if (whole <= 0) return "0,0%";
   return `${((part / whole) * 100).toLocaleString("hu-HU", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
@@ -98,7 +107,7 @@ export function buildMinutesDraft(m: MeetingDetailData): string {
 
   lines.push(`# Jegyzőkönyv — ${m.title}`);
   lines.push("");
-  lines.push(`**Időpont:** ${fmtDateTime(m.date)} ${m.time}`);
+  lines.push(`**Időpont:** ${fmtDate(m.date)} ${m.time}`);
   if (m.location) lines.push(`**Helyszín:** ${m.location}`);
   if (m.format) lines.push(`**A közgyűlés formája:** ${FORMAT_LABEL[m.format] ?? m.format}`);
   lines.push(`**Megnyitás:** ${fmtDateTime(m.startedAt)} · **Berekesztés:** ${fmtDateTime(m.endedAt)}`);

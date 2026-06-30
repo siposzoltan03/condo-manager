@@ -1880,6 +1880,8 @@
     "addAgendaItem": "Pont hozzáadása",
     "agendaItemTitle": "Napirendi pont címe",
     "agendaItemDescription": "Leírás (opcionális)",
+    "agendaNoVote": "Nincs kapcsolódó szavazás",
+    "agendaLinkedVote": "Szavazás",
     "agendaSaved": "Napirend mentve",
     "agendaSaveFailed": "Nem sikerült menteni a napirendet",
     "attendeesTitle": "Visszajelzések",
