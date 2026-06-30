@@ -4,10 +4,12 @@ import type {
   BoardDashboardData,
   BoardActivityItem,
   FollowupItem,
+  OnboardingChecklist,
 } from "@/lib/dashboard-dal";
 import type { RegistryStatus } from "@/lib/officer-registry";
 import { OfficerRegistryBanner } from "@/components/compliance/officer-registry-banner";
 import { AuditCommitteeRequiredBanner } from "@/components/compliance/audit-committee-required-banner";
+import { SetupChecklist } from "./setup-checklist";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
@@ -74,6 +76,8 @@ interface Props {
     requiresAuditCommittee: boolean;
     hasActiveCommittee: boolean;
   };
+  /** Onboarding setup progress; rendered only while setup is incomplete. */
+  onboarding?: OnboardingChecklist;
 }
 
 export async function BoardDashboard({
@@ -83,6 +87,7 @@ export async function BoardDashboard({
   followups,
   activeBuildingName: _activeBuildingName,
   compliance,
+  onboarding,
 }: Props) {
   const t = await getTranslations({ locale, namespace: "dashboard" });
   const tCompliance = await getTranslations({ locale, namespace: "compliance" });
@@ -151,6 +156,11 @@ export async function BoardDashboard({
             dismiss: tCompliance("auditCommittee.dismiss"),
           }}
         />
+      )}
+
+      {/* ── Onboarding setup checklist (hidden once complete) ──────────── */}
+      {onboarding && !onboarding.allComplete && (
+        <SetupChecklist locale={locale} checklist={onboarding} />
       )}
 
       {/* ── Page header ────────────────────────────────────────────────── */}

@@ -6,6 +6,7 @@ import {
   getBuildingName,
   getFollowups,
   getMemberDashboard,
+  getOnboardingChecklist,
 } from "@/lib/dashboard-dal";
 import { BoardDashboard } from "@/components/dashboard/board-dashboard";
 import { MemberDashboard } from "@/components/dashboard/member-dashboard";
@@ -38,10 +39,11 @@ export default async function DashboardPage({ params }: Props) {
         representativeRegistryDeadline: true,
       },
     });
-    const [data, followups, hasCommittee] = await Promise.all([
+    const [data, followups, hasCommittee, onboarding] = await Promise.all([
       getBoardDashboard(),
       getFollowups(),
       hasActiveAuditCommittee(prisma, buildingId),
+      getOnboardingChecklist(),
     ]);
     const registryStatus = compliance
       ? getRegistryStatus({
@@ -61,6 +63,7 @@ export default async function DashboardPage({ params }: Props) {
           requiresAuditCommittee: compliance?.requiresAuditCommittee ?? false,
           hasActiveCommittee: hasCommittee,
         }}
+        onboarding={onboarding}
       />
     );
   }

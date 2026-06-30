@@ -1001,3 +1001,70 @@ export async function getBuildingName(buildingId: string) {
     select: { name: true },
   });
 }
+
+// ─── Onboarding setup checklist ─────────────────────────────────────────────
+
+export interface ChecklistItem {
+  /** i18n key under `onboarding.checklist.items` */
+  key: "units" | "shares" | "owners" | "meeting" | "documents";
+  done: boolean;
+  /** Where to go to complete this step (locale-less app path). */
+  href: string;
+}
+
+export interface OnboardingChecklist {
+  items: ChecklistItem[];
+  doneCount: number;
+  total: number;
+  allComplete: boolean;
+}
+
+/**
+ * Building-setup progress for the board onboarding card. Auto-hides once every
+ * item is done (the dashboard only renders it while `allComplete` is false).
+ */
+export const getOnboardingChecklist = cache(
+  async (): Promise<OnboardingChecklist> => {
+    const { buildingId } = await requireBuildingContext();
+    const now = new Date();
+
+    const [unitCount, shareAgg, ownerUnitCount, upcomingMeetings, docCount] =
+      await Promise.all([
+        prisma.unit.count({ where: { buildingId } }),
+        prisma.unit.aggregate({
+          where: { buildingId },
+          _sum: { ownershipShare: true },
+        }),
+        prisma.unit.count({
+          where: { buildingId, unitUsers: { some: { relationship: "OWNER" } } },
+        }),
+        prisma.meeting.count({ where: { buildingId, date: { gte: now } } }),
+        prisma.document.count({ where: { category: { buildingId } } }),
+      ]);
+
+    const shareTotal = Number(shareAgg._sum.ownershipShare ?? 0);
+    const items: ChecklistItem[] = [
+      { key: "units", done: unitCount > 0, href: "/units" },
+      {
+        key: "shares",
+        done: unitCount > 0 && Math.abs(shareTotal - 1) <= 0.0001,
+        href: "/units",
+      },
+      {
+        key: "owners",
+        done: unitCount > 0 && ownerUnitCount === unitCount,
+        href: "/residents",
+      },
+      { key: "meeting", done: upcomingMeetings > 0, href: "/voting/meetings" },
+      { key: "documents", done: docCount > 0, href: "/documents" },
+    ];
+
+    const doneCount = items.filter((i) => i.done).length;
+    return {
+      items,
+      doneCount,
+      total: items.length,
+      allComplete: doneCount === items.length,
+    };
+  },
+);

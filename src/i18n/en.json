@@ -2918,6 +2918,22 @@
     "planEnterprise": "Enterprise",
     "planLegacy": "Legacy"
   },
+  "onboarding": {
+    "checklist": {
+      "eyebrow": "Setup",
+      "title": "Building setup",
+      "subtitle": "A few steps to complete your building's data. This list disappears once everything is done.",
+      "progress": "{done}/{total} done · {pct}%",
+      "action": "Set up",
+      "items": {
+        "units": "Record units",
+        "shares": "Ownership shares reach 100%",
+        "owners": "Owners assigned to every unit",
+        "meeting": "First general meeting scheduled",
+        "documents": "First document uploaded"
+      }
+    }
+  },
   "dashboard": {
     "newTask": "New task",
     "greeting": {
