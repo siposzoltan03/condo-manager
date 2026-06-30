@@ -1757,6 +1757,7 @@
     "minutesSignAuth1": "Authenticator 1",
     "minutesSignAuth2": "Authenticator 2",
     "minutesAwaitingSignature": "Awaiting signature",
+    "minutesSignatureDocTitle": "Authentication",
     "minutesExecuted": "Executed",
     "minutesSigned": "Signature recorded",
     "minutesSignBoardOnly": "Only board members can sign the minutes.",

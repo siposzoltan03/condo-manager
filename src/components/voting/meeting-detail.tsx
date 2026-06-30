@@ -29,6 +29,7 @@ import { AgendaEditor, AgendaItem } from "./agenda-editor";
 import { CreateVoteModal } from "./create-vote-modal";
 import { QuickVotePanel } from "./quick-vote-panel";
 import { MinutesSignaturesPanel } from "./minutes-signatures-panel";
+import { MinutesSignatureBlock } from "./minutes-signature-block";
 import type { MeetingDetailData } from "@/lib/dal";
 
 interface MeetingDetailProps {
@@ -485,6 +486,7 @@ export function MeetingDetail({ meeting }: MeetingDetailProps) {
               updatedBy={meeting.minutesUpdatedBy}
             />
           )}
+          <MinutesSignatureBlock signatures={meeting.signatures} />
           <MinutesSignaturesPanel
             meetingId={meeting.id}
             signatures={meeting.signatures}
