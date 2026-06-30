@@ -32,10 +32,10 @@ export function DeleteUnitButton({ unitId, hasUsers }: DeleteUnitButtonProps) {
   if (error) {
     return (
       <div className="flex items-center gap-1">
-        <span className="text-xs text-[#93000a]">{error}</span>
+        <span className="text-xs text-danger">{error}</span>
         <button
           onClick={() => setError("")}
-          className="rounded-md px-2 py-1 text-xs font-medium text-[#515f74] hover:bg-[#f2f3ff] transition-colors"
+          className="rounded-md px-2 py-1 text-xs font-medium text-muted hover:bg-bg-3 transition-colors"
         >
           {t("cancel")}
         </button>
@@ -48,13 +48,13 @@ export function DeleteUnitButton({ unitId, hasUsers }: DeleteUnitButtonProps) {
       <div className="flex items-center gap-1">
         <button
           onClick={handleDelete}
-          className="rounded-md px-2 py-1 text-xs font-medium text-[#93000a] hover:bg-[#ffdad6] transition-colors"
+          className="rounded-md px-2 py-1 text-xs font-medium text-danger hover:bg-danger/10 transition-colors"
         >
           {t("delete")}
         </button>
         <button
           onClick={() => setConfirming(false)}
-          className="rounded-md px-2 py-1 text-xs font-medium text-[#515f74] hover:bg-[#f2f3ff] transition-colors"
+          className="rounded-md px-2 py-1 text-xs font-medium text-muted hover:bg-bg-3 transition-colors"
         >
           {t("cancel")}
         </button>
@@ -66,7 +66,7 @@ export function DeleteUnitButton({ unitId, hasUsers }: DeleteUnitButtonProps) {
     <button
       onClick={() => setConfirming(true)}
       disabled={hasUsers}
-      className="rounded-md p-2 text-[#515f74] hover:text-[#ba1a1a] disabled:text-[#c4c6cf]/30 disabled:cursor-not-allowed transition-colors"
+      className="rounded-md p-2 text-muted hover:text-danger disabled:text-muted/30 disabled:cursor-not-allowed transition-colors"
       title={hasUsers ? tUnits("unitHasUsers") : tUnits("deleteUnit")}
     >
       <Trash2 className="h-4 w-4" />

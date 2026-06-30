@@ -39,7 +39,7 @@ export function ImportAccountsButton() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+        className="inline-flex items-center gap-2 rounded-md border border-tile-a bg-card px-3 py-2 text-sm font-medium text-ink-soft hover:bg-bg-3 transition-colors"
       >
         <FileSpreadsheet className="h-4 w-4" />
         {t("importAccounts")}

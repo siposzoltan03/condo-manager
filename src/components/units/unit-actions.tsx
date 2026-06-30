@@ -27,7 +27,7 @@ export function AddUnitButton({ totalOwnershipShare }: AddUnitButtonProps) {
     <>
       <button
         onClick={() => setShowModal(true)}
-        className="inline-flex items-center gap-2 rounded-lg bg-[#002045] px-6 py-3 text-sm font-bold text-white shadow-lg hover:opacity-90 transition-all"
+        className="inline-flex items-center gap-2 rounded-lg bg-blue px-6 py-3 text-sm font-bold text-card shadow-lg hover:opacity-90 transition-all"
       >
         <Plus className="h-4 w-4" />
         {tUnits("addUnit")}
@@ -61,7 +61,7 @@ export function EditUnitButton({ unit, totalOwnershipShare }: EditUnitButtonProp
     <>
       <button
         onClick={() => setShowModal(true)}
-        className="rounded-md p-2 text-[#515f74] hover:text-[#002045] transition-colors"
+        className="rounded-md p-2 text-muted hover:text-blue transition-colors"
         title={tUnits("editUnit")}
       >
         <Pencil className="h-4 w-4" />

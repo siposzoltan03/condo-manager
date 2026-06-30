@@ -93,19 +93,19 @@ export function UnitFormModal({
   }
 
   const inputClass =
-    "w-full px-4 py-2.5 bg-[#f2f3ff] border border-[#c4c6cf]/40 rounded-lg text-sm text-[#131b2e] placeholder:text-[#74777f] outline-none focus:ring-2 focus:ring-[#002045] focus:border-[#002045] transition-all";
+    "w-full px-4 py-2.5 bg-bg-3 border border-tile-a rounded-lg text-sm text-ink placeholder:text-muted outline-none focus:ring-2 focus:ring-blue focus:border-blue transition-all";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="w-full max-w-lg bg-white rounded-xl shadow-2xl mx-4 overflow-hidden border border-[#c4c6cf]/20">
+      <div className="w-full max-w-lg bg-card rounded-xl shadow-2xl mx-4 overflow-hidden border border-tile-a">
         {/* Header */}
-        <div className="flex items-center justify-between px-8 py-6 border-b border-[#c4c6cf]/10">
-          <h2 className="text-xl font-bold font-manrope text-[#131b2e] tracking-tight">
+        <div className="flex items-center justify-between px-8 py-6 border-b border-tile-a">
+          <h2 className="text-xl font-bold font-display text-ink tracking-tight">
             {isEdit ? tUnits("editUnit") : tUnits("addUnit")}
           </h2>
           <button
             onClick={onClose}
-            className="text-[#43474e] hover:text-[#131b2e] transition-colors p-1"
+            className="text-ink-soft hover:text-ink transition-colors p-1"
             aria-label="Close"
           >
             <X className="h-5 w-5" />
@@ -117,7 +117,7 @@ export function UnitFormModal({
           <div className="px-8 py-8 space-y-6">
             {/* Unit Number */}
             <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-[#43474e]">
+              <label className="block text-sm font-medium text-ink-soft">
                 {tUnits("unitNumber")}
               </label>
               <input
@@ -132,7 +132,7 @@ export function UnitFormModal({
 
             {/* Floor */}
             <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-[#43474e]">
+              <label className="block text-sm font-medium text-ink-soft">
                 {tUnits("floor")}
               </label>
               <input
@@ -147,7 +147,7 @@ export function UnitFormModal({
 
             {/* Size */}
             <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-[#43474e]">
+              <label className="block text-sm font-medium text-ink-soft">
                 {tUnits("size")}
               </label>
               <input
@@ -163,7 +163,7 @@ export function UnitFormModal({
 
             {/* Ownership Share */}
             <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-[#43474e]">
+              <label className="block text-sm font-medium text-ink-soft">
                 {tUnits("ownershipPercent")}
               </label>
               <input
@@ -184,10 +184,10 @@ export function UnitFormModal({
               <div
                 className={`flex items-start gap-3 rounded-lg border p-4 ${
                   projectedTotal > 1.0001
-                    ? "bg-[#ffdad6]/50 border-[#ffdad6] text-[#93000a]"
+                    ? "bg-danger/10 border-danger/40 text-danger"
                     : projectedTotal < 0.9999
-                      ? "bg-amber-50 border-amber-200 text-amber-800"
-                      : "bg-emerald-50 border-emerald-200 text-emerald-800"
+                      ? "bg-ochre/15 border-ochre/40 text-ochre"
+                      : "bg-good/10 border-good/40 text-good"
                 }`}
               >
                 <Info className="h-4 w-4 shrink-0 mt-0.5" />
@@ -201,30 +201,30 @@ export function UnitFormModal({
 
             {/* Error / Success */}
             {error && (
-              <div className="rounded-lg bg-[#ffdad6] px-4 py-3 text-sm font-medium text-[#93000a]">
+              <div className="rounded-lg bg-danger/10 px-4 py-3 text-sm font-medium text-danger">
                 {error}
               </div>
             )}
             {success && (
-              <div className="rounded-lg bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+              <div className="rounded-lg bg-good/10 px-4 py-3 text-sm font-medium text-good">
                 {success}
               </div>
             )}
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-end gap-3 px-8 py-6 bg-[#f2f3ff]/50 border-t border-[#c4c6cf]/10">
+          <div className="flex items-center justify-end gap-3 px-8 py-6 bg-bg-3 border-t border-tile-a">
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2.5 text-sm font-bold text-[#43474e] hover:text-[#131b2e] transition-colors"
+              className="px-6 py-2.5 text-sm font-bold text-ink-soft hover:text-ink transition-colors"
             >
               {t("cancel")}
             </button>
             <button
               type="submit"
               disabled={submitting}
-              className="rounded-lg bg-[#1a365d] px-8 py-2.5 text-sm font-bold text-white shadow-sm hover:shadow-md disabled:opacity-50 transition-all active:opacity-90"
+              className="rounded-lg bg-blue px-8 py-2.5 text-sm font-bold text-card shadow-sm hover:shadow-md disabled:opacity-50 transition-all active:opacity-90"
             >
               {submitting ? t("loading") : isEdit ? t("save") : t("create")}
             </button>

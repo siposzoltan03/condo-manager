@@ -145,24 +145,24 @@ export function UserFormModal({ user, onClose, onSuccess }: UserFormModalProps) 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="relative w-full max-w-lg rounded-xl bg-white p-6 shadow-2xl mx-4">
+      <div className="relative w-full max-w-lg rounded-xl bg-card p-6 shadow-2xl mx-4">
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+          className="absolute right-4 top-4 rounded-lg p-1 text-muted hover:bg-bg-2 hover:text-ink-soft transition-colors"
           aria-label="Close"
         >
           <X className="h-5 w-5" />
         </button>
 
-        <h2 className="text-xl font-bold text-slate-900 mb-6">
+        <h2 className="text-xl font-bold text-ink mb-6">
           {isEdit ? "Edit User" : "Create User"}
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Name */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+            <label className="block text-sm font-medium text-ink-soft mb-1.5">
               Name
             </label>
             <input
@@ -171,14 +171,14 @@ export function UserFormModal({ user, onClose, onSuccess }: UserFormModalProps) 
               onChange={(e) => setName(e.target.value)}
               disabled={isEdit}
               required
-              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-slate-50 disabled:text-slate-500"
+              className="w-full rounded-lg border border-tile-a bg-card px-4 py-2.5 text-sm text-ink placeholder:text-muted focus:border-blue focus:outline-none focus:ring-1 focus:ring-blue disabled:bg-bg-3 disabled:text-muted"
               placeholder="Full name"
             />
           </div>
 
           {/* Email */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+            <label className="block text-sm font-medium text-ink-soft mb-1.5">
               {t("email")}
             </label>
             <input
@@ -187,7 +187,7 @@ export function UserFormModal({ user, onClose, onSuccess }: UserFormModalProps) 
               onChange={(e) => setEmail(e.target.value)}
               disabled={isEdit}
               required
-              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-slate-50 disabled:text-slate-500"
+              className="w-full rounded-lg border border-tile-a bg-card px-4 py-2.5 text-sm text-ink placeholder:text-muted focus:border-blue focus:outline-none focus:ring-1 focus:ring-blue disabled:bg-bg-3 disabled:text-muted"
               placeholder="user@example.com"
             />
           </div>
@@ -195,7 +195,7 @@ export function UserFormModal({ user, onClose, onSuccess }: UserFormModalProps) 
           {/* Temporary Password (create only) */}
           {!isEdit && (
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+              <label className="block text-sm font-medium text-ink-soft mb-1.5">
                 Temporary Password
               </label>
               <input
@@ -203,7 +203,7 @@ export function UserFormModal({ user, onClose, onSuccess }: UserFormModalProps) 
                 value={temporaryPassword}
                 onChange={(e) => setTemporaryPassword(e.target.value)}
                 required
-                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full rounded-lg border border-tile-a bg-card px-4 py-2.5 text-sm text-ink placeholder:text-muted focus:border-blue focus:outline-none focus:ring-1 focus:ring-blue"
                 placeholder="Set a temporary password"
               />
             </div>
@@ -211,13 +211,13 @@ export function UserFormModal({ user, onClose, onSuccess }: UserFormModalProps) 
 
           {/* Role */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+            <label className="block text-sm font-medium text-ink-soft mb-1.5">
               Role
             </label>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-lg border border-tile-a bg-card px-4 py-2.5 text-sm text-ink-soft focus:border-blue focus:outline-none focus:ring-1 focus:ring-blue"
             >
               {ROLES.map((r) => (
                 <option key={r.value} value={r.value}>
@@ -229,17 +229,17 @@ export function UserFormModal({ user, onClose, onSuccess }: UserFormModalProps) 
 
           {/* Unit */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+            <label className="block text-sm font-medium text-ink-soft mb-1.5">
               Unit
             </label>
             {loadingUnits ? (
-              <p className="text-sm text-slate-500">{t("loading")}</p>
+              <p className="text-sm text-muted">{t("loading")}</p>
             ) : (
               <select
                 value={unitId}
                 onChange={(e) => setUnitId(e.target.value)}
                 required
-                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full rounded-lg border border-tile-a bg-card px-4 py-2.5 text-sm text-ink-soft focus:border-blue focus:outline-none focus:ring-1 focus:ring-blue"
               >
                 <option value="">{t("selectUnit")}</option>
                 {units.map((unit) => (
@@ -253,13 +253,13 @@ export function UserFormModal({ user, onClose, onSuccess }: UserFormModalProps) 
 
           {/* Relationship */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+            <label className="block text-sm font-medium text-ink-soft mb-1.5">
               Relationship
             </label>
             <select
               value={relationship}
               onChange={(e) => setRelationship(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-lg border border-tile-a bg-card px-4 py-2.5 text-sm text-ink-soft focus:border-blue focus:outline-none focus:ring-1 focus:ring-blue"
             >
               {RELATIONSHIPS.map((r) => (
                 <option key={r.value} value={r.value}>
@@ -277,16 +277,16 @@ export function UserFormModal({ user, onClose, onSuccess }: UserFormModalProps) 
               aria-checked={isPrimaryContact}
               onClick={() => setIsPrimaryContact(!isPrimaryContact)}
               className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-                isPrimaryContact ? "bg-blue-600" : "bg-slate-200"
+                isPrimaryContact ? "bg-blue" : "bg-bg-2"
               }`}
             >
               <span
-                className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg transition-transform ${
+                className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-card shadow-lg transition-transform ${
                   isPrimaryContact ? "translate-x-5" : "translate-x-0"
                 }`}
               />
             </button>
-            <label className="text-sm font-medium text-slate-700">
+            <label className="text-sm font-medium text-ink-soft">
               Primary Contact
             </label>
           </div>
@@ -294,8 +294,8 @@ export function UserFormModal({ user, onClose, onSuccess }: UserFormModalProps) 
           {/* Tenant consent — Tht. § 22(2) requires explicit opt-in
               before the building may store a tenant's email/phone. */}
           {!isEdit && relationship === "TENANT" && (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
-              <label className="flex items-start gap-2 text-sm text-slate-700">
+            <div className="rounded-lg border border-ochre/30 bg-ochre/15 p-3">
+              <label className="flex items-start gap-2 text-sm text-ink-soft">
                 <input
                   type="checkbox"
                   checked={contactConsent}
@@ -309,12 +309,12 @@ export function UserFormModal({ user, onClose, onSuccess }: UserFormModalProps) 
 
           {/* Error / Success */}
           {error && (
-            <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div className="rounded-lg bg-danger/10 px-4 py-3 text-sm text-danger">
               {error}
             </div>
           )}
           {success && (
-            <div className="rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            <div className="rounded-lg bg-good/10 px-4 py-3 text-sm text-good">
               {success}
             </div>
           )}
@@ -324,14 +324,14 @@ export function UserFormModal({ user, onClose, onSuccess }: UserFormModalProps) 
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+              className="rounded-lg border border-tile-a bg-card px-4 py-2.5 text-sm font-medium text-ink-soft hover:bg-bg-3 transition-colors"
             >
               {t("cancel")}
             </button>
             <button
               type="submit"
               disabled={submitting}
-              className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              className="rounded-lg bg-blue px-4 py-2.5 text-sm font-medium text-white hover:bg-blue/90 disabled:opacity-50 transition-colors"
             >
               {submitting ? t("loading") : isEdit ? t("save") : t("create")}
             </button>

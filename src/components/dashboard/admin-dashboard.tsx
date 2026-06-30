@@ -72,31 +72,31 @@ export function AdminDashboard({ initialData, userName }: AdminDashboardProps) {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">
+        <h1 className="text-2xl font-bold text-ink">
           {t("welcomeBack", { name: userName || user?.name || "" })}
         </h1>
         {activeBuilding && (
-          <p className="text-sm font-medium text-blue-600">{activeBuilding.name}</p>
+          <p className="text-sm font-medium text-blue">{activeBuilding.name}</p>
         )}
-        <p className="text-slate-500">{t("adminOverview")}</p>
+        <p className="text-muted">{t("adminOverview")}</p>
       </div>
 
       {/* Admin-only summary cards */}
       {loading ? (
         <div className="flex items-center justify-center py-10">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-bg-2 border-t-blue" />
         </div>
       ) : summary ? (
         <>
           <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <StatCard
-              icon={<Building2 className="h-5 w-5 text-blue-600" />}
+              icon={<Building2 className="h-5 w-5 text-blue" />}
               label={t("buildingOverview")}
               value={`${summary.totalUnits}`}
               sublabel={t("totalResidents", { count: summary.totalResidents })}
             />
             <StatCard
-              icon={<Wallet className="h-5 w-5 text-green-600" />}
+              icon={<Wallet className="h-5 w-5 text-good" />}
               label={t("financialSummary")}
               value={`${currentFundBalance.toLocaleString()} Ft`}
               sublabel={t("reserveFund", {
@@ -104,7 +104,7 @@ export function AdminDashboard({ initialData, userName }: AdminDashboardProps) {
               })}
             />
             <StatCard
-              icon={<AlertTriangle className="h-5 w-5 text-red-600" />}
+              icon={<AlertTriangle className="h-5 w-5 text-danger" />}
               label={t("overduePayments")}
               value={`${summary.overduePaymentsCount}`}
               sublabel={t("overdueCount", {
@@ -113,7 +113,7 @@ export function AdminDashboard({ initialData, userName }: AdminDashboardProps) {
               alert={summary.overduePaymentsCount > 0}
             />
             <StatCard
-              icon={<Wrench className="h-5 w-5 text-orange-600" />}
+              icon={<Wrench className="h-5 w-5 text-ochre" />}
               label={t("pendingMaintenance")}
               value={`${summary.pendingMaintenanceCount}`}
               sublabel={t("awaitingAction")}
@@ -122,7 +122,7 @@ export function AdminDashboard({ initialData, userName }: AdminDashboardProps) {
 
           {/* Quick Actions */}
           <div className="mb-8">
-            <h2 className="mb-3 text-sm font-semibold text-slate-700">
+            <h2 className="mb-3 text-sm font-semibold text-ink-soft">
               {t("quickActions")}
             </h2>
             <div className="flex flex-wrap gap-3">
@@ -166,16 +166,16 @@ function StatCard({
 }) {
   return (
     <div
-      className={`rounded-xl border bg-white p-4 shadow-sm ${
-        alert ? "border-red-200" : "border-slate-200"
+      className={`rounded-xl border bg-card p-4 shadow-sm ${
+        alert ? "border-danger/40" : "border-tile-a"
       }`}
     >
       <div className="mb-2 flex items-center gap-2">
         {icon}
-        <span className="text-xs font-medium text-slate-500">{label}</span>
+        <span className="text-xs font-medium text-muted">{label}</span>
       </div>
-      <p className="text-2xl font-bold text-slate-900">{value}</p>
-      <p className="text-xs text-slate-400">{sublabel}</p>
+      <p className="text-2xl font-bold text-ink">{value}</p>
+      <p className="text-xs text-muted">{sublabel}</p>
     </div>
   );
 }
@@ -192,7 +192,7 @@ function QuickAction({
   return (
     <Link
       href={href}
-      className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:border-blue-300 hover:text-blue-600"
+      className="inline-flex items-center gap-2 rounded-lg border border-tile-a bg-card px-4 py-2 text-sm font-medium text-ink-soft shadow-sm transition-colors hover:border-blue/40 hover:text-blue"
     >
       <PlusCircle className="h-4 w-4" />
       {icon}

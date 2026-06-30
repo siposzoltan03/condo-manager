@@ -10,17 +10,17 @@ import { useConfirm } from "@/components/shared/confirm-dialog";
 import type { InvitationsData, InvitationItemData } from "@/lib/dal";
 
 const STATUS_STYLES: Record<string, string> = {
-  PENDING: "bg-yellow-100 text-yellow-700",
-  ACCEPTED: "bg-green-100 text-green-700",
-  EXPIRED: "bg-red-100 text-red-700",
-  REVOKED: "bg-slate-100 text-slate-500",
+  PENDING: "bg-ochre/15 text-ochre",
+  ACCEPTED: "bg-good/10 text-good",
+  EXPIRED: "bg-danger/10 text-danger",
+  REVOKED: "bg-bg-2 text-muted",
 };
 
 const ROLE_STYLES: Record<string, string> = {
-  ADMIN: "bg-purple-100 text-purple-700",
-  BOARD_MEMBER: "bg-blue-100 text-blue-700",
-  RESIDENT: "bg-green-100 text-green-700",
-  TENANT: "bg-slate-100 text-slate-700",
+  ADMIN: "bg-ochre/10 text-ochre",
+  BOARD_MEMBER: "bg-blue/10 text-blue",
+  RESIDENT: "bg-good/10 text-good",
+  TENANT: "bg-bg-2 text-ink-soft",
 };
 
 interface InvitationListProps {
@@ -128,11 +128,11 @@ export function InvitationList({ initialData }: InvitationListProps) {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">{t("title")}</h1>
+          <h1 className="text-2xl font-bold text-ink">{t("title")}</h1>
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+          className="flex items-center gap-2 rounded-lg bg-blue px-4 py-2 text-sm font-medium text-white hover:bg-blue/90 transition-colors"
         >
           <Send className="h-4 w-4" />
           {t("inviteUser")}
@@ -144,7 +144,7 @@ export function InvitationList({ initialData }: InvitationListProps) {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          className="rounded-lg border border-tile-a bg-card px-3 py-2 text-sm text-ink-soft focus:border-blue focus:ring-1 focus:ring-blue"
         >
           <option value="">{t("allStatuses")}</option>
           <option value="PENDING">{t("statusPending")}</option>
@@ -157,47 +157,47 @@ export function InvitationList({ initialData }: InvitationListProps) {
       {/* Table */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          <Loader2 className="h-8 w-8 animate-spin text-blue" />
         </div>
       ) : invitations.length === 0 ? (
-        <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
+        <div className="rounded-lg border border-tile-a bg-card p-8 text-center text-sm text-muted">
           {t("noInvitations")}
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
-          <table className="min-w-full divide-y divide-slate-200">
-            <thead className="bg-slate-50">
+        <div className="overflow-x-auto rounded-lg border border-tile-a bg-card">
+          <table className="min-w-full divide-y divide-tile-a">
+            <thead className="bg-bg-3">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">
                   {t("email")}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">
                   {t("role")}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">
                   {t("status")}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">
                   {t("sentBy")}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">
                   {t("sentAt")}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">
                   {t("expiresAt")}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">
                   {t("actions")}
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-tile-a">
               {invitations.map((inv) => (
-                <tr key={inv.id} className="hover:bg-slate-50">
-                  <td className="px-4 py-3 text-sm text-slate-900">
+                <tr key={inv.id} className="hover:bg-bg-3">
+                  <td className="px-4 py-3 text-sm text-ink">
                     {inv.email}
                     {inv.unit && (
-                      <span className="ml-2 text-xs text-slate-500">
+                      <span className="ml-2 text-xs text-muted">
                         (Unit {inv.unit.number})
                       </span>
                     )}
@@ -206,7 +206,7 @@ export function InvitationList({ initialData }: InvitationListProps) {
                     {inv.role && (
                       <span
                         className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${
-                          ROLE_STYLES[inv.role] ?? "bg-slate-100 text-slate-700"
+                          ROLE_STYLES[inv.role] ?? "bg-bg-2 text-ink-soft"
                         }`}
                       >
                         {inv.role.replace("_", " ")}
@@ -216,19 +216,19 @@ export function InvitationList({ initialData }: InvitationListProps) {
                   <td className="px-4 py-3">
                     <span
                       className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${
-                        STATUS_STYLES[inv.status] ?? "bg-slate-100 text-slate-500"
+                        STATUS_STYLES[inv.status] ?? "bg-bg-2 text-muted"
                       }`}
                     >
                       {t(getStatusKey(inv.status))}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-sm text-slate-600">
+                  <td className="px-4 py-3 text-sm text-ink-soft">
                     {inv.invitedBy?.name ?? "-"}
                   </td>
-                  <td className="px-4 py-3 text-sm text-slate-600">
+                  <td className="px-4 py-3 text-sm text-ink-soft">
                     {formatDate(inv.createdAt)}
                   </td>
-                  <td className="px-4 py-3 text-sm text-slate-600">
+                  <td className="px-4 py-3 text-sm text-ink-soft">
                     {formatDate(inv.expiresAt)}
                   </td>
                   <td className="px-4 py-3">
@@ -237,7 +237,7 @@ export function InvitationList({ initialData }: InvitationListProps) {
                         <button
                           onClick={() => handleResend(inv.id)}
                           disabled={actionLoading === inv.id}
-                          className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-50"
+                          className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-blue hover:bg-blue/10 transition-colors disabled:opacity-50"
                         >
                           {actionLoading === inv.id ? (
                             <Loader2 className="h-3 w-3 animate-spin" />
@@ -249,7 +249,7 @@ export function InvitationList({ initialData }: InvitationListProps) {
                         <button
                           onClick={() => handleRevoke(inv.id)}
                           disabled={actionLoading === inv.id}
-                          className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                          className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-danger hover:bg-danger/10 transition-colors disabled:opacity-50"
                         >
                           <XCircle className="h-3 w-3" />
                           {t("revoke")}

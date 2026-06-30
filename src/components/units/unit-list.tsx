@@ -28,10 +28,10 @@ export function UnitList({ initialData }: UnitListProps) {
   const isOwnershipOver = totalOwnershipShare > 1.0001;
 
   const ownershipColor = isOwnershipOver
-    ? "text-[#93000a]"
+    ? "text-danger"
     : isOwnershipOk
-      ? "text-emerald-600"
-      : "text-[#633f0f]";
+      ? "text-good"
+      : "text-ochre";
 
   function formatOwnership(value: number): string {
     if (displayMode === "percent") {
@@ -52,7 +52,7 @@ export function UnitList({ initialData }: UnitListProps) {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-manrope text-3xl font-extrabold tracking-tight text-[#002045]">
+          <h1 className="font-display text-3xl font-extrabold tracking-tight text-blue">
             {tUnits("title")}
           </h1>
         </div>
@@ -66,27 +66,27 @@ export function UnitList({ initialData }: UnitListProps) {
       {units.length > 0 && (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
           {/* Total Units */}
-          <div className="flex items-center gap-5 rounded-xl bg-white p-6 shadow-sm border border-[#c4c6cf]/20">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#e2e7ff]">
-              <Building2 className="h-6 w-6 text-[#002045]" />
+          <div className="flex items-center gap-5 rounded-xl bg-card p-6 shadow-sm border border-tile-a">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-blue/10">
+              <Building2 className="h-6 w-6 text-blue" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-[#515f74]">{tUnits("totalUnits")}</p>
-              <p className="text-2xl font-extrabold text-[#002045]">{units.length}</p>
+              <p className="text-sm font-semibold text-muted">{tUnits("totalUnits")}</p>
+              <p className="text-2xl font-extrabold text-blue">{units.length}</p>
             </div>
           </div>
 
           {/* Total Ownership */}
           <div
-            className={`flex items-center gap-5 rounded-xl p-6 shadow-sm border border-[#c4c6cf]/20 ${
+            className={`flex items-center gap-5 rounded-xl p-6 shadow-sm border border-tile-a ${
               isOwnershipOver
-                ? "bg-[#ffdad6]"
+                ? "bg-danger/10"
                 : isOwnershipOk
-                  ? "bg-emerald-50"
-                  : "bg-[#ffddba]"
+                  ? "bg-good/10"
+                  : "bg-ochre/15"
             }`}
           >
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white/20">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-card/20">
               <Percent className={`h-6 w-6 ${ownershipColor}`} />
             </div>
             <div>
@@ -100,13 +100,13 @@ export function UnitList({ initialData }: UnitListProps) {
           </div>
 
           {/* Average Size */}
-          <div className="flex items-center gap-5 rounded-xl bg-white p-6 shadow-sm border border-[#c4c6cf]/20">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#e2e7ff]">
-              <Ruler className="h-6 w-6 text-[#002045]" />
+          <div className="flex items-center gap-5 rounded-xl bg-card p-6 shadow-sm border border-tile-a">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-blue/10">
+              <Ruler className="h-6 w-6 text-blue" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-[#515f74]">{tUnits("averageSize")}</p>
-              <p className="text-2xl font-extrabold text-[#002045]">
+              <p className="text-sm font-semibold text-muted">{tUnits("averageSize")}</p>
+              <p className="text-2xl font-extrabold text-blue">
                 {averageSize.toFixed(1)} m&sup2;
               </p>
             </div>
@@ -119,8 +119,8 @@ export function UnitList({ initialData }: UnitListProps) {
         <div
           className={`flex items-center gap-3 rounded-xl px-6 py-4 shadow-sm font-semibold ${
             isOwnershipOver
-              ? "bg-[#ffdad6] text-[#93000a]"
-              : "bg-[#ffddba] text-[#633f0f]"
+              ? "bg-danger/10 text-danger"
+              : "bg-ochre/15 text-ochre"
           }`}
         >
           <AlertTriangle className="h-5 w-5 shrink-0" />
@@ -129,30 +129,30 @@ export function UnitList({ initialData }: UnitListProps) {
       )}
 
       {/* Table */}
-      <div className="overflow-hidden rounded-xl bg-white shadow-sm border border-[#c4c6cf]/20">
+      <div className="overflow-hidden rounded-xl bg-card shadow-sm border border-tile-a">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left border-collapse">
             <thead>
-              <tr className="bg-[#f2f3ff] border-b border-[#c4c6cf]/10">
-                <th className="px-6 py-4 text-xs font-bold text-[#515f74] uppercase tracking-wider">
+              <tr className="bg-bg-3 border-b border-tile-a">
+                <th className="px-6 py-4 text-xs font-bold text-muted uppercase tracking-wider">
                   {tUnits("unitNumber")}
                 </th>
-                <th className="px-6 py-4 text-xs font-bold text-[#515f74] uppercase tracking-wider">
+                <th className="px-6 py-4 text-xs font-bold text-muted uppercase tracking-wider">
                   {tUnits("floor")}
                 </th>
-                <th className="px-6 py-4 text-xs font-bold text-[#515f74] uppercase tracking-wider">
+                <th className="px-6 py-4 text-xs font-bold text-muted uppercase tracking-wider">
                   {tUnits("size")}
                 </th>
-                <th className="px-6 py-4 text-xs font-bold text-[#515f74] uppercase tracking-wider">
+                <th className="px-6 py-4 text-xs font-bold text-muted uppercase tracking-wider">
                   <div className="flex items-center gap-2">
                     <span>{tUnits("ownershipShare")}</span>
-                    <div className="inline-flex rounded-lg border border-[#c4c6cf]/40 bg-white text-[10px] font-bold">
+                    <div className="inline-flex rounded-lg border border-tile-a bg-card text-[10px] font-bold">
                       <button
                         onClick={() => setDisplayMode("percent")}
                         className={`rounded-l-lg px-2 py-0.5 transition-colors ${
                           displayMode === "percent"
-                            ? "bg-[#002045] text-white"
-                            : "text-[#515f74] hover:bg-[#f2f3ff]"
+                            ? "bg-blue text-card"
+                            : "text-muted hover:bg-bg-3"
                         }`}
                       >
                         %
@@ -161,8 +161,8 @@ export function UnitList({ initialData }: UnitListProps) {
                         onClick={() => setDisplayMode("decimal")}
                         className={`rounded-r-lg px-2 py-0.5 transition-colors ${
                           displayMode === "decimal"
-                            ? "bg-[#002045] text-white"
-                            : "text-[#515f74] hover:bg-[#f2f3ff]"
+                            ? "bg-blue text-card"
+                            : "text-muted hover:bg-bg-3"
                         }`}
                       >
                         0.00
@@ -170,21 +170,21 @@ export function UnitList({ initialData }: UnitListProps) {
                     </div>
                   </div>
                 </th>
-                <th className="px-6 py-4 text-xs font-bold text-[#515f74] uppercase tracking-wider">
+                <th className="px-6 py-4 text-xs font-bold text-muted uppercase tracking-wider">
                   {tUnits("primaryContact")}
                 </th>
-                <th className="px-6 py-4 text-xs font-bold text-[#515f74] uppercase tracking-wider">
+                <th className="px-6 py-4 text-xs font-bold text-muted uppercase tracking-wider">
                   {tUnits("residents")}
                 </th>
-                <th className="px-6 py-4 text-xs font-bold text-[#515f74] uppercase tracking-wider text-right">
+                <th className="px-6 py-4 text-xs font-bold text-muted uppercase tracking-wider text-right">
                   {t("edit")}
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#c4c6cf]/10">
+            <tbody className="divide-y divide-tile-a">
               {units.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-[#515f74]">
+                  <td colSpan={7} className="px-6 py-12 text-center text-muted">
                     {tUnits("noUnits")}
                   </td>
                 </tr>
@@ -192,39 +192,39 @@ export function UnitList({ initialData }: UnitListProps) {
                 units.map((unit) => (
                   <tr
                     key={unit.id}
-                    className="hover:bg-[#eaedff]/30 transition-colors"
+                    className="hover:bg-blue/10 transition-colors"
                   >
                     <td className="px-6 py-5">
-                      <span className="inline-flex items-center justify-center rounded-lg bg-[#d6e3ff] px-3 py-1 text-sm font-bold text-[#001b3c]">
+                      <span className="inline-flex items-center justify-center rounded-lg bg-blue/10 px-3 py-1 text-sm font-bold text-blue">
                         {unit.number}
                       </span>
                     </td>
-                    <td className="px-6 py-5 font-medium text-[#131b2e]">
+                    <td className="px-6 py-5 font-medium text-ink">
                       {unit.floor}
                     </td>
-                    <td className="px-6 py-5 text-[#131b2e]">
+                    <td className="px-6 py-5 text-ink">
                       {unit.size.toFixed(1)} m&sup2;
                     </td>
                     <td className="px-6 py-5">
                       <div className="flex flex-col gap-1.5 min-w-[120px]">
-                        <span className="text-sm font-bold text-[#002045] tabular-nums">
+                        <span className="text-sm font-bold text-blue tabular-nums">
                           {formatOwnership(unit.ownershipShare)}
                         </span>
-                        <div className="w-full h-1 rounded-full bg-[#eaedff] overflow-hidden">
+                        <div className="w-full h-1 rounded-full bg-blue/10 overflow-hidden">
                           <div
-                            className="h-full bg-[#002045] rounded-full"
+                            className="h-full bg-blue rounded-full"
                             style={{ width: `${Math.min(unit.ownershipShare * 100, 100)}%` }}
                           />
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-5 font-medium text-[#131b2e]">
+                    <td className="px-6 py-5 font-medium text-ink">
                       {unit.primaryContact ?? (
-                        <span className="text-[#515f74] italic">{"\u2014"}</span>
+                        <span className="text-muted italic">{"\u2014"}</span>
                       )}
                     </td>
                     <td className="px-6 py-5">
-                      <span className="inline-flex items-center rounded-full bg-[#e2e7ff] px-2.5 py-0.5 text-xs font-bold text-[#515f74]">
+                      <span className="inline-flex items-center rounded-full bg-blue/10 px-2.5 py-0.5 text-xs font-bold text-muted">
                         {unit.residentCount}
                       </span>
                     </td>

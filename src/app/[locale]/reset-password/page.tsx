@@ -9,9 +9,9 @@ export default function ResetPasswordPage() {
       fallback={
         <div
           className="flex min-h-screen items-center justify-center"
-          style={{ backgroundColor: "#faf8ff" }}
+          style={{ backgroundColor: "var(--color-bg-3)" }}
         >
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-tile-a border-t-moss" />
         </div>
       }
     >

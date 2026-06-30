@@ -8,11 +8,11 @@ import { CreditCard, BarChart3, Clock, ExternalLink, AlertTriangle } from "lucid
 import type { BillingData } from "@/lib/dal";
 
 const STATUS_STYLES: Record<string, string> = {
-  ACTIVE: "bg-green-100 text-green-800",
-  TRIALING: "bg-blue-100 text-blue-800",
-  PAST_DUE: "bg-red-100 text-red-800",
-  CANCELED: "bg-slate-100 text-slate-600",
-  EXPIRED: "bg-slate-100 text-slate-600",
+  ACTIVE: "bg-good/10 text-good",
+  TRIALING: "bg-blue/10 text-blue",
+  PAST_DUE: "bg-danger/10 text-danger",
+  CANCELED: "bg-bg-2 text-ink-soft",
+  EXPIRED: "bg-bg-2 text-ink-soft",
 };
 
 interface BillingPageProps {
@@ -49,8 +49,8 @@ export function BillingPage({ initialData }: BillingPageProps) {
   if (!subscription) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
-        <div className="rounded-lg bg-red-50 px-6 py-4 text-center">
-          <p className="text-sm text-red-700">{t("noSubscription")}</p>
+        <div className="rounded-lg bg-danger/10 px-6 py-4 text-center">
+          <p className="text-sm text-danger">{t("noSubscription")}</p>
         </div>
       </div>
     );
@@ -73,14 +73,14 @@ export function BillingPage({ initialData }: BillingPageProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">{t("title")}</h1>
-        <p className="mt-1 text-sm text-slate-500">{t("subtitle")}</p>
+        <h1 className="text-2xl font-bold text-ink">{t("title")}</h1>
+        <p className="mt-1 text-sm text-muted">{t("subtitle")}</p>
       </div>
 
       {/* Error banner */}
       {error && (
-        <div className="rounded-lg bg-red-50 px-4 py-3">
-          <p className="text-sm text-red-700">{error}</p>
+        <div className="rounded-lg bg-danger/10 px-4 py-3">
+          <p className="text-sm text-danger">{error}</p>
         </div>
       )}
 
@@ -89,29 +89,29 @@ export function BillingPage({ initialData }: BillingPageProps) {
         <div
           className={`rounded-xl border p-6 shadow-sm ${
             trialExpired
-              ? "border-red-200 bg-red-50"
+              ? "border-danger/30 bg-danger/10"
               : trialDaysRemaining <= 3
-                ? "border-amber-200 bg-amber-50"
-                : "border-blue-200 bg-blue-50"
+                ? "border-ochre/30 bg-ochre/15"
+                : "border-blue/30 bg-blue/10"
           }`}
         >
           <div className="flex items-center gap-3 mb-3">
             <Clock
               className={`h-5 w-5 ${
                 trialExpired
-                  ? "text-red-600"
+                  ? "text-danger"
                   : trialDaysRemaining <= 3
-                    ? "text-amber-600"
-                    : "text-blue-600"
+                    ? "text-ochre"
+                    : "text-blue"
               }`}
             />
             <h2
               className={`text-lg font-semibold ${
                 trialExpired
-                  ? "text-red-900"
+                  ? "text-danger"
                   : trialDaysRemaining <= 3
-                    ? "text-amber-900"
-                    : "text-blue-900"
+                    ? "text-ochre"
+                    : "text-blue"
               }`}
             >
               {trialExpired
@@ -121,17 +121,17 @@ export function BillingPage({ initialData }: BillingPageProps) {
           </div>
           {!trialExpired && (
             <div className="mb-3">
-              <div className="h-2 w-full rounded-full bg-white/60">
+              <div className="h-2 w-full rounded-full bg-card/60">
                 <div
                   className={`h-2 rounded-full transition-all ${
-                    trialDaysRemaining <= 3 ? "bg-amber-500" : "bg-blue-500"
+                    trialDaysRemaining <= 3 ? "bg-ochre" : "bg-blue"
                   }`}
                   style={{
                     width: `${Math.max(0, Math.min(100, ((14 - trialDaysRemaining) / 14) * 100))}%`,
                   }}
                 />
               </div>
-              <p className="mt-1 text-xs text-slate-600">
+              <p className="mt-1 text-xs text-ink-soft">
                 {t("daysRemaining", { days: trialDaysRemaining })}
               </p>
             </div>
@@ -139,7 +139,7 @@ export function BillingPage({ initialData }: BillingPageProps) {
           {(trialExpired || trialDaysRemaining <= 3) && (
             <Link
               href="/en/pricing"
-              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+              className="inline-flex items-center gap-2 rounded-lg bg-blue px-4 py-2 text-sm font-medium text-white hover:bg-blue/90 transition-colors"
             >
               {t("choosePlan")}
             </Link>
@@ -149,50 +149,50 @@ export function BillingPage({ initialData }: BillingPageProps) {
 
       {/* Frozen Buildings Banner */}
       {usage && usage.frozenBuildings.length > 0 && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-6 shadow-sm">
+        <div className="rounded-xl border border-danger/30 bg-danger/10 p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-3">
-            <AlertTriangle className="h-5 w-5 text-red-600" />
-            <h2 className="text-lg font-semibold text-red-900">
+            <AlertTriangle className="h-5 w-5 text-danger" />
+            <h2 className="text-lg font-semibold text-danger">
               {t("overLimit")}
             </h2>
           </div>
-          <p className="text-sm text-red-800 mb-3">
+          <p className="text-sm text-danger mb-3">
             {t("frozenBanner", { count: usage.frozenBuildings.length })}
           </p>
           <div className="space-y-2">
             {usage.frozenBuildings.map((building) => (
               <div
                 key={building.id}
-                className="flex items-center gap-2 rounded-lg bg-white/60 px-3 py-2"
+                className="flex items-center gap-2 rounded-lg bg-card/60 px-3 py-2"
               >
-                <span className="text-sm font-medium text-red-900">
+                <span className="text-sm font-medium text-danger">
                   {building.name}
                 </span>
-                <span className="text-xs text-red-600">
+                <span className="text-xs text-danger">
                   {building.address}
                 </span>
-                <span className="ml-auto rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-700">
+                <span className="ml-auto rounded-full bg-danger/10 px-2 py-0.5 text-[10px] font-bold text-danger">
                   {t("frozenBuildingBadge")}
                 </span>
               </div>
             ))}
           </div>
-          <p className="mt-3 text-xs text-red-700">
+          <p className="mt-3 text-xs text-danger">
             {t("removeOrUpgrade")}
           </p>
         </div>
       )}
 
       {/* Current Plan Card */}
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-xl border border-tile-a bg-card p-6 shadow-sm">
         <div className="flex items-center gap-3 mb-4">
-          <CreditCard className="h-5 w-5 text-slate-400" />
-          <h2 className="text-lg font-semibold text-slate-900">
+          <CreditCard className="h-5 w-5 text-muted" />
+          <h2 className="text-lg font-semibold text-ink">
             {t("currentPlan")}
           </h2>
         </div>
         <div className="flex items-center gap-3 mb-4">
-          <span className="text-2xl font-bold text-slate-900">
+          <span className="text-2xl font-bold text-ink">
             {subscription?.isLegacy ? t("legacyPlan") : subscription?.planName}
           </span>
           <span
@@ -204,7 +204,7 @@ export function BillingPage({ initialData }: BillingPageProps) {
           </span>
         </div>
         {subscription?.isLegacy && (
-          <p className="text-sm text-slate-500 mb-4">
+          <p className="text-sm text-muted mb-4">
             {t("legacyDescription")}
           </p>
         )}
@@ -212,10 +212,10 @@ export function BillingPage({ initialData }: BillingPageProps) {
 
       {/* Usage Card */}
       {usage && (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-xl border border-tile-a bg-card p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-4">
-            <BarChart3 className="h-5 w-5 text-slate-400" />
-            <h2 className="text-lg font-semibold text-slate-900">
+            <BarChart3 className="h-5 w-5 text-muted" />
+            <h2 className="text-lg font-semibold text-ink">
               {t("usage")}
             </h2>
           </div>
@@ -223,22 +223,22 @@ export function BillingPage({ initialData }: BillingPageProps) {
             {/* Buildings usage */}
             <div>
               <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-medium text-slate-700">
+                <span className="text-sm font-medium text-ink-soft">
                   {t("buildings")}
                 </span>
-                <span className="text-sm text-slate-500">
+                <span className="text-sm text-muted">
                   {usage.buildings.max === -1
                     ? `${usage.buildings.current} / ${t("unlimited")}`
                     : `${usage.buildings.current} / ${usage.buildings.max}`}
                 </span>
               </div>
-              <div className="h-2 w-full rounded-full bg-slate-100">
+              <div className="h-2 w-full rounded-full bg-bg-2">
                 <div
                   className={`h-2 rounded-full transition-all ${
                     usage.buildings.max !== -1 &&
                     usage.buildings.current >= usage.buildings.max
-                      ? "bg-red-500"
-                      : "bg-blue-500"
+                      ? "bg-danger"
+                      : "bg-blue"
                   }`}
                   style={{
                     width:
@@ -253,22 +253,22 @@ export function BillingPage({ initialData }: BillingPageProps) {
             {/* Units usage */}
             <div>
               <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-medium text-slate-700">
+                <span className="text-sm font-medium text-ink-soft">
                   {t("units")}
                 </span>
-                <span className="text-sm text-slate-500">
+                <span className="text-sm text-muted">
                   {usage.units.max === -1
                     ? `${usage.units.current} / ${t("unlimited")}`
                     : `${usage.units.current} / ${usage.units.max}`}
                 </span>
               </div>
-              <div className="h-2 w-full rounded-full bg-slate-100">
+              <div className="h-2 w-full rounded-full bg-bg-2">
                 <div
                   className={`h-2 rounded-full transition-all ${
                     usage.units.max !== -1 &&
                     usage.units.current >= usage.units.max
-                      ? "bg-red-500"
-                      : "bg-blue-500"
+                      ? "bg-danger"
+                      : "bg-blue"
                   }`}
                   style={{
                     width:
@@ -284,15 +284,15 @@ export function BillingPage({ initialData }: BillingPageProps) {
       )}
 
       {/* Action Buttons */}
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-xl border border-tile-a bg-card p-6 shadow-sm">
         <div className="flex flex-wrap gap-3">
           <button
             onClick={handleManageSubscription}
             disabled={portalLoading || subscription?.isLegacy}
             className={`inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${
               subscription?.isLegacy
-                ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                : "bg-blue-600 text-white hover:bg-blue-700"
+                ? "bg-bg-2 text-muted cursor-not-allowed"
+                : "bg-blue text-white hover:bg-blue/90"
             }`}
             title={
               subscription?.isLegacy ? t("noStripeSubscription") : undefined
@@ -303,7 +303,7 @@ export function BillingPage({ initialData }: BillingPageProps) {
           </button>
           <Link
             href="/en/pricing"
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+            className="inline-flex items-center gap-2 rounded-lg border border-tile-a bg-card px-4 py-2.5 text-sm font-medium text-ink-soft hover:bg-bg-3 transition-colors"
           >
             {t("viewPricing")}
           </Link>

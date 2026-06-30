@@ -18,9 +18,9 @@ export default async function BuildingsPage({ params }: Props) {
       capability="platform.admin"
       fallback={
         <div className="flex min-h-[60vh] items-center justify-center">
-          <div className="rounded-lg bg-red-50 px-6 py-4 text-center">
-            <h2 className="text-lg font-semibold text-red-800">Access Denied</h2>
-            <p className="mt-1 text-sm text-red-600">
+          <div className="rounded-lg bg-danger/10 px-6 py-4 text-center">
+            <h2 className="text-lg font-semibold text-danger">Access Denied</h2>
+            <p className="mt-1 text-sm text-danger">
               You do not have permission to access this page.
             </p>
           </div>
