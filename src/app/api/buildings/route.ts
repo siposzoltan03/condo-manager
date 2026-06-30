@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser, requireBuildingContext } from "@/lib/auth";
 import { requireCapability } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
+import { createDefaultDocumentCategories } from "@/lib/building-setup";
 
 export async function GET() {
   try {
@@ -88,6 +89,8 @@ export async function POST(request: NextRequest) {
     const building = await prisma.building.create({
       data: { name, address, city, zipCode },
     });
+
+    await createDefaultDocumentCategories(prisma, building.id);
 
     return NextResponse.json(
       {

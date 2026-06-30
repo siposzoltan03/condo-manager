@@ -5,6 +5,7 @@ import { issueVerificationToken } from "@/lib/email-verification";
 import { sendEmail } from "@/lib/email";
 import { verificationEmail } from "@/lib/email-templates";
 import { escapeHtml } from "@/lib/escape-html";
+import { createDefaultDocumentCategories } from "@/lib/building-setup";
 
 /**
  * Self-serve registration: creates a User + TRIALING Subscription on the
@@ -136,6 +137,8 @@ export async function register(rawInput: unknown, baseUrl: string): Promise<Regi
           isActive: true,
         },
       });
+
+      await createDefaultDocumentCategories(tx, building.id);
 
       return user.id;
     });

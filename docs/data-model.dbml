@@ -138,6 +138,12 @@ Table Building {
 Default INTERNAL_ONLY means the data is visible only at közgyűlés
 or to the named owner. CLOSED_DELIVERY allows sealed-envelope
 distribution. No PUBLIC option exists — that\'s illegal under NAIH.']
+  reserveTargetHUF BigInt [not null, default: 0, note: 'Reserve-fund target in HUF. 0 = not yet set (dashboard falls back to a
+heuristic default until the board configures it).']
+  defaultMajority MajorityType [not null, default: 'SIMPLE_MAJORITY', note: 'Default majority rule applied to new votes (Tht. § 17–18). The SZMSZ
+may require a stricter rule for specific decisions.']
+  costAllocationBasis CostAllocationBasis [not null, default: 'OWNERSHIP_SHARE', note: 'Basis for splitting common costs across units (Tht. § 24(1)).']
+  onboardingCompletedAt DateTime [note: 'Set when the onboarding wizard is completed; null while setup is pending.']
   units Unit [not null]
   userBuildings UserBuilding [not null]
   auditorMemberships AuditorMembership [not null, note: 'Phase 2 — Tht. § 27(3), § 51/A: audit committee members + external auditor.']
@@ -1503,6 +1509,12 @@ Enum MajorityType {
   FOUR_FIFTHS
   UNANIMOUS
   PLURALITY
+}
+
+Enum CostAllocationBasis {
+  OWNERSHIP_SHARE
+  EQUAL
+  AREA
 }
 
 Enum DocumentVisibility {
