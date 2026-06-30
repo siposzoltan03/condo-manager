@@ -69,7 +69,7 @@ export function AuditCommitteeRequiredBanner({
         </p>
       </div>
       <Link
-        href={`/${locale}/settings/building-officers#fb`}
+        href={`/${locale}/admin/officer-registry`}
         className="inline-flex min-h-11 items-center self-start rounded-md px-4 font-mono text-[11px] uppercase tracking-wider sm:min-h-0 sm:self-auto"
         style={{
           background: "var(--color-ink)",

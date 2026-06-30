@@ -129,7 +129,7 @@ export function AdminDashboard({ initialData, userName }: AdminDashboardProps) {
               <QuickAction
                 icon={<Megaphone className="h-4 w-4" />}
                 label={t("createAnnouncement")}
-                href="/announcements"
+                href="/communication"
               />
               <QuickAction
                 icon={<CreditCard className="h-4 w-4" />}

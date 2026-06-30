@@ -189,7 +189,7 @@ export async function MemberDashboard({ locale, userName, data }: Props) {
           icon="wrench"
         />
         <QuickAction
-          href={`/${locale}/messages`}
+          href={`/${locale}/communication`}
           iconBg="var(--color-ink)"
           iconColor="var(--color-bg)"
           label={t("memberQuickMessageChair")}
@@ -228,7 +228,7 @@ export async function MemberDashboard({ locale, userName, data }: Props) {
         )}
         {isTenant && (
           <QuickAction
-            href={`/${locale}/announcements`}
+            href={`/${locale}/communication`}
             iconBg="color-mix(in srgb, var(--color-ink) 90%, var(--color-moss))"
             iconColor="var(--color-bg)"
             label={t("memberQuickAnnouncements")}
@@ -254,7 +254,7 @@ export async function MemberDashboard({ locale, userName, data }: Props) {
                 ? `${unreadCount} ${t("memberAnnouncementsUnread")}`
                 : t("memberAnnouncementsAllRead")
             }
-            link={{ label: t("seeAll"), href: `/${locale}/announcements` }}
+            link={{ label: t("seeAll"), href: `/${locale}/communication` }}
           />
           <div>
             {data.announcements.length === 0 ? (
@@ -278,7 +278,7 @@ export async function MemberDashboard({ locale, userName, data }: Props) {
               }
               link={{
                 label: data.activeVote.hasCast ? t("open") : t("memberCastVote"),
-                href: `/${locale}/voting/${data.activeVote.id}`,
+                href: `/${locale}/voting`,
               }}
             />
             <div style={{ padding: "22px" }}>
@@ -317,7 +317,7 @@ export async function MemberDashboard({ locale, userName, data }: Props) {
                 {t("voteClosesPrefix")} · {formatDateShort(data.activeVote.deadline, locale)}
               </div>
               <Link
-                href={`/${locale}/voting/${data.activeVote.id}`}
+                href={`/${locale}/voting`}
                 className="inline-flex items-center gap-2 transition-opacity hover:opacity-90"
                 style={{
                   padding: "10px 16px",
@@ -353,7 +353,7 @@ export async function MemberDashboard({ locale, userName, data }: Props) {
             <div style={{ padding: "22px" }}>
               {data.houseRulesDoc ? (
                 <Link
-                  href={`/${locale}/documents/${data.houseRulesDoc.id}`}
+                  href={`/${locale}/documents`}
                   className="flex items-center gap-3 transition-colors hover:bg-[var(--color-bg-3)]"
                   style={{
                     padding: "16px",
@@ -459,7 +459,7 @@ export async function MemberDashboard({ locale, userName, data }: Props) {
           <div style={{ padding: "22px" }}>
             {data.chair ? (
               <Link
-                href={`/${locale}/messages?to=${data.chair.id}`}
+                href={`/${locale}/communication`}
                 className="flex items-center gap-3 transition-colors hover:bg-[var(--color-bg-3)]"
                 style={{
                   padding: "14px",
@@ -725,7 +725,7 @@ function AnnouncementRow({
 }) {
   return (
     <Link
-      href={`/${locale}/announcements/${item.id}`}
+      href={`/${locale}/communication`}
       className="grid items-start cursor-pointer hover:bg-[var(--color-bg-3)] transition-colors"
       style={{
         gridTemplateColumns: "8px 1fr auto",

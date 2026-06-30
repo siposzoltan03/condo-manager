@@ -169,7 +169,7 @@ export default async function ProfilePage({ params }: Props) {
               detail={t("security.passwordDetail")}
               right={
                 <Link
-                  href={`/${locale}/settings/password`}
+                  href={`/${locale}/forgot-password`}
                   style={{
                     fontSize: "12px",
                     fontWeight: 600,

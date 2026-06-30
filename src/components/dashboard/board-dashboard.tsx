@@ -204,21 +204,6 @@ export async function BoardDashboard({
             <CalendarIcon />
             {now.toLocaleDateString(intlLocale(locale), { month: "long" })}
           </button>
-          <Link
-            href={`/${locale}/dashboard/tasks/new`}
-            className="inline-flex items-center gap-2 transition-opacity hover:opacity-90"
-            style={{
-              padding: "9px 14px",
-              borderRadius: "8px",
-              fontSize: "13px",
-              fontWeight: 600,
-              background: "var(--color-ink)",
-              color: "var(--color-bg)",
-            }}
-          >
-            <PlusIcon />
-            {t("newTask")}
-          </Link>
         </div>
       </div>
 
@@ -312,7 +297,7 @@ export async function BoardDashboard({
       {/* ── Quick actions ──────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3" style={{ marginBottom: "24px" }}>
         <QuickAction
-          href={`/${locale}/announcements/new`}
+          href={`/${locale}/communication`}
           iconBg="var(--color-ink)"
           iconColor="var(--color-bg)"
           label={t("quickAnnouncement")}
@@ -388,7 +373,7 @@ export async function BoardDashboard({
             sub={data.activeVote ? `VOTE-${data.activeVote.id.slice(-6).toUpperCase()}` : "—"}
             link={
               data.activeVote
-                ? { label: t("open"), href: `/${locale}/voting/${data.activeVote.id}` }
+                ? { label: t("open"), href: `/${locale}/voting` }
                 : undefined
             }
           />
@@ -593,7 +578,7 @@ export async function BoardDashboard({
           <PanelHead
             title={t("boardMembers")}
             sub={`${data.boardMembers.length} ${t("boardMembersSub")}`}
-            link={{ label: t("message"), href: `/${locale}/messages` }}
+            link={{ label: t("message"), href: `/${locale}/communication` }}
           />
           <div style={{ padding: "22px" }}>
             {data.boardMembers.length === 0 ? (

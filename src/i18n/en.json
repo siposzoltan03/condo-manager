@@ -1,6 +1,9 @@
 {
   "common": {
     "appName": "Condo Manager",
+    "back": "Back",
+    "done": "Done",
+    "notifications": "Notifications",
     "tenantConsentLabel": "Tenant has provided explicit consent to retain email and phone for building communication (GDPR Art. 6, Tht. § 22(2)). Without consent the building may store only name and unit presence.",
     "login": "Log in",
     "logout": "Log out",
@@ -1965,6 +1968,8 @@
       "downloaded": "Downloaded",
       "lastAccess": "Last access",
       "pinCta": "Pin",
+      "pinned": "Pinned",
+      "unpinned": "Unpinned",
       "unpinCta": "Unpin"
     },
     "modal": {
@@ -2880,6 +2885,7 @@
     "legacyPlan": "Legacy Plan",
     "legacyDescription": "This is a legacy subscription with all features enabled.",
     "noStripeSubscription": "No Stripe subscription linked",
+    "noSubscription": "No active subscription.",
     "frozenBanner": "You have {count} buildings over your plan limit. Remove buildings or upgrade to restore full access.",
     "frozenBuildingBadge": "Frozen",
     "overLimit": "Over limit",
@@ -3055,6 +3061,8 @@
   },
   "landing": {
     "startFreeTrial": "Start Free Trial",
+    "footerCopyright": "© 2026 Közös Kft. · All rights reserved.",
+    "footerLogin": "Log in",
     "viewPricing": "View Pricing",
     "goToDashboard": "Go to Dashboard",
     "hero": {

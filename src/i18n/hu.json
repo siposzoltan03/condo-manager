@@ -1,6 +1,9 @@
 {
   "common": {
     "appName": "Társasházkezelő",
+    "back": "Vissza",
+    "done": "Kész",
+    "notifications": "Értesítések",
     "tenantConsentLabel": "A bérlő kifejezett hozzájárulását adta, hogy a társasház a kommunikációhoz tárolja az e-mail-címét és telefonszámát (GDPR 6. cikk, Tht. 22. § (2)). Hozzájárulás hiányában csak a név és az albetét-jelenlét tárolható.",
     "login": "Bejelentkezés",
     "logout": "Kijelentkezés",
@@ -1965,6 +1968,8 @@
       "downloaded": "Letöltve",
       "lastAccess": "Utolsó hozzáférés",
       "pinCta": "Kitűz",
+      "pinned": "Rögzítve",
+      "unpinned": "Rögzítés feloldva",
       "unpinCta": "Levesz"
     },
     "modal": {
@@ -2880,6 +2885,7 @@
     "legacyPlan": "Legacy csomag",
     "legacyDescription": "Ez egy legacy elofizetes, minden funkcio elerheto.",
     "noStripeSubscription": "Nincs Stripe elofizetes csatolva",
+    "noSubscription": "Nincs aktív előfizetés.",
     "frozenBanner": "{count} epulet meghaladja a csomag korlatjat. Tavolitson el epuleteket vagy frissitsen a teljes hozzaferes visszaallitasahoz.",
     "frozenBuildingBadge": "Befagyasztva",
     "overLimit": "Korlat felett",
@@ -3055,6 +3061,8 @@
   },
   "landing": {
     "startFreeTrial": "Próbáld ki ingyen",
+    "footerCopyright": "© 2026 Közös Kft. · Minden jog fenntartva.",
+    "footerLogin": "Bejelentkezés",
     "viewPricing": "Árak megtekintése",
     "goToDashboard": "Irányítópult",
     "hero": {
