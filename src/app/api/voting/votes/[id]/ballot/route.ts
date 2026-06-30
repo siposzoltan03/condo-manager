@@ -155,6 +155,20 @@ export async function POST(request: NextRequest, context: RouteContext) {
         return NextResponse.json({ error: "No unit found in this building" }, { status: 400 });
       }
       unitId = userUnit.unitId;
+
+      // Presence gate: for a vote held inside a meeting, the owner's unit must
+      // be checked in (présent). The companion self-checks-in on joining the
+      // live view; the board uses "Érkeztetés" for people in the room. Proxy
+      // (represented) and board on-behalf casts have their own paths above and
+      // are intentionally not gated here.
+      if (vote.meetingId) {
+        const attendance = await prisma.meetingAttendance.findUnique({
+          where: { meetingId_unitId: { meetingId: vote.meetingId, unitId } },
+        });
+        if (!attendance || !attendance.checkedIn || attendance.checkedOutAt) {
+          return NextResponse.json({ error: "NOT_CHECKED_IN" }, { status: 403 });
+        }
+      }
     }
 
     // Check if this unit already voted
