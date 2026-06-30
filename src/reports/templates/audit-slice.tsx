@@ -1,13 +1,8 @@
 import * as React from "react";
-import {
-  Document,
-  Page,
-  Text,
-  View,
-  StyleSheet,
-} from "@react-pdf/renderer";
+import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import { formatDateTime, formatNumber } from "../lib/format";
-import { shortHash } from "../lib/footer";
+import { color, font, size, space } from "../lib/theme";
+import { ReportHeader, ReportFooter, SectionTitle, StatusPill } from "../lib/components";
 import type { AuditSliceData } from "@/lib/reports/audit-slice-data";
 
 export interface AuditSlicePdfProps extends AuditSliceData {
@@ -17,110 +12,76 @@ export interface AuditSlicePdfProps extends AuditSliceData {
 
 const styles = StyleSheet.create({
   page: {
-    padding: "44 40 60 40",
-    fontSize: 9,
-    color: "#16181a",
-    fontFamily: "Manrope",
-    lineHeight: 1.4,
+    paddingTop: space.pageTop,
+    paddingBottom: space.pageBottom,
+    paddingHorizontal: space.pageX,
+    fontSize: size.body,
+    color: color.ink,
+    fontFamily: font.sans,
+    lineHeight: 1.45,
   },
-  eyebrow: {
-    fontSize: 9,
-    color: "#6c727a",
-    letterSpacing: 1.4,
-    textTransform: "uppercase",
-    marginBottom: 6,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 500,
-    letterSpacing: -0.5,
-    lineHeight: 1.25,
-    marginBottom: 4,
-  },
-  buildingLine: {
-    fontSize: 11,
-    color: "#3a4048",
-    marginBottom: 12,
-  },
+
+  // Title block
+  title: { fontSize: size.title, fontWeight: 700, letterSpacing: -0.5, lineHeight: 1.2, marginBottom: 6 },
+  buildingLine: { fontSize: size.lead, fontWeight: 500, color: color.inkSoft, marginBottom: 12 },
+
   metaBlock: {
-    fontSize: 9,
-    color: "#3a4048",
+    fontSize: size.small,
+    color: color.inkSoft,
     marginBottom: 14,
-    backgroundColor: "#f6f3ec",
-    padding: 9,
-    borderRadius: 5,
+    backgroundColor: color.panel,
+    padding: 10,
+    borderRadius: 6,
     lineHeight: 1.5,
   },
-  truncated: {
-    fontSize: 9,
-    color: "#a04040",
-    marginBottom: 12,
-    paddingLeft: 8,
-    borderLeftWidth: 3,
-    borderLeftColor: "#a04040",
-  },
-  rowHeader: {
+  truncated: { marginBottom: 12 },
+
+  // Table
+  thRow: {
     flexDirection: "row",
     paddingBottom: 5,
     borderBottomWidth: 1,
-    borderBottomColor: "#16181a",
+    borderBottomColor: color.lineStrong,
     borderBottomStyle: "solid",
-    fontSize: 8,
-    color: "#6c727a",
-    letterSpacing: 1.1,
+    fontSize: size.micro,
+    color: color.muted,
+    letterSpacing: 0.8,
     textTransform: "uppercase",
   },
-  row: {
+  tr: {
     flexDirection: "row",
-    paddingTop: 4,
-    paddingBottom: 4,
+    paddingVertical: 4.5,
     borderBottomWidth: 0.5,
-    borderBottomColor: "#e8e6e1",
+    borderBottomColor: color.line,
     borderBottomStyle: "solid",
-    fontSize: 8.5,
+    fontSize: size.small,
   },
+  trZebra: { backgroundColor: color.panel },
   cellTime: { width: 90 },
   cellActor: { width: 110 },
   cellAction: { width: 60 },
   cellEntity: { width: 110 },
-  cellDiff: { flex: 1, color: "#3a4048" },
+  cellDiff: { flex: 1, color: color.inkSoft },
+
   manifestBox: {
     marginTop: 16,
-    padding: 9,
-    border: "1pt solid #d4d2cc",
-    borderRadius: 5,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: color.panelEdge,
+    borderStyle: "solid",
+    borderRadius: 8,
   },
   manifestLabel: {
-    fontSize: 8,
-    color: "#6c727a",
-    letterSpacing: 1.1,
+    fontSize: size.micro,
+    color: color.muted,
+    letterSpacing: 0.9,
     textTransform: "uppercase",
     marginBottom: 3,
   },
-  manifestHash: {
-    fontFamily: "Courier",
-    fontSize: 8.5,
-    color: "#16181a",
-  },
-  manifestNote: {
-    fontSize: 8,
-    color: "#6c727a",
-    marginTop: 4,
-    lineHeight: 1.4,
-  },
-  emptyNote: { fontSize: 10, color: "#9a9c9f", marginTop: 12 },
-  footer: {
-    position: "absolute",
-    bottom: 28,
-    left: 40,
-    right: 40,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    fontSize: 8,
-    color: "#9a9c9f",
-    letterSpacing: 0.6,
-  },
-  pageNum: { fontFamily: "Courier" },
+  manifestHash: { fontFamily: font.mono, fontSize: size.small, color: color.ink },
+  manifestNote: { fontSize: size.micro, color: color.muted, marginTop: 4, lineHeight: 1.4 },
+
+  empty: { fontSize: size.small, color: color.faint, marginTop: 12 },
 });
 
 const ACTION_LABEL: Record<string, string> = {
@@ -136,7 +97,9 @@ export function AuditSlicePdf(props: AuditSlicePdfProps) {
       author={props.buildingName}
     >
       <Page size="A4" style={styles.page}>
-        <Text style={styles.eyebrow}>Audit napló kivonat · GDPR § 15</Text>
+        <ReportHeader reportType="Számviteli kivonat" reportRef="GDPR § 15" />
+
+        {/* Title block */}
         <Text style={styles.title}>
           {props.filters.fromLabel} – {props.filters.toLabel}
         </Text>
@@ -152,28 +115,28 @@ export function AuditSlicePdf(props: AuditSlicePdfProps) {
         </Text>
 
         {props.truncated && (
-          <Text style={styles.truncated}>
-            A találatok száma meghaladja a {formatNumber(props.rowLimit)}-as
-            korlátot. Csak a legfrissebb {formatNumber(props.rowLimit)} esemény
-            kerül megjelenítésre. Szűkítse a tartományt további részletekért.
-          </Text>
+          <View style={styles.truncated}>
+            <StatusPill tone="warning">
+              {`A találatok száma meghaladja a ${formatNumber(props.rowLimit)}-as korlátot. Csak a legfrissebb ${formatNumber(props.rowLimit)} esemény kerül megjelenítésre. Szűkítse a tartományt további részletekért.`}
+            </StatusPill>
+          </View>
         )}
 
+        {/* AUDIT EVENTS */}
+        <SectionTitle>Audit események</SectionTitle>
         {props.rows.length === 0 ? (
-          <Text style={styles.emptyNote}>
-            Nincs audit esemény a megadott tartományban.
-          </Text>
+          <Text style={styles.empty}>Nincs audit esemény a megadott tartományban.</Text>
         ) : (
           <View>
-            <View style={styles.rowHeader}>
+            <View style={styles.thRow}>
               <Text style={styles.cellTime}>Időpont</Text>
               <Text style={styles.cellActor}>Felhasználó</Text>
               <Text style={styles.cellAction}>Művelet</Text>
               <Text style={styles.cellEntity}>Entitás</Text>
               <Text style={styles.cellDiff}>Részletek</Text>
             </View>
-            {props.rows.map((r) => (
-              <View key={r.id} style={styles.row} wrap={false}>
+            {props.rows.map((r, i) => (
+              <View key={r.id} style={[styles.tr, i % 2 === 1 ? styles.trZebra : {}]} wrap={false}>
                 <Text style={styles.cellTime}>
                   {new Date(r.createdAt).toLocaleString("hu-HU", {
                     year: "2-digit",
@@ -207,18 +170,11 @@ export function AuditSlicePdf(props: AuditSlicePdfProps) {
           </Text>
         </View>
 
-        <View style={styles.footer} fixed>
-          <Text>
-            {props.buildingName} · {formatDateTime(props.generatedAt)} · hash{" "}
-            {shortHash(props.contentHash)}
-          </Text>
-          <Text
-            style={styles.pageNum}
-            render={({ pageNumber, totalPages }) =>
-              `${pageNumber} / ${totalPages}`
-            }
-          />
-        </View>
+        <ReportFooter
+          buildingName={props.buildingName}
+          generatedAt={props.generatedAt}
+          contentHash={props.contentHash}
+        />
       </Page>
     </Document>
   );

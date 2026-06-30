@@ -6,8 +6,9 @@ import {
   View,
   StyleSheet,
 } from "@react-pdf/renderer";
-import { formatHUF, formatDateTime } from "../lib/format";
-import { shortHash } from "../lib/footer";
+import { formatHUF } from "../lib/format";
+import { color, font, size, space } from "../lib/theme";
+import { ReportHeader, ReportFooter, SectionTitle, StatusPill } from "../lib/components";
 import type { YearEndAccountData } from "@/lib/reports/year-end-account-data";
 
 export interface YearEndAccountPdfProps extends YearEndAccountData {
@@ -28,44 +29,20 @@ export interface YearEndAccountPdfProps extends YearEndAccountData {
 
 const styles = StyleSheet.create({
   page: {
-    padding: "48 56 64 56",
-    fontSize: 10.5,
-    color: "#16181a",
-    fontFamily: "Manrope",
-    lineHeight: 1.4,
+    paddingTop: space.pageTop,
+    paddingBottom: space.pageBottom,
+    paddingHorizontal: space.pageX,
+    fontSize: size.body,
+    color: color.ink,
+    fontFamily: font.sans,
+    lineHeight: 1.45,
   },
-  eyebrow: {
-    fontSize: 9,
-    color: "#6c727a",
-    letterSpacing: 1.4,
-    textTransform: "uppercase",
-    marginBottom: 8,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 500,
-    letterSpacing: -0.5,
-    lineHeight: 1.2,
-    marginBottom: 4,
-  },
-  buildingLine: {
-    fontSize: 11,
-    color: "#3a4048",
-    marginBottom: 24,
-  },
-  sectionHeader: {
-    fontSize: 11,
-    fontWeight: 700,
-    color: "#16181a",
-    letterSpacing: 0.4,
-    textTransform: "uppercase",
-    marginTop: 18,
-    marginBottom: 10,
-    paddingBottom: 4,
-    borderBottomWidth: 1,
-    borderBottomColor: "#16181a",
-    borderBottomStyle: "solid",
-  },
+
+  // Title block
+  title: { fontSize: size.title, fontWeight: 700, letterSpacing: -0.5, lineHeight: 1.2, marginBottom: 6 },
+  buildingLine: { fontSize: size.lead, fontWeight: 500, color: color.inkSoft, marginBottom: 3 },
+  meta: { fontSize: size.small, color: color.muted, marginBottom: 14 },
+
   kpiRow: {
     flexDirection: "row",
     marginBottom: 16,
@@ -73,89 +50,73 @@ const styles = StyleSheet.create({
   },
   kpiCell: {
     flex: 1,
-    border: "1pt solid #d4d2cc",
-    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: color.panelEdge,
+    borderStyle: "solid",
+    borderRadius: 8,
     padding: 12,
   },
   kpiLabel: {
-    fontSize: 8,
-    color: "#6c727a",
+    fontSize: size.tiny,
+    color: color.muted,
     letterSpacing: 1.1,
     textTransform: "uppercase",
     marginBottom: 4,
   },
-  kpiValue: { fontSize: 16, fontWeight: 500 },
-  kpiSub: { fontSize: 9, color: "#6c727a", marginTop: 2 },
-  good: { color: "#4a5a3e" },
-  bad: { color: "#a04040" },
+  kpiValue: { fontSize: 16, fontWeight: 700 },
+  kpiSub: { fontSize: size.micro, color: color.muted, marginTop: 2 },
+  good: { color: color.positive },
+  bad: { color: color.negative },
+
+  // Tables
   rowHeader: {
     flexDirection: "row",
-    paddingBottom: 6,
+    paddingBottom: 5,
     borderBottomWidth: 1,
-    borderBottomColor: "#16181a",
+    borderBottomColor: color.lineStrong,
     borderBottomStyle: "solid",
-    fontSize: 9,
-    color: "#6c727a",
-    letterSpacing: 1.1,
+    fontSize: size.micro,
+    color: color.muted,
+    letterSpacing: 0.8,
     textTransform: "uppercase",
   },
   row: {
     flexDirection: "row",
-    paddingTop: 6,
-    paddingBottom: 6,
+    paddingVertical: 4.5,
     borderBottomWidth: 0.5,
-    borderBottomColor: "#d4d2cc",
+    borderBottomColor: color.line,
     borderBottomStyle: "solid",
+    fontSize: size.small,
   },
   rowTotal: {
     flexDirection: "row",
-    paddingTop: 8,
+    paddingTop: 6,
     borderTopWidth: 1,
-    borderTopColor: "#16181a",
+    borderTopColor: color.lineStrong,
     borderTopStyle: "solid",
-    marginTop: 4,
+    marginTop: 2,
   },
   cellName: { flex: 3 },
   cellAmount: { flex: 1, textAlign: "right", fontWeight: 500 },
-  cellShare: { flex: 1, textAlign: "right", color: "#6c727a" },
-  cellRatio: { flex: 1, textAlign: "right", color: "#6c727a" },
+  cellShare: { flex: 1, textAlign: "right", color: color.muted },
+  cellRatio: { flex: 1, textAlign: "right", color: color.muted },
   twoCol: { flexDirection: "row", gap: 16, marginBottom: 8 },
   twoColCell: { flex: 1 },
-  miniHeader: {
-    fontSize: 9,
-    fontWeight: 700,
-    color: "#3a4048",
-    letterSpacing: 0.6,
-    textTransform: "uppercase",
-    marginBottom: 6,
-  },
-  emptyNote: { fontSize: 10, color: "#9a9c9f" },
+
+  emptyNote: { fontSize: size.small, color: color.faint },
   perOwnerRow: {
     flexDirection: "row",
-    paddingTop: 5,
-    paddingBottom: 5,
+    paddingVertical: 4.5,
     borderBottomWidth: 0.5,
-    borderBottomColor: "#d4d2cc",
+    borderBottomColor: color.line,
     borderBottomStyle: "solid",
-    fontSize: 9.5,
+    fontSize: size.small,
   },
   unitCell: { width: 50 },
   ownerCell: { flex: 2 },
-  shareCell: { width: 60, textAlign: "right", color: "#6c727a" },
+  shareCell: { width: 60, textAlign: "right", color: color.muted },
   amountCell: { width: 90, textAlign: "right" },
   outstandingCell: { width: 90, textAlign: "right" },
-  footer: {
-    position: "absolute",
-    bottom: 32,
-    left: 56,
-    right: 56,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    fontSize: 8,
-    color: "#9a9c9f",
-    letterSpacing: 0.6,
-  },
-  pageNum: { fontFamily: "Courier" },
   watermark: {
     position: "absolute",
     // Visually centred on an A4 page (595×842 pt) with the rotation
@@ -168,19 +129,19 @@ const styles = StyleSheet.create({
     fontSize: 110,
     fontWeight: 500,
     letterSpacing: 14,
-    color: "#16181a",
+    color: color.ink,
     opacity: 0.08,
     transform: "rotate(-30deg)",
   },
   approvedBanner: {
-    fontSize: 9.5,
-    color: "#4a5a3e",
-    backgroundColor: "color-mix(in srgb, #4a5a3e 14%, transparent)",
+    fontSize: size.small,
+    color: color.positive,
+    backgroundColor: color.positiveTint,
     padding: 8,
     borderRadius: 5,
     marginBottom: 18,
     borderLeftWidth: 3,
-    borderLeftColor: "#4a5a3e",
+    borderLeftColor: color.positive,
   },
 });
 
@@ -202,11 +163,20 @@ export function YearEndAccountPdf(props: YearEndAccountPdfProps) {
           </Text>
         )}
 
-        <Text style={styles.eyebrow}>
-          Éves pénzügyi elszámolás{isDraft ? " · tervezet" : ""}
-        </Text>
+        <ReportHeader reportType="Éves elszámolás" />
+
+        {/* Title block */}
         <Text style={styles.title}>{props.year}. év</Text>
         <Text style={styles.buildingLine}>{props.buildingName}</Text>
+        <Text style={styles.meta}>
+          Éves pénzügyi elszámolás{isDraft ? " · tervezet" : ""}
+        </Text>
+
+        {isDraft ? (
+          <StatusPill tone="warning">Tervezet · a közgyűlés jóváhagyásáig</StatusPill>
+        ) : (
+          <StatusPill tone="positive">Elfogadva a közgyűlés által</StatusPill>
+        )}
 
         {!isDraft && props.approvedAt && (
           <Text style={styles.approvedBanner}>
@@ -250,7 +220,7 @@ export function YearEndAccountPdf(props: YearEndAccountPdfProps) {
         {/* ASSETS + LIABILITIES side by side */}
         <View style={styles.twoCol}>
           <View style={styles.twoColCell}>
-            <Text style={styles.sectionHeader}>Vagyon</Text>
+            <SectionTitle>Vagyon</SectionTitle>
             {props.assets.length === 0 ? (
               <Text style={styles.emptyNote}>Nincs vagyoni tétel.</Text>
             ) : (
@@ -273,7 +243,7 @@ export function YearEndAccountPdf(props: YearEndAccountPdfProps) {
             )}
           </View>
           <View style={styles.twoColCell}>
-            <Text style={styles.sectionHeader}>Kötelezettségek</Text>
+            <SectionTitle>Kötelezettségek</SectionTitle>
             {props.liabilities.length === 0 && props.arrears.total === 0 ? (
               <Text style={styles.emptyNote}>Nincs nyitott kötelezettség.</Text>
             ) : (
@@ -300,7 +270,7 @@ export function YearEndAccountPdf(props: YearEndAccountPdfProps) {
         </View>
 
         {/* BUDGET vs ACTUAL */}
-        <Text style={styles.sectionHeader}>Költségvetés terv vs. tény</Text>
+        <SectionTitle>Költségvetés terv vs. tény</SectionTitle>
         {props.budget.length === 0 ? (
           <Text style={styles.emptyNote}>Nincs évre rögzített költségvetés.</Text>
         ) : (
@@ -354,7 +324,7 @@ export function YearEndAccountPdf(props: YearEndAccountPdfProps) {
         )}
 
         {/* EXPENSE CATEGORIES */}
-        <Text style={styles.sectionHeader}>Kiadások kategóriánként</Text>
+        <SectionTitle>Kiadások kategóriánként</SectionTitle>
         {props.expenseByCategory.length === 0 ? (
           <Text style={styles.emptyNote}>Nincs kiadás az évben.</Text>
         ) : (
@@ -385,9 +355,7 @@ export function YearEndAccountPdf(props: YearEndAccountPdfProps) {
         {/* REZSI */}
         {props.rezsiBreakdown.length > 0 && (
           <View>
-            <Text style={styles.sectionHeader}>
-              Rezsi — közüzemi költségek éves bontása
-            </Text>
+            <SectionTitle>Rezsi — közüzemi költségek éves bontása</SectionTitle>
             <View style={styles.rowHeader}>
               <Text style={styles.cellName}>Számla</Text>
               <Text style={styles.cellAmount}>Éves összeg</Text>
@@ -410,31 +378,17 @@ export function YearEndAccountPdf(props: YearEndAccountPdfProps) {
         )}
 
         {/* PER OWNER */}
-        <Text style={styles.sectionHeader} break>
-          Tulajdonosi költségmegosztás
-        </Text>
+        <SectionTitle breakBefore>Tulajdonosi költségmegosztás</SectionTitle>
         {props.perOwner.length === 0 ? (
           <Text style={styles.emptyNote}>Nincs albetét rögzítve.</Text>
         ) : (
           <View>
-            <View
-              style={[
-                styles.perOwnerRow,
-                {
-                  borderBottomWidth: 1,
-                  borderBottomColor: "#16181a",
-                  paddingTop: 0,
-                  paddingBottom: 6,
-                },
-              ]}
-            >
-              <Text style={[styles.unitCell, styles.kpiLabel]}>Albetét</Text>
-              <Text style={[styles.ownerCell, styles.kpiLabel]}>Tulajdonos</Text>
-              <Text style={[styles.shareCell, styles.kpiLabel]}>Hányad</Text>
-              <Text style={[styles.amountCell, styles.kpiLabel]}>Befizetett</Text>
-              <Text style={[styles.outstandingCell, styles.kpiLabel]}>
-                Hátralék
-              </Text>
+            <View style={styles.rowHeader}>
+              <Text style={styles.unitCell}>Albetét</Text>
+              <Text style={styles.ownerCell}>Tulajdonos</Text>
+              <Text style={styles.shareCell}>Hányad</Text>
+              <Text style={styles.amountCell}>Befizetett</Text>
+              <Text style={styles.outstandingCell}>Hátralék</Text>
             </View>
             {props.perOwner.map((p) => (
               <View key={p.unitNumber} style={styles.perOwnerRow} wrap={false}>
@@ -477,18 +431,11 @@ export function YearEndAccountPdf(props: YearEndAccountPdfProps) {
           </View>
         )}
 
-        <View style={styles.footer} fixed>
-          <Text>
-            {props.buildingName} · {formatDateTime(props.generatedAt)} · hash{" "}
-            {shortHash(props.contentHash)}
-          </Text>
-          <Text
-            style={styles.pageNum}
-            render={({ pageNumber, totalPages }) =>
-              `${pageNumber} / ${totalPages}`
-            }
-          />
-        </View>
+        <ReportFooter
+          buildingName={props.buildingName}
+          generatedAt={props.generatedAt}
+          contentHash={props.contentHash}
+        />
       </Page>
     </Document>
   );
