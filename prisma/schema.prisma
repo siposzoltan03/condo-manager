@@ -95,6 +95,15 @@ enum MajorityType {
   PLURALITY
 }
 
+/// How common costs are split across units. Tht. § 24(1) defaults to
+/// ownership share (tulajdoni hányad); the SZMSZ may set equal-per-unit or
+/// floor-area allocation for specific cost types.
+enum CostAllocationBasis {
+  OWNERSHIP_SHARE
+  EQUAL
+  AREA
+}
+
 enum DocumentVisibility {
   PUBLIC
   BOARD_ONLY
@@ -370,6 +379,18 @@ model Building {
   /// or to the named owner. CLOSED_DELIVERY allows sealed-envelope
   /// distribution. No PUBLIC option exists — that's illegal under NAIH.
   arrearsDisclosureMode    ArrearsDisclosureMode  @default(INTERNAL_ONLY)
+
+  // ─── Governance (set during onboarding; SZMSZ-derived) ──────────────────
+  /// Reserve-fund target in HUF. 0 = not yet set (dashboard falls back to a
+  /// heuristic default until the board configures it).
+  reserveTargetHUF     BigInt                 @default(0)
+  /// Default majority rule applied to new votes (Tht. § 17–18). The SZMSZ
+  /// may require a stricter rule for specific decisions.
+  defaultMajority      MajorityType           @default(SIMPLE_MAJORITY)
+  /// Basis for splitting common costs across units (Tht. § 24(1)).
+  costAllocationBasis  CostAllocationBasis    @default(OWNERSHIP_SHARE)
+  /// Set when the onboarding wizard is completed; null while setup is pending.
+  onboardingCompletedAt DateTime?
 
   units                Unit[]
   userBuildings        UserBuilding[]

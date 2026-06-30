@@ -12,7 +12,7 @@ export interface BoardKPI {
   operatingBalance: number;
   /** Reserve fund balance (Ft). Heuristic: ASSET accounts named like "Reserve". */
   reserveBalance: number;
-  /** Reserve fund target (Ft). Hardcoded for now — TODO: move to Building.reserveTarget. */
+  /** Reserve fund target (Ft) from Building.reserveTargetHUF; placeholder until set. */
   reserveTarget: number;
   /** Open + acknowledged maintenance ticket count. */
   openTicketCount: number;
@@ -129,6 +129,17 @@ export const getBoardDashboard = cache(async (): Promise<BoardDashboardData> => 
   const ctx = await requireBuildingContext();
   const { buildingId } = ctx;
   requireCapability(ctx, "view.building.finance");
+
+  // Reserve-fund target is configured during onboarding. Until the board sets
+  // it (reserveTargetHUF === 0) we fall back to a heuristic placeholder so the
+  // gauge still renders.
+  const buildingRow = await prisma.building.findUnique({
+    where: { id: buildingId },
+    select: { reserveTargetHUF: true },
+  });
+  const reserveTarget = buildingRow?.reserveTargetHUF
+    ? Number(buildingRow.reserveTargetHUF)
+    : 32_000_000;
 
   // Compute month-window boundaries.
   const now = new Date();
@@ -550,7 +561,7 @@ export const getBoardDashboard = cache(async (): Promise<BoardDashboardData> => 
     kpi: {
       operatingBalance,
       reserveBalance,
-      reserveTarget: 32_000_000,
+      reserveTarget,
       openTicketCount: openTickets,
       urgentTicketCount: urgentTickets,
       outstandingCharges,
