@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import Link from "next/link";
 import {
@@ -41,7 +41,10 @@ const PILL_BASE =
 export function MeetingDetail({ meeting }: MeetingDetailProps) {
   const t = useTranslations("voting");
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"overview" | "minutes">("overview");
+  const searchParams = useSearchParams();
+  const [activeTab, setActiveTab] = useState<"overview" | "minutes">(
+    searchParams.get("tab") === "minutes" ? "minutes" : "overview",
+  );
   const [editingAgenda, setEditingAgenda] = useState(false);
   const [agendaDraft, setAgendaDraft] = useState<AgendaItem[]>([]);
   const [agendaSaving, setAgendaSaving] = useState(false);

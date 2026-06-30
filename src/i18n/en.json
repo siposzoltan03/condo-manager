@@ -2047,6 +2047,7 @@
     "actionFailed": "The action failed.",
     "closedHeading": "Assembly adjourned",
     "closedBody": "The minutes draft is available on the meeting page.",
+    "closedDraftNote": "The system prepared a minutes draft from the votes and discussion — review it and have it authenticated.",
     "toMinutes": "Open minutes",
     "setupEyebrow": "Assembly mode · start",
     "setupHeading": "Start the assembly",

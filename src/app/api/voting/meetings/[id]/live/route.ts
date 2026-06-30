@@ -5,6 +5,9 @@ import { allows } from "@/lib/authz";
 import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
 import { prisma } from "@/lib/prisma";
 import { publishToMeeting } from "@/lib/assembly-bus";
+import { getMeetingDetail } from "@/lib/dal";
+import { buildMinutesDraft } from "@/lib/voting/minutes-draft";
+import { meetingMinutesUpdated } from "@/lib/voting/events";
 
 export const runtime = "nodejs";
 
@@ -105,6 +108,31 @@ export async function POST(request: NextRequest, ctx: RouteContext) {
         where: { id },
         data: { liveStatus: "CLOSED", endedAt: new Date(), currentVoteId: null },
       });
+
+      // Auto-generate a jegyzőkönyv draft from the session record (closed-vote
+      // resolutions + Q&A log + quorum). Best-effort: never let a draft failure
+      // block the adjournment, and never clobber minutes already written.
+      try {
+        const detail = await getMeetingDetail(id);
+        if (!detail.minutes?.trim()) {
+          await prisma.meeting.update({
+            where: { id },
+            data: {
+              minutes: buildMinutesDraft(detail),
+              minutesUpdatedById: actor.userId,
+              minutesUpdatedAt: new Date(),
+            },
+          });
+          await meetingMinutesUpdated({
+            meetingId: id,
+            updatedByUserId: actor.userId,
+            buildingId: actor.buildingId,
+          });
+        }
+      } catch (err) {
+        console.error("Auto-minutes draft failed for meeting", id, err);
+      }
+
       publishToMeeting(id, { type: "session:ended", meetingId: id });
       return NextResponse.json({ ok: true });
     }

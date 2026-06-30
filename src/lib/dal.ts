@@ -405,6 +405,7 @@ export interface MeetingDetailData {
   currentAgendaIndex: number;
   currentVoteId: string | null;
   startedAt: string | null;
+  endedAt: string | null;
   minutes: string | null;
   minutesUpdatedAt: string | null;
   minutesUpdatedBy: { name: string } | null;
@@ -595,6 +596,7 @@ export const getMeetingDetail = cache(async (id: string): Promise<MeetingDetailD
     currentAgendaIndex: meeting.currentAgendaIndex,
     currentVoteId: meeting.currentVoteId,
     startedAt: meeting.startedAt?.toISOString() ?? null,
+    endedAt: meeting.endedAt?.toISOString() ?? null,
     minutes: meeting.minutes,
     minutesUpdatedAt: meeting.minutesUpdatedAt?.toISOString() ?? null,
     minutesUpdatedBy: meeting.minutesUpdatedBy ? { name: meeting.minutesUpdatedBy.name } : null,

@@ -2047,6 +2047,7 @@
     "actionFailed": "A művelet nem sikerült.",
     "closedHeading": "Közgyűlés berekesztve",
     "closedBody": "A jegyzőkönyv-vázlat elérhető a közgyűlés oldalán.",
+    "closedDraftNote": "A rendszer a szavazások és a hozzászólások alapján elkészítette a jegyzőkönyv-tervezetet — ellenőrizze és hitelesíttesse.",
     "toMinutes": "Jegyzőkönyv megnyitása",
     "setupEyebrow": "Közgyűlés mód · indítás",
     "setupHeading": "Közgyűlés indítása",
