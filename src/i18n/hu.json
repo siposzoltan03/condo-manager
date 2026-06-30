@@ -2918,6 +2918,22 @@
     "planEnterprise": "Vallalati",
     "planLegacy": "Legacy"
   },
+  "onboarding": {
+    "checklist": {
+      "eyebrow": "Beüzemelés",
+      "title": "Társasház beállítása",
+      "subtitle": "Néhány lépés, hogy a társasház adatai teljesek legyenek. A lista eltűnik, amint mindennel végeztél.",
+      "progress": "{done}/{total} kész · {pct}%",
+      "action": "Beállítás",
+      "items": {
+        "units": "Albetétek rögzítése",
+        "shares": "Tulajdoni hányadok elérik a 100%-ot",
+        "owners": "Tulajdonosok hozzárendelve minden albetéthez",
+        "meeting": "Első közgyűlés ütemezve",
+        "documents": "Első dokumentum feltöltve"
+      }
+    }
+  },
   "dashboard": {
     "newTask": "Új teendő",
     "greeting": {
