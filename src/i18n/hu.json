@@ -2047,6 +2047,7 @@
   "assembly": {
     "presenterTitle": "Közgyűlés mód",
     "actionFailed": "A művelet nem sikerült.",
+    "notPresent": "A szavazáshoz jelen kell lennie. Nyissa meg az élő követést, vagy kérje az érkeztetést a levezető elnöktől.",
     "closedHeading": "Közgyűlés berekesztve",
     "closedBody": "A jegyzőkönyv-vázlat elérhető a közgyűlés oldalán.",
     "closedDraftNote": "A rendszer a szavazások és a hozzászólások alapján elkészítette a jegyzőkönyv-tervezetet — ellenőrizze és hitelesíttesse.",

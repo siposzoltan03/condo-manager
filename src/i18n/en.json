@@ -2047,6 +2047,7 @@
   "assembly": {
     "presenterTitle": "Assembly mode",
     "actionFailed": "The action failed.",
+    "notPresent": "You must be present to vote. Open the live view, or ask the chair to check you in.",
     "closedHeading": "Assembly adjourned",
     "closedBody": "The minutes draft is available on the meeting page.",
     "closedDraftNote": "The system prepared a minutes draft from the votes and discussion — review it and have it authenticated.",

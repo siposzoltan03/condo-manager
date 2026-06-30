@@ -75,6 +75,14 @@ export function AssemblyCompanion({
 
   useAssemblyStream(meeting.id, () => router.refresh());
 
+  // Self check-in on joining the live view: registers the owner's unit(s) as
+  // present so they're allowed to vote (the remote-attendee equivalent of the
+  // board's "Érkeztetés"). Idempotent server-side; fire-and-forget.
+  useEffect(() => {
+    if (meeting.liveStatus !== "LIVE") return;
+    fetch(`/api/voting/meetings/${meeting.id}/check-in`, { method: "POST" }).catch(() => {});
+  }, [meeting.id, meeting.liveStatus]);
+
   const agenda = parseAgenda(meeting.agenda);
   const idx = Math.min(meeting.currentAgendaIndex, Math.max(0, agenda.length - 1));
   const point = agenda[idx];
@@ -115,7 +123,7 @@ export function AssemblyCompanion({
       });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
-        toast.error(d.error || t("actionFailed"));
+        toast.error(d.error === "NOT_CHECKED_IN" ? t("notPresent") : d.error || t("actionFailed"));
         return;
       }
       const fresh = await fetch(`/api/voting/votes/${voteId}`, { cache: "no-store" });
