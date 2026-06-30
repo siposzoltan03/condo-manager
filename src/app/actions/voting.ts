@@ -92,7 +92,7 @@ export async function createVote(input: CreateVoteInput): Promise<ActionResult> 
       });
     }
 
-    revalidatePath("/voting");
+    revalidatePath("/[locale]/voting", "page");
     return { success: true };
   } catch (error) {
     console.error("Failed to create vote:", error);
@@ -137,7 +137,7 @@ export async function saveMinutes(
       newValue: { minutesLength: minutes.length },
     });
 
-    revalidatePath(`/voting/meetings/${meetingId}`);
+    revalidatePath("/[locale]/voting/meetings/[id]", "page");
     return { success: true };
   } catch (error) {
     console.error("Failed to save minutes:", error);
@@ -206,7 +206,7 @@ export async function signMeetingMinutes(
       newValue: { role: signatureRole },
     });
 
-    revalidatePath(`/voting/meetings/${meetingId}`);
+    revalidatePath("/[locale]/voting/meetings/[id]", "page");
     return { success: true };
   } catch (error) {
     console.error("Failed to sign minutes:", error);
