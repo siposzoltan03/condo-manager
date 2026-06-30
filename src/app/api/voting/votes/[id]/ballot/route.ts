@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
 import { requireFeature, FeatureGateError } from "@/lib/feature-gate";
 import { allows } from "@/lib/authz";
+import { publishToMeeting } from "@/lib/assembly-bus";
 import { prisma } from "@/lib/prisma";
 import { createHash } from "crypto";
 import { rateLimitMutationOrRespond } from "@/lib/rate-limit";
@@ -223,6 +224,15 @@ export async function POST(request: NextRequest, context: RouteContext) {
         isSecret: vote.isSecret,
       },
     });
+
+    // Live assembly: nudge the presenter's tally to refresh.
+    if (vote.meetingId) {
+      publishToMeeting(vote.meetingId, {
+        type: "session:tally",
+        meetingId: vote.meetingId,
+        voteId,
+      });
+    }
 
     return NextResponse.json({
       id: ballot.id,

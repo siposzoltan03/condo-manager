@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { calculateQuorum, calculateResults, calculateMeetingQuorum, calculateVoteResult } from "@/lib/voting/quorum";
 import { voteUpdated } from "@/lib/voting/events";
 import { resolveAwardVote } from "@/lib/marketplace";
+import { publishToMeeting } from "@/lib/assembly-bus";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -179,6 +180,20 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       } catch (err) {
         console.error("Auto-award on vote close failed:", err);
       }
+    }
+
+    // Live assembly: when a meeting-linked vote closes, clear it as the
+    // current vote and broadcast so presenter + companions update.
+    if (data.status === "CLOSED" && existing.status !== "CLOSED" && existing.meetingId) {
+      await prisma.meeting.updateMany({
+        where: { id: existing.meetingId, currentVoteId: id },
+        data: { currentVoteId: null },
+      });
+      publishToMeeting(existing.meetingId, {
+        type: "session:voteClosed",
+        meetingId: existing.meetingId,
+        voteId: id,
+      });
     }
 
     return NextResponse.json({ ...updated, award });

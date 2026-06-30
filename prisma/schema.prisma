@@ -1679,6 +1679,23 @@ model Budget {
 
 // ─── Voting & Meetings Module ──────────────────────────────────────────────
 
+enum MeetingLiveStatus {
+  SCHEDULED
+  LIVE
+  CLOSED
+}
+
+enum MeetingFormat {
+  IN_PERSON
+  HYBRID
+  ONLINE
+}
+
+enum MeetingVoteMode {
+  DEVICE
+  HANDS
+}
+
 model Meeting {
   id          String        @id @default(cuid())
   title       String
@@ -1696,6 +1713,19 @@ model Meeting {
   building           Building      @relation(fields: [buildingId], references: [id])
   buildingId         String
   isRepeated         Boolean       @default(false)
+  // ── Live assembly mode (Közgyűlés mód) ──────────────────────────────
+  /// Lifecycle of the live session: SCHEDULED until started, LIVE while
+  /// the képviselő is running it, CLOSED after berekesztés.
+  liveStatus         MeetingLiveStatus @default(SCHEDULED)
+  /// Participation form + voting mode, chosen at start.
+  format             MeetingFormat?
+  voteMode           MeetingVoteMode?
+  startedAt          DateTime?
+  endedAt            DateTime?
+  /// Agenda point currently on screen (index into `agenda`).
+  currentAgendaIndex Int           @default(0)
+  /// The vote currently open/presented in the session (Vote.id), if any.
+  currentVoteId      String?
   rsvps              MeetingRsvp[]
   attendances        MeetingAttendance[]
   votes              Vote[]
