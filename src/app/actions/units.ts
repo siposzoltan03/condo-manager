@@ -282,12 +282,17 @@ export async function importUnits(rows: ImportRow[]): Promise<ImportResultType> 
       };
     }
 
-    // Get existing unit numbers
+    // Get existing unit numbers + the ownership-share total already on file
+    // (needed for the 100%-share gate below).
     const existingUnits = await prisma.unit.findMany({
       where: { buildingId },
-      select: { number: true },
+      select: { number: true, ownershipShare: true },
     });
     const existingNumbers = new Set(existingUnits.map((u) => u.number));
+    const existingShareSum = existingUnits.reduce(
+      (sum, u) => sum + Number(u.ownershipShare),
+      0,
+    );
 
     const errors: { row: number; message: string }[] = [];
     const validData: { number: string; floor: number; size: number; ownershipShare: number }[] = [];
@@ -323,6 +328,26 @@ export async function importUnits(rows: ImportRow[]): Promise<ImportResultType> 
       return { created: 0, skipped: rows.length - errors.length, errors };
     }
 
+    // 100%-share gate (Tht. §43: ownership shares are the legal basis for voting
+    // weight + cost allocation). The building total can never exceed 1.0; reject
+    // the whole import if it would (a sign of bad data). Falling short of 100% is
+    // allowed — onboarding may import in batches — but reported as incomplete.
+    const importedShareSum = validData.reduce((s, d) => s + d.ownershipShare, 0);
+    const buildingShareTotal = existingShareSum + importedShareSum;
+    const SHARE_EPS = 0.0001;
+    if (buildingShareTotal > 1 + SHARE_EPS) {
+      return {
+        created: 0,
+        skipped: rows.length,
+        errors: [
+          {
+            row: 0,
+            message: `Total ownership share would exceed 100% (existing ${(existingShareSum * 100).toFixed(2)}% + import ${(importedShareSum * 100).toFixed(2)}% = ${(buildingShareTotal * 100).toFixed(2)}%). Check the shares.`,
+          },
+        ],
+      };
+    }
+
     // Batch create
     const created = await prisma.unit.createMany({
       data: validData.map((d) => ({
@@ -355,7 +380,10 @@ export async function importUnits(rows: ImportRow[]): Promise<ImportResultType> 
       skipped: rows.length - validData.length - errors.length,
       errors,
       summary: {
-        totalOwnershipImported: validData.reduce((sum, d) => sum + d.ownershipShare, 0).toFixed(4),
+        totalOwnershipImported: importedShareSum.toFixed(4),
+        buildingShareTotal: buildingShareTotal.toFixed(4),
+        /** True once the building's units sum to 100% — drives the onboarding checklist. */
+        sharesComplete: Math.abs(buildingShareTotal - 1) <= SHARE_EPS,
       },
     };
   } catch (error) {
