@@ -1178,6 +1178,14 @@ Table Meeting {
   building Building [not null]
   buildingId String [not null]
   isRepeated Boolean [not null, default: false]
+  liveStatus MeetingLiveStatus [not null, default: 'SCHEDULED', note: 'Lifecycle of the live session: SCHEDULED until started, LIVE while
+the képviselő is running it, CLOSED after berekesztés.']
+  format MeetingFormat [note: 'Participation form + voting mode, chosen at start.']
+  voteMode MeetingVoteMode
+  startedAt DateTime
+  endedAt DateTime
+  currentAgendaIndex Int [not null, default: 0, note: 'Agenda point currently on screen (index into `agenda`).']
+  currentVoteId String [note: 'The vote currently open/presented in the session (Vote.id), if any.']
   rsvps MeetingRsvp [not null]
   attendances MeetingAttendance [not null]
   votes Vote [not null]
@@ -1626,6 +1634,23 @@ Enum MarketplaceBidStatus {
 Enum MarketplaceInvoiceStatus {
   PENDING
   PAID
+}
+
+Enum MeetingLiveStatus {
+  SCHEDULED
+  LIVE
+  CLOSED
+}
+
+Enum MeetingFormat {
+  IN_PERSON
+  HYBRID
+  ONLINE
+}
+
+Enum MeetingVoteMode {
+  DEVICE
+  HANDS
 }
 
 Enum ReportStatus {

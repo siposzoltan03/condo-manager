@@ -398,6 +398,13 @@ export interface MeetingDetailData {
   location: string | null;
   agenda: unknown;
   isRepeated: boolean;
+  /** Live assembly (Közgyűlés mód) session state. */
+  liveStatus: "SCHEDULED" | "LIVE" | "CLOSED";
+  format: "IN_PERSON" | "HYBRID" | "ONLINE" | null;
+  voteMode: "DEVICE" | "HANDS" | null;
+  currentAgendaIndex: number;
+  currentVoteId: string | null;
+  startedAt: string | null;
   minutes: string | null;
   minutesUpdatedAt: string | null;
   minutesUpdatedBy: { name: string } | null;
@@ -566,6 +573,12 @@ export const getMeetingDetail = cache(async (id: string): Promise<MeetingDetailD
     location: meeting.location,
     agenda: meeting.agenda,
     isRepeated: meeting.isRepeated,
+    liveStatus: meeting.liveStatus,
+    format: meeting.format,
+    voteMode: meeting.voteMode,
+    currentAgendaIndex: meeting.currentAgendaIndex,
+    currentVoteId: meeting.currentVoteId,
+    startedAt: meeting.startedAt?.toISOString() ?? null,
     minutes: meeting.minutes,
     minutesUpdatedAt: meeting.minutesUpdatedAt?.toISOString() ?? null,
     minutesUpdatedBy: meeting.minutesUpdatedBy ? { name: meeting.minutesUpdatedBy.name } : null,
