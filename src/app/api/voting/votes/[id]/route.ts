@@ -52,25 +52,20 @@ export async function GET(request: NextRequest, context: RouteContext) {
       ? await calculateMeetingQuorum(vote.meetingId)
       : null;
 
-    // Resolve user's unit in this building
-    const userUnit = await prisma.unitUser.findFirst({
-      where: { userId, unit: { buildingId } },
-      select: { unitId: true },
+    // The caller's own units in this building (only owners vote — Tht. §38).
+    // myWeight is the SUM across all owned units; a single cast fans out to each.
+    const ownerUnits = await prisma.unitUser.findMany({
+      where: { userId, relationship: "OWNER", unit: { buildingId } },
+      select: { unit: { select: { id: true, ownershipShare: true } } },
     });
+    const myWeight = ownerUnits.reduce((sum, u) => sum + Number(u.unit.ownershipShare), 0);
+    const ownerUnitIds = ownerUnits.map((u) => u.unit.id);
 
-    // Check if user's unit already voted
-    const myBallot = userUnit
-      ? await prisma.ballot.findUnique({
-          where: { voteId_unitId: { voteId: id, unitId: userUnit.unitId } },
+    // Whether the caller's units have voted (any of them) + which option.
+    const myBallot = ownerUnitIds.length
+      ? await prisma.ballot.findFirst({
+          where: { voteId: id, unitId: { in: ownerUnitIds } },
           select: { optionId: true, receiptHash: true },
-        })
-      : null;
-
-    // Get user's unit ownership share for display
-    const unit = userUnit
-      ? await prisma.unit.findUnique({
-          where: { id: userUnit.unitId },
-          select: { ownershipShare: true },
         })
       : null;
 
@@ -153,7 +148,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       myBallot: myBallot
         ? { optionId: myBallot.optionId, receiptHash: myBallot.receiptHash }
         : null,
-      myWeight: unit ? Number(unit.ownershipShare) : 0,
+      myWeight,
       proxyUnits,
       results,
       ballots: vote.ballots.map((b) => ({
