@@ -104,8 +104,9 @@ export function AssemblyPresenter({
         <div className="mx-auto max-w-2xl px-6 py-16 text-center">
           <h1 className="font-display text-3xl text-ink">{t("closedHeading")}</h1>
           <p className="mt-3 text-ink-soft">{t("closedBody")}</p>
+          <p className="mt-1 text-sm text-muted">{t("closedDraftNote")}</p>
           <a
-            href={`/${locale}/voting/meetings/${meeting.id}`}
+            href={`/${locale}/voting/meetings/${meeting.id}?tab=minutes`}
             className="mt-6 inline-block rounded-xl bg-ink px-5 py-3 font-semibold text-bg"
           >
             {t("toMinutes")}
