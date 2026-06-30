@@ -2100,6 +2100,8 @@
     "companionVoted": "Vote recorded · {label}",
     "companionProxyTitle": "By proxy",
     "companionProxyCast": "Cast for {name}",
+    "companionProxyCastAll": "Cast for {name} ({n} units)",
+    "companionProxyUnitCount": "{n} units",
     "castVote": "Cast vote",
     "companionTallyHidden": "The result is hidden until close.",
     "companionAsk": "Question",
