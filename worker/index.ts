@@ -1,3 +1,6 @@
+// MUST be first: neutralizes `server-only` so the shared libs the worker
+// reuses don't crash this non-RSC process at startup.
+import "./server-only-shim";
 import { Worker } from "bullmq";
 import Redis from "ioredis";
 import { processNotificationJob } from "./jobs";
