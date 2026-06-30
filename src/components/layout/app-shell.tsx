@@ -24,8 +24,11 @@ function stripLocale(pathname: string): string {
     : pathname;
 }
 
-/** Full-screen kiosk routes that render without the app shell. */
-const STANDALONE_PATTERNS = [/^\/voting\/meetings\/[^/]+\/live$/];
+/** Full-screen kiosk / companion routes that render without the app shell. */
+const STANDALONE_PATTERNS = [
+  /^\/voting\/meetings\/[^/]+\/live$/,
+  /^\/voting\/meetings\/[^/]+\/follow$/,
+];
 
 function isStandalonePage(pathname: string): boolean {
   const p = stripLocale(pathname);
