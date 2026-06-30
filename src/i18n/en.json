@@ -1880,6 +1880,8 @@
     "addAgendaItem": "Add item",
     "agendaItemTitle": "Agenda item title",
     "agendaItemDescription": "Description (optional)",
+    "agendaNoVote": "No linked vote",
+    "agendaLinkedVote": "Vote",
     "agendaSaved": "Agenda saved",
     "agendaSaveFailed": "Failed to save agenda",
     "attendeesTitle": "Responses",

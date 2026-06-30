@@ -7,14 +7,18 @@ import { Plus, GripVertical, Trash2 } from "lucide-react";
 export interface AgendaItem {
   title: string;
   description: string;
+  /** Optional vote attached to this point — surfaced in Közgyűlés mód. */
+  voteId?: string;
 }
 
 interface AgendaEditorProps {
   items: AgendaItem[];
   onChange: (items: AgendaItem[]) => void;
+  /** Votes belonging to this meeting, offered as per-point attachments. */
+  votes?: { id: string; title: string }[];
 }
 
-export function AgendaEditor({ items, onChange }: AgendaEditorProps) {
+export function AgendaEditor({ items, onChange, votes = [] }: AgendaEditorProps) {
   const t = useTranslations("voting");
   const [dragIndex, setDragIndex] = useState<number | null>(null);
 
@@ -26,9 +30,16 @@ export function AgendaEditor({ items, onChange }: AgendaEditorProps) {
     onChange(items.filter((_, i) => i !== index));
   }
 
-  function updateItem(index: number, field: keyof AgendaItem, value: string) {
+  function updateItem(index: number, field: "title" | "description", value: string) {
     const updated = items.map((item, i) =>
       i === index ? { ...item, [field]: value } : item
+    );
+    onChange(updated);
+  }
+
+  function setVote(index: number, voteId: string) {
+    const updated = items.map((item, i) =>
+      i === index ? { ...item, voteId: voteId || undefined } : item
     );
     onChange(updated);
   }
@@ -111,6 +122,20 @@ export function AgendaEditor({ items, onChange }: AgendaEditorProps) {
                 placeholder={t("agendaItemDescription")}
                 className="w-full rounded-md border border-ink/8 bg-card px-3 py-1.5 text-xs text-ink-soft placeholder:text-muted focus:border-ink/40 focus:outline-none"
               />
+              {votes.length > 0 && (
+                <select
+                  value={item.voteId ?? ""}
+                  onChange={(e) => setVote(index, e.target.value)}
+                  className="w-full rounded-md border border-ink/8 bg-card px-3 py-1.5 text-xs text-ink-soft focus:border-ink/40 focus:outline-none"
+                >
+                  <option value="">{t("agendaNoVote")}</option>
+                  {votes.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {t("agendaLinkedVote")}: {v.title}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             <button

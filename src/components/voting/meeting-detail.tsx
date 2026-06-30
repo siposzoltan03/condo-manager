@@ -269,16 +269,21 @@ export function MeetingDetail({ meeting }: MeetingDetailProps) {
                   <button
                     onClick={() => {
                       setAgendaDraft(
-                        agendaItems.map((item: unknown) => ({
-                          title:
-                            typeof item === "string"
-                              ? item
-                              : String((item as Record<string, unknown>)?.title ?? ""),
-                          description:
+                        agendaItems.map((item: unknown) => {
+                          const obj =
                             typeof item === "object" && item !== null
-                              ? String((item as Record<string, unknown>)?.description ?? "")
-                              : "",
-                        }))
+                              ? (item as Record<string, unknown>)
+                              : null;
+                          return {
+                            title:
+                              typeof item === "string"
+                                ? item
+                                : String(obj?.title ?? ""),
+                            description: obj ? String(obj.description ?? "") : "",
+                            voteId:
+                              obj && typeof obj.voteId === "string" ? obj.voteId : undefined,
+                          };
+                        })
                       );
                       setEditingAgenda(true);
                     }}
@@ -292,7 +297,11 @@ export function MeetingDetail({ meeting }: MeetingDetailProps) {
 
               {editingAgenda ? (
                 <div className="space-y-4">
-                  <AgendaEditor items={agendaDraft} onChange={setAgendaDraft} />
+                  <AgendaEditor
+                    items={agendaDraft}
+                    onChange={setAgendaDraft}
+                    votes={meeting.votes.map((v) => ({ id: v.id, title: v.title }))}
+                  />
                   <div className="flex items-center justify-end gap-2 pt-3 border-t border-ink/10">
                     <button
                       onClick={() => setEditingAgenda(false)}
