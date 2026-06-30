@@ -420,6 +420,7 @@ the threat model warrants it.']
   meetingsCreated Meeting [not null]
   minutesEdited Meeting [not null]
   meetingRsvps MeetingRsvp [not null]
+  meetingQuestions MeetingQuestion [not null]
   votesCreated Vote [not null]
   ballots Ballot [not null]
   ballotsCastOnBehalf Ballot [not null]
@@ -1189,11 +1190,28 @@ the képviselő is running it, CLOSED after berekesztés.']
   rsvps MeetingRsvp [not null]
   attendances MeetingAttendance [not null]
   votes Vote [not null]
+  questions MeetingQuestion [not null, note: 'Live Q&A — questions + raise-hand requests from attendees.']
   pendingAgenda PendingAgendaItem [not null, note: 'Pending agenda items (resignations + escalated complaints) attached
 to this meeting. Source-of-truth for meeting agenda integration.']
   minutesSignatures MeetingMinutesSignature [not null, note: 'Chair + two-authenticator signatures on the jegyzőkönyv.']
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
+}
+
+Table MeetingQuestion {
+  id String [pk]
+  meeting Meeting [not null]
+  meetingId String [not null]
+  user User [not null]
+  userId String [not null]
+  type MeetingQuestionType [not null]
+  body String [note: 'Question text; null for a raise-hand request.']
+  agendaIndex Int [not null, default: 0, note: 'Agenda point index this was raised at.']
+  status MeetingQuestionStatus [not null, default: 'PENDING']
+  createdAt DateTime [default: `now()`, not null]
+
+  Note: 'Live Q&A item raised by an attendee during an assembly — either a typed
+question or a raise-hand request to speak. Logged into the minutes.'
 }
 
 Table MeetingRsvp {
@@ -1653,6 +1671,16 @@ Enum MeetingVoteMode {
   HANDS
 }
 
+Enum MeetingQuestionType {
+  QUESTION
+  HAND
+}
+
+Enum MeetingQuestionStatus {
+  PENDING
+  ADDRESSED
+}
+
 Enum ReportStatus {
   PENDING
   RUNNING
@@ -1885,6 +1913,10 @@ Ref: Meeting.minutesUpdatedById > User.id
 Ref: Meeting.createdById > User.id
 
 Ref: Meeting.buildingId > Building.id
+
+Ref: MeetingQuestion.meetingId > Meeting.id [delete: Cascade]
+
+Ref: MeetingQuestion.userId > User.id
 
 Ref: MeetingRsvp.meetingId > Meeting.id [delete: Cascade]
 

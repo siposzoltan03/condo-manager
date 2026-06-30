@@ -2097,7 +2097,17 @@
     "companionTallyHidden": "Az eredmény a lezárásig rejtett.",
     "companionAsk": "Kérdés",
     "companionRaiseHand": "Hozzászólok",
-    "soon": "Hamarosan"
+    "soon": "Hamarosan",
+    "pointShort": "pont",
+    "raisedHand": "Jelentkezett hozzászólásra",
+    "grantFloor": "Szót ad",
+    "markRead": "Felolvasva",
+    "questionsEmpty": "Nincs kérdés.",
+    "askPlaceholder": "Írd be a kérdésed…",
+    "send": "Küldés",
+    "cancel": "Mégse",
+    "questionSent": "Kérdés elküldve a képviselőnek",
+    "handSent": "Jelentkezés elküldve"
   },
   "impersonation": {
     "viewAsUser": "Megtekintés felhasználóként",

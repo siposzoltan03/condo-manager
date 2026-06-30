@@ -46,6 +46,32 @@ export function AssemblyCompanion({
   const [detail, setDetail] = useState<VoteDetail | null>(null);
   const [picked, setPicked] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [composing, setComposing] = useState(false);
+  const [qText, setQText] = useState("");
+  const [sent, setSent] = useState<"q" | "h" | null>(null);
+  const [sending, setSending] = useState(false);
+
+  async function submitQuestion(type: "QUESTION" | "HAND", text?: string) {
+    if (sending) return;
+    setSending(true);
+    try {
+      const res = await fetch(`/api/voting/meetings/${meeting.id}/questions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type, body: text }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        toast.error(d.error || t("actionFailed"));
+        return;
+      }
+      setSent(type === "HAND" ? "h" : "q");
+      setComposing(false);
+      setQText("");
+    } finally {
+      setSending(false);
+    }
+  }
 
   useAssemblyStream(meeting.id, () => router.refresh());
 
@@ -213,19 +239,45 @@ export function AssemblyCompanion({
           </div>
         )}
 
-        {/* interaction (P3) */}
-        <div className="grid grid-cols-2 gap-2.5">
-          <button disabled className="rounded-2xl p-3.5 text-center opacity-60"
-            style={{ background: "var(--color-card)", border: "1px solid color-mix(in srgb, var(--color-ink) 11%, transparent)" }}>
-            <strong className="font-display text-[13px] block">{t("companionAsk")}</strong>
-            <small style={{ color: "var(--color-muted)" }}>{t("soon")}</small>
-          </button>
-          <button disabled className="rounded-2xl p-3.5 text-center opacity-60"
-            style={{ background: "var(--color-card)", border: "1px solid color-mix(in srgb, var(--color-ink) 11%, transparent)" }}>
-            <strong className="font-display text-[13px] block">{t("companionRaiseHand")}</strong>
-            <small style={{ color: "var(--color-muted)" }}>{t("soon")}</small>
-          </button>
-        </div>
+        {/* interaction (Q&A) */}
+        {sent ? (
+          <div className="rounded-2xl p-3.5 text-center text-[13px] font-semibold"
+            style={{ background: "color-mix(in srgb, var(--color-moss) 14%, var(--color-card))", color: "var(--color-moss)" }}>
+            ✓ {sent === "h" ? t("handSent") : t("questionSent")}
+          </div>
+        ) : composing ? (
+          <div className="rounded-2xl p-3" style={{ background: "var(--color-card)", border: "1px solid color-mix(in srgb, var(--color-ink) 11%, transparent)" }}>
+            <textarea value={qText} onChange={(e) => setQText(e.target.value)} rows={3}
+              placeholder={t("askPlaceholder")} autoFocus
+              className="w-full rounded-lg p-2.5 text-[14px] outline-none"
+              style={{ border: "1px solid color-mix(in srgb, var(--color-ink) 14%, transparent)", background: "var(--color-bg-3)", resize: "none" }} />
+            <div className="mt-2 flex gap-2">
+              <button onClick={() => { setComposing(false); setQText(""); }}
+                className="flex-1 rounded-lg py-2.5 text-sm font-semibold"
+                style={{ border: "1px solid color-mix(in srgb, var(--color-ink) 12%, transparent)", color: "var(--color-ink-soft)" }}>
+                {t("cancel")}
+              </button>
+              <button disabled={!qText.trim() || sending} onClick={() => submitQuestion("QUESTION", qText.trim())}
+                className="flex-1 rounded-lg py-2.5 text-sm font-bold disabled:opacity-50"
+                style={{ background: "var(--color-ink)", color: "var(--color-bg)" }}>
+                {t("send")}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-2.5">
+            <button onClick={() => setComposing(true)}
+              className="rounded-2xl p-3.5 text-center"
+              style={{ background: "var(--color-card)", border: "1px solid color-mix(in srgb, var(--color-ink) 11%, transparent)" }}>
+              <strong className="font-display text-[13px] block">{t("companionAsk")}</strong>
+            </button>
+            <button disabled={sending} onClick={() => submitQuestion("HAND")}
+              className="rounded-2xl p-3.5 text-center disabled:opacity-50"
+              style={{ background: "var(--color-card)", border: "1px solid color-mix(in srgb, var(--color-ink) 11%, transparent)" }}>
+              <strong className="font-display text-[13px] block">{t("companionRaiseHand")}</strong>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
