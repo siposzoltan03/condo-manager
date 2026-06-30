@@ -74,6 +74,61 @@ export async function GET(request: NextRequest, context: RouteContext) {
         })
       : null;
 
+    // Units the caller may cast for via an active proxy (meghatalmazás) —
+    // the grantor's owner-units in this building, for proxies valid now and
+    // in scope for this vote. Each carries whether it has already voted.
+    const now = new Date();
+    const proxyAssignments = await prisma.proxyAssignment.findMany({
+      where: {
+        granteeId: userId,
+        validFrom: { lte: now },
+        AND: [
+          { OR: [{ voteId: id }, { voteId: null }] },
+          { OR: [{ validUntil: null }, { validUntil: { gte: now } }] },
+        ],
+      },
+      select: {
+        grantor: {
+          select: {
+            name: true,
+            unitUsers: {
+              where: { relationship: "OWNER", unit: { buildingId } },
+              select: { unit: { select: { id: true, number: true, ownershipShare: true } } },
+            },
+          },
+        },
+      },
+    });
+
+    const proxyUnitMap = new Map<
+      string,
+      { unitId: string; unitNumber: string; grantorName: string; weight: number }
+    >();
+    for (const pa of proxyAssignments) {
+      for (const uu of pa.grantor.unitUsers) {
+        if (!proxyUnitMap.has(uu.unit.id)) {
+          proxyUnitMap.set(uu.unit.id, {
+            unitId: uu.unit.id,
+            unitNumber: uu.unit.number,
+            grantorName: pa.grantor.name,
+            weight: Number(uu.unit.ownershipShare),
+          });
+        }
+      }
+    }
+    const proxyUnitIds = [...proxyUnitMap.keys()];
+    const proxyBallots = proxyUnitIds.length
+      ? await prisma.ballot.findMany({
+          where: { voteId: id, unitId: { in: proxyUnitIds } },
+          select: { unitId: true, optionId: true },
+        })
+      : [];
+    const proxyVotedBy = new Map(proxyBallots.map((b) => [b.unitId, b.optionId]));
+    const proxyUnits = [...proxyUnitMap.values()].map((u) => ({
+      ...u,
+      votedOptionId: proxyVotedBy.get(u.unitId) ?? null,
+    }));
+
     // Results only available when vote is closed
     let results = null;
     if (vote.status === "CLOSED") {
@@ -99,6 +154,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         ? { optionId: myBallot.optionId, receiptHash: myBallot.receiptHash }
         : null,
       myWeight: unit ? Number(unit.ownershipShare) : 0,
+      proxyUnits,
       results,
       ballots: vote.ballots.map((b) => ({
         id: b.id,

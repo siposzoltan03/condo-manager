@@ -2097,6 +2097,8 @@
     "companionFollowing": "Most tárgyalt · {n}/{total}",
     "companionYourShare": "Az Ön hányada:",
     "companionVoted": "Szavazata rögzítve · {label}",
+    "companionProxyTitle": "Meghatalmazással",
+    "companionProxyCast": "Leadom {name} nevében",
     "castVote": "Szavazat leadása",
     "companionTallyHidden": "Az eredmény a lezárásig rejtett.",
     "companionAsk": "Kérdés",
