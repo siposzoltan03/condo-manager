@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { UnitModal } from "./unit-modal";
+import { ImportUnitsButton } from "./import-units-button";
 
 interface Props {
   isBoardPlus: boolean;
@@ -18,6 +19,7 @@ export function UnitsHeaderActions({ isBoardPlus }: Props) {
 
   return (
     <>
+      <ImportUnitsButton />
       <button
         type="button"
         onClick={() => {

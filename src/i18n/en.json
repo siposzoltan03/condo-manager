@@ -268,7 +268,8 @@
       "ownerOccupied": "Owner-occupied",
       "tenant": "Tenant-occupied",
       "vacant": "Vacant",
-      "totalArea": "Net area"
+      "totalArea": "Net area",
+      "ownershipShare": "Ownership share"
     },
     "tab": {
       "map": "Building map",
