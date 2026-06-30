@@ -8,6 +8,7 @@ import { NotificationMatrixView } from "@/components/settings/notification-matri
 import { DangerZone } from "@/components/settings/danger-zone";
 import { PersonalDataLauncher } from "@/components/settings/personal-data-launcher";
 import { TwoFactorLauncher } from "@/components/settings/two-factor-launcher";
+import { ChangePasswordLauncher } from "@/components/settings/change-password-launcher";
 import { SessionsTable } from "@/components/settings/sessions-table";
 import { AuditSlicePdfButton } from "@/components/reports/audit-slice-pdf-button";
 
@@ -167,24 +168,7 @@ export default async function ProfilePage({ params }: Props) {
               icon="lock"
               title={t("security.passwordTitle")}
               detail={t("security.passwordDetail")}
-              right={
-                <Link
-                  href={`/${locale}/forgot-password`}
-                  style={{
-                    fontSize: "12px",
-                    fontWeight: 600,
-                    padding: "6px 12px",
-                    borderRadius: "8px",
-                    background: "var(--color-card)",
-                    border:
-                      "1px solid color-mix(in srgb, var(--color-ink) 10%, transparent)",
-                    textDecoration: "none",
-                    color: "var(--color-ink)",
-                  }}
-                >
-                  {t("security.changeCta")}
-                </Link>
-              }
+              right={<ChangePasswordLauncher />}
             />
             <SecurityRow
               icon="phone"
