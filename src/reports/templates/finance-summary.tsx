@@ -8,10 +8,10 @@ import {
 } from "@react-pdf/renderer";
 import {
   formatHUF,
-  formatDateTime,
   formatNumber,
 } from "../lib/format";
-import { shortHash } from "../lib/footer";
+import { color, font, size, space } from "../lib/theme";
+import { ReportHeader, ReportFooter, SectionTitle, StatusPill } from "../lib/components";
 import type { FinanceSummaryData } from "@/lib/reports/finance-summary-data";
 
 export interface FinanceSummaryPdfProps extends FinanceSummaryData {
@@ -21,113 +21,83 @@ export interface FinanceSummaryPdfProps extends FinanceSummaryData {
 
 const styles = StyleSheet.create({
   page: {
-    padding: "48 56 64 56",
-    fontSize: 10.5,
-    color: "#16181a",
-    fontFamily: "Manrope",
-    lineHeight: 1.4,
+    paddingTop: space.pageTop,
+    paddingBottom: space.pageBottom,
+    paddingHorizontal: space.pageX,
+    fontSize: size.body,
+    color: color.ink,
+    fontFamily: font.sans,
+    lineHeight: 1.45,
   },
-  eyebrow: {
-    fontSize: 9,
-    color: "#6c727a",
-    letterSpacing: 1.4,
-    textTransform: "uppercase",
-    marginBottom: 8,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: 500,
-    letterSpacing: -0.5,
-    lineHeight: 1.25,
-    marginBottom: 8,
-    color: "#16181a",
-  },
-  subtitle: {
-    fontSize: 11,
-    color: "#3a4048",
-    marginBottom: 4,
-  },
-  meta: {
-    fontSize: 10,
-    color: "#3a4048",
-    marginBottom: 24,
-  },
-  sectionHeader: {
-    fontSize: 11,
-    fontWeight: 700,
-    color: "#16181a",
-    letterSpacing: 0.4,
-    textTransform: "uppercase",
-    marginTop: 16,
-    marginBottom: 10,
-    paddingBottom: 4,
-    borderBottomWidth: 1,
-    borderBottomColor: "#16181a",
-    borderBottomStyle: "solid",
-  },
+
+  // Title block
+  title: { fontSize: size.title, fontWeight: 700, letterSpacing: -0.5, lineHeight: 1.2, marginBottom: 6 },
+  buildingLine: { fontSize: size.lead, fontWeight: 500, color: color.inkSoft, marginBottom: 3 },
+  meta: { fontSize: size.small, color: color.muted, marginBottom: 14 },
+
+  // KPI row
   kpiRow: {
     flexDirection: "row",
-    marginBottom: 16,
+    marginBottom: 4,
     gap: 8,
   },
   kpiCell: {
     flex: 1,
-    border: "1pt solid #d4d2cc",
-    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: color.panelEdge,
+    borderStyle: "solid",
+    borderRadius: 8,
     padding: 12,
   },
   kpiLabel: {
-    fontSize: 8,
-    color: "#6c727a",
+    fontSize: size.tiny,
+    color: color.muted,
     letterSpacing: 1.1,
     textTransform: "uppercase",
     marginBottom: 4,
   },
   kpiValue: {
     fontSize: 16,
-    fontWeight: 500,
+    fontWeight: 700,
   },
   kpiSub: {
-    fontSize: 9,
-    color: "#6c727a",
+    fontSize: size.micro,
+    color: color.muted,
     marginTop: 2,
   },
-  good: { color: "#4a5a3e" },
-  bad: { color: "#a04040" },
-  rowHeader: {
+  good: { color: color.positive },
+  bad: { color: color.negative },
+
+  // Tables
+  thRow: {
     flexDirection: "row",
-    paddingBottom: 6,
+    paddingBottom: 5,
     borderBottomWidth: 1,
-    borderBottomColor: "#16181a",
+    borderBottomColor: color.lineStrong,
     borderBottomStyle: "solid",
-    fontSize: 9,
-    color: "#6c727a",
-    letterSpacing: 1.1,
+    fontSize: size.micro,
+    color: color.muted,
+    letterSpacing: 0.8,
     textTransform: "uppercase",
   },
-  row: {
+  tr: {
     flexDirection: "row",
-    paddingTop: 8,
-    paddingBottom: 8,
+    paddingVertical: 4.5,
     borderBottomWidth: 0.5,
-    borderBottomColor: "#d4d2cc",
+    borderBottomColor: color.line,
     borderBottomStyle: "solid",
+    fontSize: size.small,
   },
+  trZebra: { backgroundColor: color.panel },
   category: { flex: 3 },
   amount: { flex: 1, textAlign: "right", fontWeight: 500 },
-  share: { flex: 1, textAlign: "right", color: "#6c727a" },
-  topRow: {
-    flexDirection: "row",
-    paddingTop: 6,
-    paddingBottom: 6,
-    borderBottomWidth: 0.5,
-    borderBottomColor: "#d4d2cc",
-    borderBottomStyle: "solid",
-  },
-  topDate: { width: 60, color: "#6c727a", fontSize: 9 },
+  share: { flex: 1, textAlign: "right", color: color.muted },
+  topDate: { width: 60, color: color.muted, fontSize: size.micro },
   topDesc: { flex: 1 },
-  topCategory: { width: 90, color: "#6c727a", fontSize: 9 },
+  topCategory: { width: 90, color: color.muted, fontSize: size.micro },
   topAmount: { width: 80, textAlign: "right", fontWeight: 500 },
+
+  // Monthly trend
   trendRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -136,8 +106,8 @@ const styles = StyleSheet.create({
   },
   trendLabel: {
     width: 60,
-    fontSize: 9,
-    color: "#6c727a",
+    fontSize: size.micro,
+    color: color.muted,
   },
   trendBars: {
     flex: 1,
@@ -152,13 +122,13 @@ const styles = StyleSheet.create({
   trendBarLabel: {
     width: 26,
     fontSize: 7.5,
-    color: "#6c727a",
+    color: color.muted,
     textTransform: "uppercase",
   },
   trendBarTrack: {
     flex: 1,
     height: 6,
-    backgroundColor: "#f3eee5",
+    backgroundColor: color.panel,
     borderRadius: 3,
   },
   trendBarFill: {
@@ -168,24 +138,10 @@ const styles = StyleSheet.create({
   trendNet: {
     width: 80,
     textAlign: "right",
-    fontSize: 9,
+    fontSize: size.micro,
   },
-  emptyNote: {
-    fontSize: 10,
-    color: "#9a9c9f",
-  },
-  footer: {
-    position: "absolute",
-    bottom: 32,
-    left: 56,
-    right: 56,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    fontSize: 8,
-    color: "#9a9c9f",
-    letterSpacing: 0.6,
-  },
-  pageNum: { fontFamily: "Courier" },
+
+  empty: { fontSize: size.small, color: color.faint },
 });
 
 export function FinanceSummaryPdf(props: FinanceSummaryPdfProps) {
@@ -205,14 +161,24 @@ export function FinanceSummaryPdf(props: FinanceSummaryPdfProps) {
       author={props.buildingName}
     >
       <Page size="A4" style={styles.page}>
-        <Text style={styles.eyebrow}>Pénzügyi összesítő</Text>
+        <ReportHeader reportType="Pénzügyi összefoglaló" />
+
+        {/* Title block */}
         <Text style={styles.title}>{props.period.label}</Text>
-        <Text style={styles.subtitle}>{props.buildingName}</Text>
+        <Text style={styles.buildingLine}>{props.buildingName}</Text>
         <Text style={styles.meta}>
           Időszak: {props.period.label} · forgalom havi bontásban
         </Text>
 
+        {/* Net result status */}
+        <StatusPill tone={props.netChange >= 0 ? "positive" : "negative"}>
+          {props.netChange >= 0
+            ? `Pénzügyi többlet · ${formatHUF(props.netChange)}`
+            : `Pénzügyi hiány · ${formatHUF(props.netChange)}`}
+        </StatusPill>
+
         {/* KPI ROW */}
+        <SectionTitle>Egyenlegek</SectionTitle>
         <View style={styles.kpiRow}>
           <View style={styles.kpiCell}>
             <Text style={styles.kpiLabel}>Nyitóegyenleg</Text>
@@ -243,20 +209,20 @@ export function FinanceSummaryPdf(props: FinanceSummaryPdfProps) {
         </View>
 
         {/* INCOME */}
-        <Text style={styles.sectionHeader}>Bevételek kategóriánként</Text>
+        <SectionTitle>Bevételek kategóriánként</SectionTitle>
         {props.incomeByCategory.length === 0 ? (
-          <Text style={styles.emptyNote}>Nincs bevétel a megadott időszakban.</Text>
+          <Text style={styles.empty}>Nincs bevétel a megadott időszakban.</Text>
         ) : (
           <View>
-            <View style={styles.rowHeader}>
+            <View style={styles.thRow}>
               <Text style={styles.category}>Kategória</Text>
               <Text style={styles.amount}>Összeg</Text>
               <Text style={styles.share}>Arány</Text>
             </View>
-            {props.incomeByCategory.map((c) => {
+            {props.incomeByCategory.map((c, i) => {
               const pct = props.totalIncome > 0 ? (c.amount / props.totalIncome) * 100 : 0;
               return (
-                <View key={c.category} style={styles.row}>
+                <View key={c.category} style={[styles.tr, i % 2 === 1 ? styles.trZebra : {}]}>
                   <Text style={styles.category}>{c.category}</Text>
                   <Text style={[styles.amount, styles.good]}>
                     {formatHUF(c.amount)}
@@ -269,20 +235,20 @@ export function FinanceSummaryPdf(props: FinanceSummaryPdfProps) {
         )}
 
         {/* EXPENSE */}
-        <Text style={styles.sectionHeader}>Kiadások kategóriánként</Text>
+        <SectionTitle>Kiadások kategóriánként</SectionTitle>
         {props.expenseByCategory.length === 0 ? (
-          <Text style={styles.emptyNote}>Nincs kiadás a megadott időszakban.</Text>
+          <Text style={styles.empty}>Nincs kiadás a megadott időszakban.</Text>
         ) : (
           <View>
-            <View style={styles.rowHeader}>
+            <View style={styles.thRow}>
               <Text style={styles.category}>Kategória</Text>
               <Text style={styles.amount}>Összeg</Text>
               <Text style={styles.share}>Arány</Text>
             </View>
-            {props.expenseByCategory.map((c) => {
+            {props.expenseByCategory.map((c, i) => {
               const pct = props.totalExpenses > 0 ? (c.amount / props.totalExpenses) * 100 : 0;
               return (
-                <View key={c.category} style={styles.row}>
+                <View key={c.category} style={[styles.tr, i % 2 === 1 ? styles.trZebra : {}]}>
                   <Text style={styles.category}>{c.category}</Text>
                   <Text style={[styles.amount, styles.bad]}>
                     {formatHUF(c.amount)}
@@ -295,21 +261,21 @@ export function FinanceSummaryPdf(props: FinanceSummaryPdfProps) {
         )}
 
         {/* TOP ENTRIES */}
-        <Text style={styles.sectionHeader}>
+        <SectionTitle>
           10 legnagyobb tétel · {formatNumber(props.topEntries.length)} db
-        </Text>
+        </SectionTitle>
         {props.topEntries.length === 0 ? (
-          <Text style={styles.emptyNote}>Nincs könyvelt tétel az időszakban.</Text>
+          <Text style={styles.empty}>Nincs könyvelt tétel az időszakban.</Text>
         ) : (
           <View>
-            <View style={styles.rowHeader}>
+            <View style={styles.thRow}>
               <Text style={styles.topDate}>Dátum</Text>
               <Text style={styles.topDesc}>Megnevezés</Text>
               <Text style={styles.topCategory}>Kategória</Text>
               <Text style={styles.topAmount}>Összeg</Text>
             </View>
-            {props.topEntries.map((e) => (
-              <View key={e.id} style={styles.topRow} wrap={false}>
+            {props.topEntries.map((e, i) => (
+              <View key={e.id} style={[styles.tr, i % 2 === 1 ? styles.trZebra : {}]} wrap={false}>
                 <Text style={styles.topDate}>
                   {new Date(e.date).toLocaleDateString("hu-HU")}
                 </Text>
@@ -330,9 +296,9 @@ export function FinanceSummaryPdf(props: FinanceSummaryPdfProps) {
         )}
 
         {/* MONTHLY TREND */}
-        <Text style={styles.sectionHeader}>Havi trend · 6 hónap</Text>
+        <SectionTitle>Havi trend · 6 hónap</SectionTitle>
         {props.monthlyTrend.length === 0 ? (
-          <Text style={styles.emptyNote}>Nincs adat a megelőző hónapokra.</Text>
+          <Text style={styles.empty}>Nincs adat a megelőző hónapokra.</Text>
         ) : (
           <View>
             {props.monthlyTrend.map((t) => {
@@ -348,7 +314,7 @@ export function FinanceSummaryPdf(props: FinanceSummaryPdfProps) {
                         <View
                           style={[
                             styles.trendBarFill,
-                            { width: `${incomePct}%`, backgroundColor: "#4a5a3e" },
+                            { width: `${incomePct}%`, backgroundColor: color.positive },
                           ]}
                         />
                       </View>
@@ -359,7 +325,7 @@ export function FinanceSummaryPdf(props: FinanceSummaryPdfProps) {
                         <View
                           style={[
                             styles.trendBarFill,
-                            { width: `${expensePct}%`, backgroundColor: "#a04040" },
+                            { width: `${expensePct}%`, backgroundColor: color.negative },
                           ]}
                         />
                       </View>
@@ -379,18 +345,11 @@ export function FinanceSummaryPdf(props: FinanceSummaryPdfProps) {
           </View>
         )}
 
-        <View style={styles.footer} fixed>
-          <Text>
-            {props.buildingName} · {formatDateTime(props.generatedAt)} · hash{" "}
-            {shortHash(props.contentHash)}
-          </Text>
-          <Text
-            style={styles.pageNum}
-            render={({ pageNumber, totalPages }) =>
-              `${pageNumber} / ${totalPages}`
-            }
-          />
-        </View>
+        <ReportFooter
+          buildingName={props.buildingName}
+          generatedAt={props.generatedAt}
+          contentHash={props.contentHash}
+        />
       </Page>
     </Document>
   );

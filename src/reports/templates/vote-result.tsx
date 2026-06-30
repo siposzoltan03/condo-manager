@@ -1,18 +1,8 @@
 import * as React from "react";
-import {
-  Document,
-  Page,
-  Text,
-  View,
-  StyleSheet,
-} from "@react-pdf/renderer";
-import {
-  formatDate,
-  formatDateTime,
-  formatPercent,
-  formatNumber,
-} from "../lib/format";
-import { shortHash } from "../lib/footer";
+import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import { formatDate, formatPercent, formatNumber } from "../lib/format";
+import { color, font, size, space, majorityLabel } from "../lib/theme";
+import { ReportHeader, ReportFooter, SectionTitle, StatusPill } from "../lib/components";
 
 export interface VoteResultPdfProps {
   buildingName: string;
@@ -47,144 +37,69 @@ export interface VoteResultPdfProps {
 
 const styles = StyleSheet.create({
   page: {
-    padding: "48 56 64 56",
-    fontSize: 10.5,
-    color: "#16181a",
-    fontFamily: "Manrope",
-    lineHeight: 1.4,
+    paddingTop: space.pageTop,
+    paddingBottom: space.pageBottom,
+    paddingHorizontal: space.pageX,
+    fontSize: size.body,
+    color: color.ink,
+    fontFamily: font.sans,
+    lineHeight: 1.45,
   },
-  eyebrow: {
-    fontSize: 9,
-    color: "#6c727a",
-    letterSpacing: 1.4,
-    textTransform: "uppercase",
-    marginBottom: 8,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: 500,
-    letterSpacing: -0.5,
-    lineHeight: 1.25,
-    marginBottom: 8,
-    color: "#16181a",
-  },
-  buildingLine: {
-    fontSize: 11,
-    color: "#3a4048",
-    marginBottom: 28,
-  },
-  sectionHeader: {
-    fontSize: 9,
-    color: "#6c727a",
-    letterSpacing: 1.2,
-    textTransform: "uppercase",
-    marginBottom: 6,
-    marginTop: 8,
-  },
-  description: {
-    fontSize: 10.5,
-    lineHeight: 1.55,
-    marginBottom: 16,
-    color: "#3a4048",
-  },
-  kpiRow: {
-    flexDirection: "row",
-    marginBottom: 24,
-    gap: 8,
-  },
+
+  // Title block
+  title: { fontSize: size.title, fontWeight: 700, letterSpacing: -0.5, lineHeight: 1.2, marginBottom: 6 },
+  buildingLine: { fontSize: size.lead, fontWeight: 500, color: color.inkSoft, marginBottom: 3 },
+  meta: { fontSize: size.small, color: color.muted, marginBottom: 14 },
+
+  description: { fontSize: size.body, lineHeight: 1.6, color: color.inkSoft, marginBottom: 4 },
+
+  // KPI cards
+  kpiRow: { flexDirection: "row", gap: 10, marginBottom: 4 },
   kpiCell: {
     flex: 1,
-    border: "1pt solid #d4d2cc",
-    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: color.panelEdge,
+    borderStyle: "solid",
+    borderRadius: 8,
     padding: 12,
   },
   kpiLabel: {
-    fontSize: 8,
-    color: "#6c727a",
-    letterSpacing: 1.1,
+    fontSize: size.micro,
+    color: color.muted,
+    letterSpacing: 0.8,
     textTransform: "uppercase",
-    marginBottom: 4,
+    marginBottom: 6,
   },
-  kpiValue: {
-    fontSize: 18,
-    fontWeight: 500,
-    color: "#16181a",
-  },
-  kpiSub: {
-    fontSize: 9,
-    color: "#6c727a",
-    marginTop: 2,
-  },
-  resultRow: {
+  kpiValue: { fontSize: 18, fontWeight: 700, color: color.ink },
+  kpiSub: { fontSize: size.micro, color: color.muted, marginTop: 2 },
+
+  // Options table
+  thRow: {
     flexDirection: "row",
-    paddingTop: 8,
-    paddingBottom: 8,
-    borderBottomWidth: 0.5,
-    borderBottomColor: "#d4d2cc",
-    borderBottomStyle: "solid",
-  },
-  resultRowHeader: {
-    flexDirection: "row",
-    paddingBottom: 6,
+    paddingBottom: 5,
     borderBottomWidth: 1,
-    borderBottomColor: "#16181a",
+    borderBottomColor: color.lineStrong,
     borderBottomStyle: "solid",
-    fontSize: 9,
-    color: "#6c727a",
-    letterSpacing: 1.1,
+    fontSize: size.micro,
+    color: color.muted,
+    letterSpacing: 0.8,
     textTransform: "uppercase",
   },
-  optionLabel: {
-    flex: 3,
-  },
-  optionBallots: {
-    flex: 1,
-    textAlign: "right",
-  },
-  optionShare: {
-    flex: 1,
-    textAlign: "right",
-  },
-  optionPercent: {
-    flex: 1,
-    textAlign: "right",
-    fontWeight: 500,
-  },
-  outcomeBox: {
-    marginTop: 28,
-    padding: 14,
-    border: "1pt solid #d4d2cc",
-    borderRadius: 6,
-    backgroundColor: "#f6f3ec",
-  },
-  outcomeLabel: {
-    fontSize: 9,
-    color: "#6c727a",
-    letterSpacing: 1.2,
-    textTransform: "uppercase",
-    marginBottom: 4,
-  },
-  outcomeValue: {
-    fontSize: 14,
-    fontWeight: 500,
-  },
-  outcomePassed: { color: "#4a5a3e" },
-  outcomeRejected: { color: "#a04040" },
-  outcomePending: { color: "#6c727a" },
-  footer: {
-    position: "absolute",
-    bottom: 32,
-    left: 56,
-    right: 56,
+  tr: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    fontSize: 8,
-    color: "#9a9c9f",
-    letterSpacing: 0.6,
+    paddingVertical: 4.5,
+    borderBottomWidth: 0.5,
+    borderBottomColor: color.line,
+    borderBottomStyle: "solid",
+    fontSize: size.small,
   },
-  pageNum: {
-    fontFamily: "Courier",
-  },
+  trZebra: { backgroundColor: color.panel },
+  optLabel: { flex: 3 },
+  optBallots: { flex: 1, textAlign: "right" },
+  optShare: { flex: 1, textAlign: "right", color: color.muted },
+  optPercent: { flex: 1, textAlign: "right", fontWeight: 700 },
+
+  outcomeNote: { marginTop: 16 },
 });
 
 export function VoteResultPdf(props: VoteResultPdfProps) {
@@ -192,120 +107,93 @@ export function VoteResultPdf(props: VoteResultPdfProps) {
     ? (props.totalCastWeight / props.totalEligibleWeight) * 100
     : 0;
   const isClosed = props.vote.status === "CLOSED";
-  const outcomeText =
-    !isClosed
-      ? "Folyamatban"
-      : props.vote.passed === true
-        ? "Elfogadva"
-        : props.vote.passed === false
-          ? "Elutasítva"
-          : "Lezárva";
-  const outcomeStyle =
-    !isClosed
-      ? styles.outcomePending
-      : props.vote.passed === true
-        ? styles.outcomePassed
-        : props.vote.passed === false
-          ? styles.outcomeRejected
-          : styles.outcomePending;
+  const outcomeText = !isClosed
+    ? "Folyamatban"
+    : props.vote.passed === true
+      ? "Elfogadva"
+      : props.vote.passed === false
+        ? "Elutasítva"
+        : "Lezárva";
+  const outcomeTone: "positive" | "negative" | "neutral" = !isClosed
+    ? "neutral"
+    : props.vote.passed === true
+      ? "positive"
+      : props.vote.passed === false
+        ? "negative"
+        : "neutral";
 
   return (
-    <Document
-      title={`Szavazás eredménye — ${props.vote.title}`}
-      author={props.buildingName}
-    >
+    <Document title={`Szavazás eredménye — ${props.vote.title}`} author={props.buildingName}>
       <Page size="A4" style={styles.page}>
-        <Text style={styles.eyebrow}>Szavazás eredménye</Text>
+        <ReportHeader reportType="Szavazási eredmény" />
+
+        {/* Title block */}
         <Text style={styles.title}>{props.vote.title}</Text>
-        <Text style={styles.buildingLine}>
-          {props.buildingName} · határidő{" "}
-          {formatDate(props.vote.deadline)}
+        <Text style={styles.buildingLine}>{props.buildingName}</Text>
+        <Text style={styles.meta}>
+          Határidő · {formatDate(props.vote.deadline)}
+          {props.vote.isSecret ? " · titkos szavazás" : ""}
         </Text>
 
+        {/* DESCRIPTION */}
         {props.vote.description && (
-          <>
-            <Text style={styles.sectionHeader}>Leírás</Text>
+          <View>
+            <SectionTitle>Leírás</SectionTitle>
             <Text style={styles.description}>{props.vote.description}</Text>
-          </>
+          </View>
         )}
 
+        {/* KPIs */}
+        <SectionTitle>Részvétel · határozatképesség</SectionTitle>
         <View style={styles.kpiRow}>
           <View style={styles.kpiCell}>
             <Text style={styles.kpiLabel}>Jogosult tulajdoni hányad</Text>
-            <Text style={styles.kpiValue}>
-              {formatPercent(props.totalEligibleWeight * 100)}
-            </Text>
-            <Text style={styles.kpiSub}>{"100% hányad"}</Text>
+            <Text style={styles.kpiValue}>{formatPercent(props.totalEligibleWeight * 100)}</Text>
+            <Text style={styles.kpiSub}>100% hányad</Text>
           </View>
           <View style={styles.kpiCell}>
             <Text style={styles.kpiLabel}>Leadott szavazat</Text>
-            <Text style={styles.kpiValue}>
-              {formatPercent(props.totalCastWeight * 100)}
-            </Text>
-            <Text style={styles.kpiSub}>
-              {formatNumber(props.ballotCount)} szavazó
-            </Text>
+            <Text style={styles.kpiValue}>{formatPercent(props.totalCastWeight * 100)}</Text>
+            <Text style={styles.kpiSub}>{formatNumber(props.ballotCount)} szavazó</Text>
           </View>
           <View style={styles.kpiCell}>
             <Text style={styles.kpiLabel}>Részvétel</Text>
             <Text style={styles.kpiValue}>{formatPercent(turnoutPct)}</Text>
-            <Text style={styles.kpiSub}>
-              {props.vote.majorityType === "SIMPLE_MAJORITY"
-                ? "egyszerű többség"
-                : props.vote.majorityType === "TWO_THIRDS"
-                  ? "kétharmados"
-                  : props.vote.majorityType === "UNANIMOUS"
-                    ? "egyhangú"
-                    : props.vote.majorityType}
-            </Text>
+            <Text style={styles.kpiSub}>{majorityLabel(props.vote.majorityType)}</Text>
           </View>
         </View>
 
-        <Text style={styles.sectionHeader}>Eredmények opciónként</Text>
-        <View style={styles.resultRowHeader}>
-          <Text style={styles.optionLabel}>Opció</Text>
-          <Text style={styles.optionBallots}>Szavazat</Text>
-          <Text style={styles.optionShare}>Hányad</Text>
-          <Text style={styles.optionPercent}>Arány</Text>
+        {/* OPTIONS */}
+        <SectionTitle>Eredmények opciónként</SectionTitle>
+        <View style={styles.thRow}>
+          <Text style={styles.optLabel}>Opció</Text>
+          <Text style={styles.optBallots}>Szavazat</Text>
+          <Text style={styles.optShare}>Hányad</Text>
+          <Text style={styles.optPercent}>Arány</Text>
         </View>
-        {props.options.map((o) => {
-          const pctOfCast =
-            props.totalCastWeight > 0
-              ? (o.weight / props.totalCastWeight) * 100
-              : 0;
+        {props.options.map((o, i) => {
+          const pctOfCast = props.totalCastWeight > 0 ? (o.weight / props.totalCastWeight) * 100 : 0;
           return (
-            <View key={o.id} style={styles.resultRow}>
-              <Text style={styles.optionLabel}>{o.label}</Text>
-              <Text style={styles.optionBallots}>
-                {formatNumber(o.ballotCount)}
-              </Text>
-              <Text style={styles.optionShare}>
-                {formatPercent(o.weight * 100)}
-              </Text>
-              <Text style={styles.optionPercent}>
-                {formatPercent(pctOfCast)}
-              </Text>
+            <View key={o.id} style={[styles.tr, i % 2 === 1 ? styles.trZebra : {}]} wrap={false}>
+              <Text style={styles.optLabel}>{o.label}</Text>
+              <Text style={styles.optBallots}>{formatNumber(o.ballotCount)}</Text>
+              <Text style={styles.optShare}>{formatPercent(o.weight * 100)}</Text>
+              <Text style={styles.optPercent}>{formatPercent(pctOfCast)}</Text>
             </View>
           );
         })}
 
-        <View style={styles.outcomeBox}>
-          <Text style={styles.outcomeLabel}>Végeredmény</Text>
-          <Text style={[styles.outcomeValue, outcomeStyle]}>{outcomeText}</Text>
+        {/* OUTCOME */}
+        <SectionTitle>Végeredmény</SectionTitle>
+        <View style={styles.outcomeNote}>
+          <StatusPill tone={outcomeTone}>{outcomeText}</StatusPill>
         </View>
 
-        <View style={styles.footer} fixed>
-          <Text>
-            {props.buildingName} · {formatDateTime(props.generatedAt)} ·
-            hash {shortHash(props.contentHash)}
-          </Text>
-          <Text
-            style={styles.pageNum}
-            render={({ pageNumber, totalPages }) =>
-              `${pageNumber} / ${totalPages}`
-            }
-          />
-        </View>
+        <ReportFooter
+          buildingName={props.buildingName}
+          generatedAt={props.generatedAt}
+          contentHash={props.contentHash}
+        />
       </Page>
     </Document>
   );
