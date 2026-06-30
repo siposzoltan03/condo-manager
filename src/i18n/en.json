@@ -2097,6 +2097,8 @@
     "companionFollowing": "Now discussing · {n}/{total}",
     "companionYourShare": "Your share:",
     "companionVoted": "Vote recorded · {label}",
+    "companionProxyTitle": "By proxy",
+    "companionProxyCast": "Cast for {name}",
     "castVote": "Cast vote",
     "companionTallyHidden": "The result is hidden until close.",
     "companionAsk": "Question",
