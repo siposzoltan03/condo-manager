@@ -15,10 +15,12 @@ export async function UnitsKpiStrip({ locale, kpis }: Props) {
     kpis.total > 0 ? Math.round((kpis.tenantOccupied / kpis.total) * 100) : 0;
   const vacantPct =
     kpis.total > 0 ? Math.round((kpis.vacant / kpis.total) * 100) : 0;
+  const sharePct = kpis.ownershipShareTotal * 100;
+  const sharesComplete = Math.abs(kpis.ownershipShareTotal - 1) <= 0.0001;
 
   return (
     <div
-      className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5"
+      className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6"
       style={{ gap: "12px", marginBottom: "24px" }}
     >
       <Tile label={t("total")} value={kpis.total.toString()} />
@@ -43,6 +45,12 @@ export async function UnitsKpiStrip({ locale, kpis }: Props) {
         value={Math.round(kpis.totalAreaM2).toLocaleString("hu-HU")}
         unit="m²"
         accent="ink"
+      />
+      <Tile
+        label={t("ownershipShare")}
+        value={`${sharePct.toLocaleString("hu-HU", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`}
+        unit={sharesComplete ? "· 100%" : `· cél 100%`}
+        accent={sharesComplete ? "moss" : undefined}
       />
     </div>
   );

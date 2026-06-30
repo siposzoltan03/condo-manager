@@ -268,7 +268,8 @@
       "ownerOccupied": "Tulajdonos lakik",
       "tenant": "Bérlős",
       "vacant": "Üres",
-      "totalArea": "Össz. hasznos ter."
+      "totalArea": "Össz. hasznos ter.",
+      "ownershipShare": "Tulajdoni hányad"
     },
     "tab": {
       "map": "Ház térkép",

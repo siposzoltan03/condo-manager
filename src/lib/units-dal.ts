@@ -35,6 +35,8 @@ export interface UnitsKpis {
   tenantOccupied: number;
   vacant: number;
   totalAreaM2: number;
+  /** Sum of all units' ownership shares, 0..1 (should reach 1.0 — Tht. §43). */
+  ownershipShareTotal: number;
 }
 
 export interface UnitsFloorMap {
@@ -220,6 +222,7 @@ export const getUnitsOverview = cache(
       ).length,
       vacant: cells.filter((c) => c.occupancy === "vacant").length,
       totalAreaM2: cells.reduce((sum, c) => sum + c.size, 0),
+      ownershipShareTotal: cells.reduce((sum, c) => sum + c.ownershipShare, 0),
     };
 
     // ── Floor map (group by stairwell, floors descending) ────────────────
