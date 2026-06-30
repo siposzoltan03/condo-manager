@@ -74,6 +74,15 @@ export function MeetingDetail({ meeting }: MeetingDetailProps) {
           {t("backToMeetings")}
         </Link>
         <div className="flex items-center gap-2">
+          {meeting.liveStatus === "LIVE" && (
+            <Link
+              href={`/voting/meetings/${meeting.id}/follow`}
+              className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold"
+              style={{ background: "var(--color-moss)", color: "#f5f2e6" }}
+            >
+              {t("followLive")}
+            </Link>
+          )}
           {meeting.canEditMinutes && meeting.liveStatus !== "CLOSED" && (
             <Link
               href={`/voting/meetings/${meeting.id}/live`}
