@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { ImportUnitsButton } from "@/components/units/import-units-button";
-import { SzmszAiExtract } from "./szmsz-ai-extract";
+import { SzmszAiExtract, type Extraction } from "./szmsz-ai-extract";
+import { importUnits } from "@/app/actions/units";
+import type { ImportRow } from "@/lib/import/types";
 
 type StepIndex = 0 | 1 | 2 | 3 | 4 | 5;
 const TOTAL_STEPS = 6;
@@ -50,6 +52,9 @@ export function BuildingOnboardingWizard({ locale }: { locale: string }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  // AI extraction is lifted here so it pre-fills the Units + Governance steps
+  // and survives step navigation (no re-upload/re-process).
+  const [extraction, setExtraction] = useState<Extraction | null>(null);
 
   const reload = useCallback(async () => {
     const res = await fetch("/api/onboarding", { cache: "no-store" });
@@ -134,9 +139,9 @@ export function BuildingOnboardingWizard({ locale }: { locale: string }) {
 
   const stepTitles = [
     t("steps.basics"),
-    t("steps.governance"),
-    t("steps.units"),
     t("steps.szmsz"),
+    t("steps.units"),
+    t("steps.governance"),
     t("steps.invites"),
     t("steps.review"),
   ];
@@ -187,7 +192,7 @@ export function BuildingOnboardingWizard({ locale }: { locale: string }) {
         {stepTitles[step]}
       </h2>
       <p style={{ color: "var(--color-ink-soft)", fontSize: "14px", margin: "0 0 24px" }}>
-        {t(`subtitles.${["basics", "governance", "units", "szmsz", "invites", "review"][step]}`)}
+        {t(`subtitles.${["basics", "szmsz", "units", "governance", "invites", "review"][step]}`)}
       </p>
 
       {error && (
@@ -217,31 +222,35 @@ export function BuildingOnboardingWizard({ locale }: { locale: string }) {
         />
       )}
       {step === 1 && (
-        <GovernanceStep
+        <SzmszStep
           state={state}
-          saving={saving}
+          locale={locale}
+          extraction={extraction}
+          onExtracted={setExtraction}
+          onReload={reload}
           onBack={() => setStep(0)}
-          onSave={async (p) => {
-            if (await savePatch({ action: "governance", ...p })) setStep(2);
-          }}
+          onNext={() => setStep(2)}
         />
       )}
       {step === 2 && (
         <UnitsStep
           state={state}
           locale={locale}
+          extraction={extraction}
           onReload={reload}
           onBack={() => setStep(1)}
           onNext={() => setStep(3)}
         />
       )}
       {step === 3 && (
-        <SzmszStep
+        <GovernanceStep
           state={state}
-          locale={locale}
-          onReload={reload}
+          saving={saving}
+          extraction={extraction}
           onBack={() => setStep(2)}
-          onNext={() => setStep(4)}
+          onSave={async (p) => {
+            if (await savePatch({ action: "governance", ...p })) setStep(4);
+          }}
         />
       )}
       {step === 4 && (
@@ -363,11 +372,13 @@ function BasicsStep({
 function GovernanceStep({
   state,
   saving,
+  extraction,
   onBack,
   onSave,
 }: {
   state: OnboardingState;
   saving: boolean;
+  extraction: Extraction | null;
   onBack: () => void;
   onSave: (p: {
     reserveTargetHUF: number;
@@ -376,9 +387,19 @@ function GovernanceStep({
   }) => Promise<void>;
 }) {
   const t = useTranslations("buildingOnboarding");
-  const [reserve, setReserve] = useState(String(state.building.reserveTargetHUF || ""));
-  const [majority, setMajority] = useState(state.building.defaultMajority);
-  const [basis, setBasis] = useState(state.building.costAllocationBasis);
+  // Pre-fill from the SZMSZ extraction when present, else the saved building.
+  const g = extraction?.governance;
+  const [reserve, setReserve] = useState(
+    String((g?.reserveTargetHUF ?? state.building.reserveTargetHUF) || ""),
+  );
+  const [majority, setMajority] = useState(
+    g?.defaultMajority || state.building.defaultMajority,
+  );
+  const [basis, setBasis] = useState(
+    g?.costAllocationBasis || state.building.costAllocationBasis,
+  );
+  const prefilled =
+    !!g && (g.reserveTargetHUF != null || !!g.defaultMajority || !!g.costAllocationBasis);
 
   return (
     <form
@@ -391,6 +412,17 @@ function GovernanceStep({
         });
       }}
     >
+      {prefilled && (
+        <p
+          style={{
+            fontSize: "12.5px",
+            color: "var(--color-blue)",
+            margin: "0 0 14px",
+          }}
+        >
+          {t("prefilledFromSzmsz")}
+        </p>
+      )}
       <Field label={t("fields.reserveTarget")} htmlFor="ob-reserve" hint={t("fields.reserveTargetHint")}>
         <input
           id="ob-reserve"
@@ -431,22 +463,59 @@ function GovernanceStep({
 function UnitsStep({
   state,
   locale,
+  extraction,
   onReload,
   onBack,
   onNext,
 }: {
   state: OnboardingState;
   locale: string;
+  extraction: Extraction | null;
   onReload: () => Promise<void>;
   onBack: () => void;
   onNext: () => void;
 }) {
   const t = useTranslations("buildingOnboarding");
+  const ta = useTranslations("buildingOnboarding.ai");
   const { unitCount, ownershipShare, sharesComplete } = state.progress;
-  const pct = (ownershipShare * 100).toLocaleString(locale === "en" ? "en-US" : "hu-HU", {
+  const intlLocale = locale === "en" ? "en-US" : "hu-HU";
+  const pct = (ownershipShare * 100).toLocaleString(intlLocale, {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
   });
+
+  const extractedUnits = extraction?.units ?? [];
+  const extractedShare = extractedUnits.reduce((s, u) => s + (u.ownershipShare || 0), 0);
+  const extractedComplete = Math.abs(extractedShare - 1) <= 0.0001;
+  const [importing, setImporting] = useState(false);
+  const [importMsg, setImportMsg] = useState<string | null>(null);
+
+  async function importExtracted() {
+    setImportMsg(null);
+    setImporting(true);
+    try {
+      const rows: ImportRow[] = extractedUnits.map((u) => ({
+        unit_number: u.number,
+        floor: String(u.floor),
+        size_sqm: String(u.size),
+        ownership_share: String(u.ownershipShare),
+      }));
+      const result = await importUnits(rows);
+      if (result.created > 0) {
+        setImportMsg(ta("imported", { count: result.created }));
+        await onReload();
+      } else {
+        const first = result.errors[0]?.message;
+        setImportMsg(first ? `${ta("importNone")} — ${first}` : ta("importNone"));
+      }
+    } catch {
+      setImportMsg(ta("importError"));
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  const showExtracted = extractedUnits.length > 0 && unitCount === 0;
 
   return (
     <div>
@@ -455,8 +524,61 @@ function UnitsStep({
         title={t("units.statusTitle", { count: unitCount })}
         detail={t("units.statusShare", { pct })}
       />
+
+      {showExtracted && (
+        <div
+          className="rounded-xl"
+          style={{
+            marginTop: "16px",
+            padding: "14px 16px",
+            background: "color-mix(in srgb, var(--color-blue) 6%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--color-blue) 25%, transparent)",
+          }}
+        >
+          <div className="flex items-center justify-between" style={{ marginBottom: "8px" }}>
+            <span className="font-mono" style={{ fontSize: "11px", color: "var(--color-muted)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+              {ta("unitsFound", { count: extractedUnits.length })}
+            </span>
+            <span className="font-mono" style={{ fontSize: "11px", fontWeight: 600, color: extractedComplete ? "var(--color-moss)" : "var(--color-ochre)" }}>
+              {ta("shareSum", { pct: (extractedShare * 100).toLocaleString(intlLocale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) })}
+            </span>
+          </div>
+          <div style={{ maxHeight: "200px", overflowY: "auto", borderRadius: "8px", border: "1px solid color-mix(in srgb, var(--color-ink) 10%, transparent)", background: "var(--color-card)" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12.5px" }}>
+              <thead>
+                <tr style={{ background: "var(--color-bg-3)", textAlign: "left" }}>
+                  <ExtractTh>{ta("colNumber")}</ExtractTh>
+                  <ExtractTh>{ta("colFloor")}</ExtractTh>
+                  <ExtractTh>{ta("colSize")}</ExtractTh>
+                  <ExtractTh>{ta("colShare")}</ExtractTh>
+                </tr>
+              </thead>
+              <tbody>
+                {extractedUnits.map((u, i) => (
+                  <tr key={`${u.number}-${i}`} style={{ borderTop: "1px solid color-mix(in srgb, var(--color-ink) 6%, transparent)" }}>
+                    <ExtractTd>{u.number}</ExtractTd>
+                    <ExtractTd>{u.floor}</ExtractTd>
+                    <ExtractTd>{u.size} m²</ExtractTd>
+                    <ExtractTd>{(u.ownershipShare * 100).toLocaleString(intlLocale, { maximumFractionDigits: 4 })}%</ExtractTd>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="flex flex-wrap items-center gap-3" style={{ marginTop: "12px" }}>
+            <button type="button" onClick={importExtracted} disabled={importing} className="transition-opacity hover:opacity-90 disabled:opacity-50" style={primaryLinkStyle}>
+              {importing ? ta("importing") : ta("importCta")}
+            </button>
+            {importMsg && <span style={{ fontSize: "13px", color: "var(--color-ink-soft)" }}>{importMsg}</span>}
+          </div>
+          {!extractedComplete && (
+            <p style={{ fontSize: "12px", color: "var(--color-ochre)", marginTop: "6px" }}>{ta("shareWarning")}</p>
+          )}
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center gap-3" style={{ marginTop: "16px" }}>
-        <ImportUnitsButton />
+        <ImportUnitsButton onImported={onReload} />
         <button type="button" onClick={onReload} style={ghostButtonStyle}>
           {t("refresh")}
         </button>
@@ -469,17 +591,32 @@ function UnitsStep({
   );
 }
 
+function ExtractTh({ children }: { children: React.ReactNode }) {
+  return (
+    <th className="font-mono" style={{ padding: "7px 10px", fontSize: "10px", color: "var(--color-muted)", letterSpacing: "0.05em", textTransform: "uppercase", fontWeight: 600 }}>
+      {children}
+    </th>
+  );
+}
+function ExtractTd({ children }: { children: React.ReactNode }) {
+  return <td style={{ padding: "6px 10px" }}>{children}</td>;
+}
+
 // ── Step: SZMSZ ─────────────────────────────────────────────────────────────
 
 function SzmszStep({
   state,
   locale,
+  extraction,
+  onExtracted,
   onReload,
   onBack,
   onNext,
 }: {
   state: OnboardingState;
   locale: string;
+  extraction: Extraction | null;
+  onExtracted: (e: Extraction) => void;
   onReload: () => Promise<void>;
   onBack: () => void;
   onNext: () => void;
@@ -492,7 +629,12 @@ function SzmszStep({
 
   return (
     <div>
-      <SzmszAiExtract locale={locale} onReload={onReload} />
+      <SzmszAiExtract
+        locale={locale}
+        extraction={extraction}
+        onExtracted={onExtracted}
+        onReload={onReload}
+      />
       <StatusCard
         done={szmszDocCount > 0}
         title={t("szmsz.statusTitle", { count: szmszDocCount })}

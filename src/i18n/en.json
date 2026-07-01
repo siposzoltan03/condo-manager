@@ -2990,11 +2990,16 @@
       "statusDetail": "Upload the SZMSZ and the founding deed.",
       "openDocuments": "Open documents"
     },
+    "prefilledFromSzmsz": "Pre-filled from the SZMSZ — review before saving.",
     "ai": {
       "eyebrow": "AI fill",
       "title": "Fill from the SZMSZ",
-      "subtitle": "Upload an SZMSZ / founding-deed PDF and AI reads out the units and governance settings. You review every proposal before it is applied.",
+      "subtitle": "Upload an SZMSZ / founding-deed PDF and AI reads out the units and governance settings. You review and commit the units and settings in the next steps.",
       "uploadCta": "Upload SZMSZ PDF",
+      "reupload": "Upload a different PDF",
+      "summaryUnits": "{count} units detected · Σ {pct}% ownership share",
+      "stored": "SZMSZ saved to Documents.",
+      "reviewNext": "Review and commit in the next steps.",
       "extracting": "Processing…",
       "gdprNote": "An SZMSZ may contain personal data. The uploaded PDF is processed by an AI provider; review the proposals before saving.",
       "notPdf": "Only PDF files can be uploaded.",

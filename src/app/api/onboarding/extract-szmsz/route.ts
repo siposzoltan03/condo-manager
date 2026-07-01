@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBuildingContext } from "@/lib/auth";
 import { requireCapability } from "@/lib/authz";
+import { prisma } from "@/lib/prisma";
+import { getStorage } from "@/lib/storage";
 import { extractSzmszFromPdf } from "@/lib/szmsz-extract";
 
 // Base64 inflates ~33%; cap the decoded PDF around 15 MB.
@@ -41,7 +43,53 @@ export async function POST(request: NextRequest) {
     }
 
     const extraction = await extractSzmszFromPdf(pdfBase64, fileName);
-    return NextResponse.json(extraction);
+
+    // Also persist the uploaded PDF as a document in the building's SZMSZ
+    // category, so the "first document uploaded" step is genuinely satisfied.
+    // board.manage-gated here (the general documents API needs chair/admin
+    // publish authority, which onboarding board members may lack).
+    let stored = false;
+    try {
+      const szmszCategory = await prisma.documentCategory.findFirst({
+        where: { buildingId: ctx.buildingId, name: { contains: "SZMSZ", mode: "insensitive" } },
+        orderBy: { sortOrder: "asc" },
+        select: { id: true },
+      });
+      if (szmszCategory) {
+        const buffer = Buffer.from(pdfBase64, "base64");
+        const safeName = fileName?.trim() || "SZMSZ.pdf";
+        const put = await getStorage().put({
+          scope: "document",
+          fileName: safeName,
+          mimeType: "application/pdf",
+          body: buffer,
+        });
+        await prisma.document.create({
+          data: {
+            title: safeName.replace(/\.pdf$/i, ""),
+            categoryId: szmszCategory.id,
+            visibility: "BOARD_ONLY",
+            uploadedById: ctx.userId,
+            versions: {
+              create: {
+                versionNumber: 1,
+                fileUrl: put.url,
+                fileName: put.fileName,
+                fileSize: put.fileSize,
+                mimeType: put.mimeType,
+                uploadedById: ctx.userId,
+              },
+            },
+          },
+        });
+        stored = true;
+      }
+    } catch (storeErr) {
+      // Storing is best-effort — extraction still succeeds without it.
+      console.error("SZMSZ document store failed (non-fatal):", storeErr);
+    }
+
+    return NextResponse.json({ ...extraction, stored });
   } catch (error) {
     console.error("SZMSZ extraction failed:", error);
     return NextResponse.json(
