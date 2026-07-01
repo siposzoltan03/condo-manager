@@ -2925,6 +2925,7 @@
       "subtitle": "Néhány lépés, hogy a társasház adatai teljesek legyenek. A lista eltűnik, amint mindennel végeztél.",
       "progress": "{done}/{total} kész · {pct}%",
       "action": "Beállítás",
+      "wizardCta": "Beüzemelés varázsló",
       "items": {
         "units": "Albetétek rögzítése",
         "shares": "Tulajdoni hányadok elérik a 100%-ot",
@@ -2933,6 +2934,79 @@
         "documents": "Első dokumentum feltöltve"
       }
     }
+  },
+  "buildingOnboarding": {
+    "eyebrow": "Beüzemelés",
+    "title": "Társasház beüzemelése",
+    "subtitle": "Lépésről lépésre beállítjuk a társasház adatait.",
+    "stepCounter": "{current}. lépés / {total}",
+    "next": "Tovább",
+    "nextSkippable": "Tovább (kihagyható)",
+    "back": "Vissza",
+    "finish": "Befejezés",
+    "refresh": "Frissítés",
+    "saveFailed": "A mentés nem sikerült. Próbáld újra.",
+    "steps": {
+      "basics": "Alapadatok",
+      "governance": "Önkormányzás",
+      "units": "Albetétek",
+      "szmsz": "SZMSZ",
+      "invites": "Meghívók",
+      "review": "Áttekintés"
+    },
+    "subtitles": {
+      "basics": "A társasház neve és címe.",
+      "governance": "Tartalékalap cél, szavazási többség és költségmegosztás alapja.",
+      "units": "Rögzítsd az albetéteket, hogy a tulajdoni hányadok elérjék a 100%-ot.",
+      "szmsz": "Töltsd fel a szervezeti és működési szabályzatot (SZMSZ).",
+      "invites": "Hívd meg a tulajdonosokat és az intézőbizottság tagjait.",
+      "review": "Nézd át a beállításokat, majd fejezd be a beüzemelést."
+    },
+    "fields": {
+      "name": "Társasház neve",
+      "address": "Cím",
+      "zipCode": "Irányítószám",
+      "city": "Város",
+      "reserveTarget": "Tartalékalap cél (Ft)",
+      "reserveTargetHint": "A felújítási tartalék célösszege. Később módosítható.",
+      "defaultMajority": "Alapértelmezett szavazási többség",
+      "costBasis": "Költségmegosztás alapja"
+    },
+    "majority": {
+      "SIMPLE_MAJORITY": "Egyszerű többség",
+      "TWO_THIRDS": "Kétharmados többség",
+      "FOUR_FIFTHS": "Négyötödös többség",
+      "UNANIMOUS": "Egyhangú"
+    },
+    "costBasis": {
+      "OWNERSHIP_SHARE": "Tulajdoni hányad szerint",
+      "EQUAL": "Albetétenként egyenlő",
+      "AREA": "Alapterület szerint"
+    },
+    "units": {
+      "statusTitle": "{count} albetét rögzítve",
+      "statusShare": "Tulajdoni hányad összesen: {pct}% (cél 100%)",
+      "openUnits": "Lakások megnyitása"
+    },
+    "szmsz": {
+      "statusTitle": "{count} dokumentum az SZMSZ kategóriában",
+      "statusDetail": "Töltsd fel az SZMSZ-t és az alapító okiratot.",
+      "openDocuments": "Dokumentumok megnyitása"
+    },
+    "invites": {
+      "statusTitle": "{count} tag a társasházban",
+      "statusDetail": "Hívd meg a tulajdonosokat e-mailben.",
+      "openResidents": "Lakók megnyitása"
+    },
+    "review": {
+      "units": "{count} albetét · {pct}% tulajdoni hányad",
+      "szmsz": "{count} dokumentum",
+      "invites": "{count} tag",
+      "note": "A kihagyott lépéseket később bármikor befejezheted. A befejezés nem zárolja az alkalmazást."
+    },
+    "doneTitle": "Beüzemelés kész",
+    "doneBody": "A társasház alapbeállításai elkészültek. Bármelyik lépést később is módosíthatod.",
+    "doneCta": "Vissza az áttekintéshez"
   },
   "dashboard": {
     "newTask": "Új teendő",

@@ -126,6 +126,22 @@ export async function SetupChecklist({ locale, checklist }: Props) {
           </li>
         ))}
       </ul>
+
+      <Link
+        href={`/${locale}/dashboard/onboarding`}
+        className="inline-flex items-center gap-2 transition-opacity hover:opacity-90"
+        style={{
+          marginTop: "16px",
+          padding: "10px 16px",
+          borderRadius: "10px",
+          fontSize: "13px",
+          fontWeight: 600,
+          background: "var(--color-ink)",
+          color: "var(--color-bg)",
+        }}
+      >
+        {t("wizardCta")} →
+      </Link>
     </div>
   );
 }
