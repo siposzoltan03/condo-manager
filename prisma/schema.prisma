@@ -415,6 +415,7 @@ model Building {
   /// Superadmin feature console — per-building feature grant/revoke overrides.
   featureOverrides     BuildingFeatureOverride[]
   residentRemovalRequests ResidentRemovalRequest[]
+  bylawsChangeProposals   BylawsChangeProposal[]
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
 }
@@ -1881,6 +1882,10 @@ model Vote {
   /// bid is awarded automatically. Null for ordinary votes.
   linkedPublication   MarketplacePublication? @relation("AwardVote", fields: [linkedPublicationId], references: [id])
   linkedPublicationId String?
+  /// Set when this vote backs a bylaws/governance change (assembly resolution):
+  /// on close-as-passed the proposal's changeset is applied to the Building.
+  linkedBylawsProposal   BylawsChangeProposal? @relation("BylawsVote", fields: [linkedBylawsProposalId], references: [id])
+  linkedBylawsProposalId String?               @unique
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
@@ -1889,6 +1894,36 @@ model Vote {
   @@index([deadline])
   @@index([createdById])
   @@index([linkedPublicationId])
+}
+
+/// A proposed change to the building's bylaws/governance settings. Tht.
+/// requires an assembly resolution for such changes, so the proposal is
+/// backed by a közgyűlés vote and applied only when that vote passes.
+enum BylawsProposalStatus {
+  PENDING_VOTE
+  APPLIED
+  REJECTED
+  CANCELLED
+}
+
+model BylawsChangeProposal {
+  id                  String                @id @default(cuid())
+  building            Building              @relation(fields: [buildingId], references: [id])
+  buildingId          String
+  /// Board-level user who proposed it (User id — no FK, to avoid User churn).
+  proposedById        String
+  /// Proposed values — only the non-null fields are applied on approval.
+  reserveTargetHUF    BigInt?
+  defaultMajority     MajorityType?
+  costAllocationBasis CostAllocationBasis?
+  status              BylawsProposalStatus  @default(PENDING_VOTE)
+  /// The backing assembly vote (set once created).
+  vote                Vote?                 @relation("BylawsVote")
+  appliedAt           DateTime?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+
+  @@index([buildingId, status])
 }
 
 model VoteOption {

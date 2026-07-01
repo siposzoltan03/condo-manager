@@ -164,6 +164,7 @@ may require a stricter rule for specific decisions.']
   generatedReports GeneratedReport [not null]
   featureOverrides BuildingFeatureOverride [not null, note: 'Superadmin feature console — per-building feature grant/revoke overrides.']
   residentRemovalRequests ResidentRemovalRequest [not null]
+  bylawsChangeProposals BylawsChangeProposal [not null]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
 }
@@ -1290,6 +1291,24 @@ Table Vote {
 publication whose bids are the options. On close, the winning option\'s
 bid is awarded automatically. Null for ordinary votes.']
   linkedPublicationId String
+  linkedBylawsProposal BylawsChangeProposal [note: 'Set when this vote backs a bylaws/governance change (assembly resolution):
+on close-as-passed the proposal\'s changeset is applied to the Building.']
+  linkedBylawsProposalId String [unique]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table BylawsChangeProposal {
+  id String [pk]
+  building Building [not null]
+  buildingId String [not null]
+  proposedById String [not null, note: 'Board-level user who proposed it (User id — no FK, to avoid User churn).']
+  reserveTargetHUF BigInt [note: 'Proposed values — only the non-null fields are applied on approval.']
+  defaultMajority MajorityType
+  costAllocationBasis CostAllocationBasis
+  status BylawsProposalStatus [not null, default: 'PENDING_VOTE']
+  vote Vote [note: 'The backing assembly vote (set once created).']
+  appliedAt DateTime
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
 }
@@ -1718,6 +1737,13 @@ Enum MeetingQuestionStatus {
   ADDRESSED
 }
 
+Enum BylawsProposalStatus {
+  PENDING_VOTE
+  APPLIED
+  REJECTED
+  CANCELLED
+}
+
 Enum ReportStatus {
   PENDING
   RUNNING
@@ -1974,6 +2000,10 @@ Ref: Vote.meetingId > Meeting.id
 Ref: Vote.createdById > User.id
 
 Ref: Vote.linkedPublicationId > MarketplacePublication.id
+
+Ref: Vote.linkedBylawsProposalId - BylawsChangeProposal.id
+
+Ref: BylawsChangeProposal.buildingId > Building.id
 
 Ref: VoteOption.voteId > Vote.id [delete: Cascade]
 
