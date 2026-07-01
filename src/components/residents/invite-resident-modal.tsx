@@ -37,9 +37,6 @@ export function InviteResidentModal({
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<(typeof ROLES)[number]>("OWNER");
   const [unitId, setUnitId] = useState("");
-  const [relationship, setRelationship] = useState<
-    (typeof RELATIONSHIPS)[number]
-  >("OWNER");
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -56,9 +53,16 @@ export function InviteResidentModal({
     setEmail("");
     setRole("OWNER");
     setUnitId("");
-    setRelationship("OWNER");
     setErrors({});
   }
+
+  // A person's unit relationship follows from their role: a TENANT rents,
+  // while an OWNER owns — and board members must be owners (Tht. § 27),
+  // so anything that isn't a TENANT is recorded as the unit's OWNER. Derived
+  // (not user-picked) to keep the two consistent — no "tenant owner" or
+  // "board-member tenant" combinations.
+  const relationship: (typeof RELATIONSHIPS)[number] =
+    role === "TENANT" ? "TENANT" : "OWNER";
 
   function validate(): Record<string, string> {
     const errs: Record<string, string> = {};
@@ -187,52 +191,26 @@ export function InviteResidentModal({
           </select>
         </VotingField>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <VotingField
-            label={t("invite.unitLabel")}
-            htmlFor="invite-unit"
-            hint={t("invite.unitHint")}
+        <VotingField
+          label={t("invite.unitLabel")}
+          htmlFor="invite-unit"
+          hint={t("invite.unitHint")}
+        >
+          <select
+            id="invite-unit"
+            value={unitId}
+            onChange={(e) => setUnitId(e.target.value)}
+            style={votingInputStyle(false)}
           >
-            <select
-              id="invite-unit"
-              value={unitId}
-              onChange={(e) => setUnitId(e.target.value)}
-              style={votingInputStyle(false)}
-            >
-              <option value="">{t("invite.unitNone")}</option>
-              {sortedUnits.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.stairwell ? `${u.stairwell} · ` : ""}
-                  {u.number}
-                </option>
-              ))}
-            </select>
-          </VotingField>
-          <VotingField
-            label={t("invite.relationshipLabel")}
-            htmlFor="invite-relationship"
-          >
-            <select
-              id="invite-relationship"
-              value={relationship}
-              disabled={!unitId}
-              onChange={(e) =>
-                setRelationship(e.target.value as (typeof RELATIONSHIPS)[number])
-              }
-              style={{
-                ...votingInputStyle(false),
-                opacity: unitId ? 1 : 0.5,
-                cursor: unitId ? "pointer" : "not-allowed",
-              }}
-            >
-              {RELATIONSHIPS.map((r) => (
-                <option key={r} value={r}>
-                  {t(`invite.rel_${r}`)}
-                </option>
-              ))}
-            </select>
-          </VotingField>
-        </div>
+            <option value="">{t("invite.unitNone")}</option>
+            {sortedUnits.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.stairwell ? `${u.stairwell} · ` : ""}
+                {u.number}
+              </option>
+            ))}
+          </select>
+        </VotingField>
 
         <div
           className="flex justify-end items-center gap-2"
