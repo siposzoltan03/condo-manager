@@ -6,6 +6,7 @@ import Redis from "ioredis";
 import { processNotificationJob } from "./jobs";
 import { processVotingJob } from "./processors/voting";
 import { processReportJob } from "./processors/reports";
+import { processSzmszJob } from "./processors/szmsz";
 
 const connection = new Redis(process.env.REDIS_URL ?? "redis://localhost:6379", {
   maxRetriesPerRequest: null,
@@ -93,8 +94,24 @@ reportsWorker.on("failed", (job, err) => {
   console.error(`Report job ${job?.id} failed:`, err.message);
 });
 
+const szmszWorker = new Worker(
+  "szmsz",
+  async (job) => {
+    console.log(`Processing SZMSZ extraction job ${job.id}`);
+    await processSzmszJob(job);
+  },
+  { connection, concurrency: 2 },
+);
+
+szmszWorker.on("completed", (job) => {
+  console.log(`SZMSZ job ${job.id} completed`);
+});
+szmszWorker.on("failed", (job, err) => {
+  console.error(`SZMSZ job ${job?.id} failed:`, err.message);
+});
+
 console.log(
-  "Worker started, listening for jobs on 'notifications', 'voting', 'scheduled', and 'reports' queues..."
+  "Worker started, listening for jobs on 'notifications', 'voting', 'scheduled', 'reports', and 'szmsz' queues..."
 );
 
 const shutdown = async () => {
@@ -103,6 +120,7 @@ const shutdown = async () => {
   await votingWorker.close();
   await scheduledWorker.close();
   await reportsWorker.close();
+  await szmszWorker.close();
   await connection.quit();
   process.exit(0);
 };

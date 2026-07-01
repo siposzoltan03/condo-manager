@@ -3,17 +3,17 @@ import { requireBuildingContext } from "@/lib/auth";
 import { requireCapability } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { getStorage } from "@/lib/storage";
-import { extractSzmszFromPdf } from "@/lib/szmsz-extract";
+import { szmszQueue } from "@/lib/queue";
 
 // Base64 inflates ~33%; cap the decoded PDF around 15 MB.
 const MAX_BASE64_LENGTH = 21_000_000;
 
-export const maxDuration = 120;
-
 /**
- * POST /api/onboarding/extract-szmsz — AI-assisted SZMSZ extraction.
- * Body: { pdfBase64: string, fileName?: string } (base64 without data-URL prefix).
- * Returns a units + governance proposal for human review; writes nothing.
+ * POST /api/onboarding/extract-szmsz — start an async SZMSZ AI extraction.
+ * Body: { pdfBase64, fileName? }. Uploads the PDF, stores it as a Bylaws
+ * document (best-effort), enqueues a background extraction job, and returns
+ * `{ jobId, stored }` immediately. The client polls GET .../[jobId] for the
+ * result — the OpenAI call runs in the worker (no request timeout).
  */
 export async function POST(request: NextRequest) {
   try {
@@ -26,7 +26,10 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json().catch(() => null);
     const pdfBase64 = body?.pdfBase64;
-    const fileName = typeof body?.fileName === "string" ? body.fileName : undefined;
+    const fileName =
+      typeof body?.fileName === "string" && body.fileName.trim()
+        ? body.fileName.trim()
+        : "SZMSZ.pdf";
 
     if (typeof pdfBase64 !== "string" || pdfBase64.length === 0) {
       return NextResponse.json({ error: "Missing pdfBase64" }, { status: 400 });
@@ -34,7 +37,6 @@ export async function POST(request: NextRequest) {
     if (pdfBase64.length > MAX_BASE64_LENGTH) {
       return NextResponse.json({ error: "File too large (max ~15 MB)" }, { status: 413 });
     }
-
     if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json(
         { error: "AI extraction is not configured (missing OPENAI_API_KEY)." },
@@ -42,12 +44,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const extraction = await extractSzmszFromPdf(pdfBase64, fileName);
+    // Upload the PDF once; reuse the key for both the stored document and the
+    // extraction job (the worker reads the PDF back from storage).
+    const put = await getStorage().put({
+      scope: "document",
+      fileName,
+      mimeType: "application/pdf",
+      body: Buffer.from(pdfBase64, "base64"),
+    });
 
-    // Also persist the uploaded PDF as a document in the building's SZMSZ
-    // category, so the "first document uploaded" step is genuinely satisfied.
-    // board.manage-gated here (the general documents API needs chair/admin
-    // publish authority, which onboarding board members may lack).
+    // Persist as a Bylaws-category document (best-effort) so the "first
+    // document uploaded" step is satisfied. board.manage-gated here.
     let stored = false;
     try {
       const szmszCategory = await prisma.documentCategory.findFirst({
@@ -56,17 +63,9 @@ export async function POST(request: NextRequest) {
         select: { id: true },
       });
       if (szmszCategory) {
-        const buffer = Buffer.from(pdfBase64, "base64");
-        const safeName = fileName?.trim() || "SZMSZ.pdf";
-        const put = await getStorage().put({
-          scope: "document",
-          fileName: safeName,
-          mimeType: "application/pdf",
-          body: buffer,
-        });
         await prisma.document.create({
           data: {
-            title: safeName.replace(/\.pdf$/i, ""),
+            title: fileName.replace(/\.pdf$/i, ""),
             categoryId: szmszCategory.id,
             visibility: "BOARD_ONLY",
             uploadedById: ctx.userId,
@@ -85,15 +84,24 @@ export async function POST(request: NextRequest) {
         stored = true;
       }
     } catch (storeErr) {
-      // Storing is best-effort — extraction still succeeds without it.
       console.error("SZMSZ document store failed (non-fatal):", storeErr);
     }
 
-    return NextResponse.json({ ...extraction, stored });
+    const jobRec = await prisma.szmszExtractionJob.create({
+      data: {
+        buildingId: ctx.buildingId,
+        createdById: ctx.userId,
+        storageKey: put.key,
+        fileName,
+      },
+    });
+    await szmszQueue.add("extract", { jobId: jobRec.id });
+
+    return NextResponse.json({ jobId: jobRec.id, stored }, { status: 202 });
   } catch (error) {
-    console.error("SZMSZ extraction failed:", error);
+    console.error("SZMSZ extraction enqueue failed:", error);
     return NextResponse.json(
-      { error: "Extraction failed. Check the PDF and try again." },
+      { error: "Could not start extraction. Try again." },
       { status: 500 },
     );
   }

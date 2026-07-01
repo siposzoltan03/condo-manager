@@ -165,6 +165,7 @@ may require a stricter rule for specific decisions.']
   featureOverrides BuildingFeatureOverride [not null, note: 'Superadmin feature console — per-building feature grant/revoke overrides.']
   residentRemovalRequests ResidentRemovalRequest [not null]
   bylawsChangeProposals BylawsChangeProposal [not null]
+  szmszExtractionJobs SzmszExtractionJob [not null]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
 }
@@ -1313,6 +1314,24 @@ Table BylawsChangeProposal {
   updatedAt DateTime [not null]
 }
 
+Table SzmszExtractionJob {
+  id String [pk]
+  building Building [not null]
+  buildingId String [not null]
+  createdById String [not null]
+  storageKey String [not null, note: 'Storage key of the uploaded PDF (the worker reads it back).']
+  fileName String [not null]
+  status ReportStatus [not null, default: 'PENDING']
+  result Json [note: 'Extraction output { units, governance, stored } once READY.']
+  errorMessage String
+  createdAt DateTime [default: `now()`, not null]
+  finishedAt DateTime
+
+  Note: 'Async SZMSZ AI extraction (background job). The uploaded PDF is stored, a
+job is enqueued, and the worker fills `result` — the client polls status.
+Reuses ReportStatus (PENDING/RUNNING/READY/FAILED).'
+}
+
 Table VoteOption {
   id String [pk]
   vote Vote [not null]
@@ -2004,6 +2023,8 @@ Ref: Vote.linkedPublicationId > MarketplacePublication.id
 Ref: Vote.linkedBylawsProposalId - BylawsChangeProposal.id
 
 Ref: BylawsChangeProposal.buildingId > Building.id
+
+Ref: SzmszExtractionJob.buildingId > Building.id
 
 Ref: VoteOption.voteId > Vote.id [delete: Cascade]
 
