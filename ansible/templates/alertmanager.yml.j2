@@ -1,0 +1,30 @@
+# Rendered by Ansible onto the server as monitoring/alertmanager/alertmanager.yml
+# (0600). Reuses the SAME SMTP relay the app uses for its own mail — the smtp_*
+# values live in ansible/secrets.yml, so credentials are never committed.
+#
+# NOTE ON PORT: the app sends on 465 (implicit TLS), but Alertmanager speaks
+# STARTTLS, so it uses 587 by default (alert_smtp_port). require_tls stays true.
+global:
+  resolve_timeout: 5m
+  smtp_smarthost: "{{ smtp_host }}:{{ alert_smtp_port | default('587') }}"
+  smtp_from: "{{ smtp_from }}"
+  smtp_auth_username: "{{ smtp_user }}"
+  smtp_auth_password: "{{ smtp_pass }}"
+  smtp_require_tls: true
+
+route:
+  receiver: email
+  # Collapse alerts that share an alertname into one mail, then hold briefly so a
+  # burst arrives together rather than as a storm.
+  group_by: ["alertname"]
+  group_wait: 30s
+  group_interval: 5m
+  # Re-send a still-firing alert at most this often (so a lingering disk-full
+  # nags daily instead of every few minutes).
+  repeat_interval: 24h
+
+receivers:
+  - name: email
+    email_configs:
+      - to: "{{ alert_email_to }}"
+        send_resolved: true # also mail when the condition clears
