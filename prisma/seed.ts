@@ -1352,7 +1352,6 @@ const BOARD_PERMISSIONS = [
   { key: "invoice_signoff", labelKey: "perm.invoice_signoff.label", descriptionKey: "perm.invoice_signoff.desc", default: true },
   { key: "board_post", labelKey: "perm.board_post.label", descriptionKey: "perm.board_post.desc", default: true },
   { key: "vote_create", labelKey: "perm.vote_create.label", descriptionKey: "perm.vote_create.desc", default: true },
-  { key: "edit_resident_contact", labelKey: "perm.edit_resident_contact.label", descriptionKey: "perm.edit_resident_contact.desc", default: true },
   { key: "maintenance_orders", labelKey: "perm.maintenance_orders.label", descriptionKey: "perm.maintenance_orders.desc", default: true },
   { key: "delete_resident", labelKey: "perm.delete_resident.label", descriptionKey: "perm.delete_resident.desc", default: false },
   { key: "modify_bylaws", labelKey: "perm.modify_bylaws.label", descriptionKey: "perm.modify_bylaws.desc", default: false },

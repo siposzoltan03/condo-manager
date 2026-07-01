@@ -1351,7 +1351,6 @@ const BOARD_PERM_KEYS = [
   "invoice_signoff",
   "board_post",
   "vote_create",
-  "edit_resident_contact",
   "maintenance_orders",
 ];
 
