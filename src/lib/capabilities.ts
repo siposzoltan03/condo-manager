@@ -109,7 +109,30 @@ export interface ActorContext {
    *  their units. Never gate privilege on this; Tht. has no legal
    *  distinction between "rezidens" and "távoli tulajdonos". */
   livesAtUnit?: boolean;
+  /** BoardPermission keys explicitly granted to this member for the active
+   *  building (the per-resident "permissions" editor). Additive delegation —
+   *  a grant can unlock an operational capability the base role lacks. See
+   *  GRANT_UNLOCKS. Loaded per-request in requireBuildingContext(). */
+  grants?: readonly string[];
 }
+
+/**
+ * Maps a delegatable capability → the BoardPermission grant key that unlocks
+ * it. A board member holding the grant gets the capability even though their
+ * base role wouldn't. Additive only — never removes access. Grants without a
+ * clean capability target (edit_resident_contact, delete_resident,
+ * modify_bylaws) are intentionally not wired: each would need a dedicated
+ * capability + gating on the underlying action.
+ */
+const GRANT_UNLOCKS: Partial<Record<Capability, string>> = {
+  "manage.budget": "financial_full",
+  "view.building.finance": "financial_full",
+  "approve.invoice": "invoice_signoff",
+  "announcement.publish": "board_post",
+  "announcement.boardChannel": "board_post",
+  "vote.start": "vote_create",
+  "ticket.assign": "maintenance_orders",
+};
 
 export function can(
   actor: ActorContext,
@@ -120,6 +143,14 @@ export function can(
   // building-legal powers without the explicit impersonation flow.
   if (actor.role === "SUPER_ADMIN") {
     return SUPER_ADMIN_CAPS.has(cap);
+  }
+
+  // Additive delegation: an explicit board-permission grant unlocks the mapped
+  // operational capability regardless of what the base role allows. Returns
+  // true only — it can never reduce access below the role baseline below.
+  if (actor.grants && actor.grants.length > 0) {
+    const grantKey = GRANT_UNLOCKS[cap];
+    if (grantKey && actor.grants.includes(grantKey)) return true;
   }
 
   // Representative authority — Tht. § 43. Either the sole közös

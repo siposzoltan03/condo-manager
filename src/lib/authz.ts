@@ -31,6 +31,8 @@ export interface BuildingActor {
   ownsAnyUnit?: boolean;
   isAuditor?: boolean;
   isProfessional?: boolean;
+  /** Explicit board-permission grant keys for the active building. */
+  grants?: readonly string[];
 }
 
 /** Build a typed ActorContext from a building context. */
@@ -41,6 +43,7 @@ export function actorFrom(ctx: BuildingActor): ActorContext {
     ownsAnyUnit: ctx.ownsAnyUnit,
     isAuditor: ctx.isAuditor,
     isProfessional: ctx.isProfessional,
+    grants: ctx.grants,
   };
 }
 
