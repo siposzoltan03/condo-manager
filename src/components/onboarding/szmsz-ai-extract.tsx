@@ -2,48 +2,50 @@
 
 import { useState, useRef } from "react";
 import { useTranslations } from "next-intl";
-import { importUnits } from "@/app/actions/units";
-import type { ImportRow } from "@/lib/import/types";
 
-interface ExtractedUnit {
+export interface ExtractedUnit {
   number: string;
   floor: number;
   size: number;
   ownershipShare: number;
 }
-interface Extraction {
+export interface Extraction {
   units: ExtractedUnit[];
   governance: {
     reserveTargetHUF: number | null;
     defaultMajority: string | null;
     costAllocationBasis: string | null;
   };
+  stored?: boolean;
 }
 
-const SHARE_EPS = 0.0001;
-
+/**
+ * SZMSZ upload + AI extraction. On success it lifts the result to the wizard
+ * (via onExtracted) so the Units and Governance steps can pre-fill from it,
+ * and the extraction survives step navigation. The uploaded PDF is also stored
+ * server-side in the Bylaws category (onReload refreshes the doc count).
+ */
 export function SzmszAiExtract({
   locale,
+  extraction,
+  onExtracted,
   onReload,
 }: {
   locale: string;
+  extraction: Extraction | null;
+  onExtracted: (e: Extraction) => void;
   onReload: () => Promise<void>;
 }) {
   const t = useTranslations("buildingOnboarding.ai");
-  const [busy, setBusy] = useState<"idle" | "extracting" | "importing" | "gov">("idle");
+  const tg = useTranslations("buildingOnboarding");
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [extraction, setExtraction] = useState<Extraction | null>(null);
-  const [importMsg, setImportMsg] = useState<string | null>(null);
-  const [govMsg, setGovMsg] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const nf = new Intl.NumberFormat(locale === "en" ? "en-US" : "hu-HU");
 
   async function handleFile(file: File) {
     setError(null);
-    setExtraction(null);
-    setImportMsg(null);
-    setGovMsg(null);
     if (file.type !== "application/pdf") {
       setError(t("notPdf"));
       return;
@@ -52,7 +54,7 @@ export function SzmszAiExtract({
       setError(t("tooLarge"));
       return;
     }
-    setBusy("extracting");
+    setBusy(true);
     try {
       const base64 = await fileToBase64(file);
       const res = await fetch("/api/onboarding/extract-szmsz", {
@@ -65,81 +67,19 @@ export function SzmszAiExtract({
         setError(d?.error ?? t("extractFailed"));
         return;
       }
-      setExtraction((await res.json()) as Extraction);
+      const result = (await res.json()) as Extraction;
+      onExtracted(result);
+      await onReload(); // stored doc → refresh the doc count
     } catch {
       setError(t("extractFailed"));
     } finally {
-      setBusy("idle");
+      setBusy(false);
     }
   }
 
   const shareSum =
     extraction?.units.reduce((s, u) => s + (u.ownershipShare || 0), 0) ?? 0;
-  const sharesComplete = Math.abs(shareSum - 1) <= SHARE_EPS;
-
-  async function handleImport() {
-    if (!extraction) return;
-    setImportMsg(null);
-    setBusy("importing");
-    try {
-      const rows: ImportRow[] = extraction.units.map((u) => ({
-        unit_number: u.number,
-        floor: String(u.floor),
-        size_sqm: String(u.size),
-        ownership_share: String(u.ownershipShare),
-      }));
-      const result = await importUnits(rows);
-      if (result.created > 0) {
-        setImportMsg(t("imported", { count: result.created }));
-        await onReload();
-      } else {
-        const first = result.errors[0]?.message;
-        setImportMsg(first ? `${t("importNone")} — ${first}` : t("importNone"));
-      }
-    } catch {
-      setImportMsg(t("importError"));
-    } finally {
-      setBusy("idle");
-    }
-  }
-
-  async function handleApplyGovernance() {
-    if (!extraction) return;
-    const g = extraction.governance;
-    const payload: Record<string, unknown> = { action: "governance" };
-    if (g.reserveTargetHUF != null) payload.reserveTargetHUF = g.reserveTargetHUF;
-    if (g.defaultMajority) payload.defaultMajority = g.defaultMajority;
-    if (g.costAllocationBasis) payload.costAllocationBasis = g.costAllocationBasis;
-    if (Object.keys(payload).length === 1) {
-      setGovMsg(t("govNone"));
-      return;
-    }
-    setGovMsg(null);
-    setBusy("gov");
-    try {
-      const res = await fetch("/api/onboarding", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        setGovMsg(t("govError"));
-        return;
-      }
-      setGovMsg(t("govApplied"));
-      await onReload();
-    } catch {
-      setGovMsg(t("govError"));
-    } finally {
-      setBusy("idle");
-    }
-  }
-
-  const hasGovernance =
-    !!extraction &&
-    (extraction.governance.reserveTargetHUF != null ||
-      !!extraction.governance.defaultMajority ||
-      !!extraction.governance.costAllocationBasis);
+  const g = extraction?.governance;
 
   return (
     <div
@@ -151,24 +91,20 @@ export function SzmszAiExtract({
         border: "1px solid color-mix(in srgb, var(--color-blue) 25%, transparent)",
       }}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div
-            className="font-mono"
-            style={{ fontSize: "10px", color: "var(--color-blue)", letterSpacing: "0.1em", textTransform: "uppercase" }}
-          >
-            {t("eyebrow")}
-          </div>
-          <div style={{ fontSize: "15px", fontWeight: 600, marginTop: "3px" }}>{t("title")}</div>
-          <p style={{ fontSize: "13px", color: "var(--color-ink-soft)", margin: "3px 0 0", maxWidth: "56ch" }}>
-            {t("subtitle")}
-          </p>
-        </div>
+      <div
+        className="font-mono"
+        style={{ fontSize: "10px", color: "var(--color-blue)", letterSpacing: "0.1em", textTransform: "uppercase" }}
+      >
+        {t("eyebrow")}
       </div>
+      <div style={{ fontSize: "15px", fontWeight: 600, marginTop: "3px" }}>{t("title")}</div>
+      <p style={{ fontSize: "13px", color: "var(--color-ink-soft)", margin: "3px 0 0", maxWidth: "56ch" }}>
+        {t("subtitle")}
+      </p>
 
       <button
         type="button"
-        disabled={busy !== "idle"}
+        disabled={busy}
         onClick={() => fileInputRef.current?.click()}
         className="inline-flex items-center gap-2 transition-opacity hover:opacity-90"
         style={{
@@ -179,17 +115,17 @@ export function SzmszAiExtract({
           fontWeight: 600,
           background: "var(--color-ink)",
           color: "var(--color-bg)",
-          cursor: busy === "idle" ? "pointer" : "not-allowed",
-          opacity: busy === "extracting" ? 0.6 : 1,
+          cursor: busy ? "not-allowed" : "pointer",
+          opacity: busy ? 0.6 : 1,
         }}
       >
-        {busy === "extracting" ? t("extracting") : t("uploadCta")}
+        {busy ? t("extracting") : extraction ? t("reupload") : t("uploadCta")}
       </button>
       <input
         ref={fileInputRef}
         type="file"
         accept="application/pdf"
-        disabled={busy !== "idle"}
+        disabled={busy}
         style={{ display: "none" }}
         onChange={(e) => {
           const f = e.target.files?.[0];
@@ -209,105 +145,44 @@ export function SzmszAiExtract({
       )}
 
       {extraction && (
-        <div style={{ marginTop: "14px" }}>
-          {/* Units review */}
-          <div className="flex items-center justify-between" style={{ marginBottom: "6px" }}>
-            <span className="font-mono" style={{ fontSize: "11px", color: "var(--color-muted)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
-              {t("unitsFound", { count: extraction.units.length })}
-            </span>
-            <span
-              className="font-mono"
-              style={{ fontSize: "11px", fontWeight: 600, color: sharesComplete ? "var(--color-moss)" : "var(--color-ochre)" }}
-            >
-              {t("shareSum", { pct: (shareSum * 100).toLocaleString(locale === "en" ? "en-US" : "hu-HU", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) })}
-            </span>
+        <div
+          className="rounded-lg"
+          style={{
+            marginTop: "14px",
+            padding: "12px 14px",
+            background: "var(--color-bg-3)",
+            border: "1px solid color-mix(in srgb, var(--color-ink) 10%, transparent)",
+          }}
+        >
+          <div style={{ fontSize: "13px", fontWeight: 600 }}>
+            {t("summaryUnits", {
+              count: extraction.units.length,
+              pct: (shareSum * 100).toLocaleString(locale === "en" ? "en-US" : "hu-HU", {
+                minimumFractionDigits: 1,
+                maximumFractionDigits: 1,
+              }),
+            })}
           </div>
-
-          <div style={{ maxHeight: "240px", overflowY: "auto", borderRadius: "8px", border: "1px solid color-mix(in srgb, var(--color-ink) 10%, transparent)" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12.5px" }}>
-              <thead>
-                <tr style={{ background: "var(--color-bg-3)", textAlign: "left" }}>
-                  <Th>{t("colNumber")}</Th>
-                  <Th>{t("colFloor")}</Th>
-                  <Th>{t("colSize")}</Th>
-                  <Th>{t("colShare")}</Th>
-                </tr>
-              </thead>
-              <tbody>
-                {extraction.units.map((u, i) => (
-                  <tr key={`${u.number}-${i}`} style={{ borderTop: "1px solid color-mix(in srgb, var(--color-ink) 6%, transparent)" }}>
-                    <Td>{u.number}</Td>
-                    <Td>{u.floor}</Td>
-                    <Td>{nf.format(u.size)} m²</Td>
-                    <Td>{(u.ownershipShare * 100).toLocaleString(locale === "en" ? "en-US" : "hu-HU", { maximumFractionDigits: 4 })}%</Td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3" style={{ marginTop: "12px" }}>
-            <button
-              type="button"
-              onClick={handleImport}
-              disabled={busy !== "idle" || extraction.units.length === 0}
-              className="transition-opacity hover:opacity-90 disabled:opacity-50"
-              style={{ padding: "9px 14px", borderRadius: "8px", fontSize: "13px", fontWeight: 600, background: "var(--color-ink)", color: "var(--color-bg)" }}
-            >
-              {busy === "importing" ? t("importing") : t("importCta")}
-            </button>
-            {importMsg && <span style={{ fontSize: "13px", color: "var(--color-ink-soft)" }}>{importMsg}</span>}
-          </div>
-          {!sharesComplete && (
-            <p style={{ fontSize: "12px", color: "var(--color-ochre)", marginTop: "6px" }}>{t("shareWarning")}</p>
+          {g && (g.reserveTargetHUF != null || g.defaultMajority || g.costAllocationBasis) && (
+            <ul style={{ fontSize: "13px", margin: "6px 0 0", paddingLeft: "16px", listStyle: "disc", color: "var(--color-ink-soft)" }}>
+              {g.reserveTargetHUF != null && (
+                <li>{t("govReserve", { amount: nf.format(g.reserveTargetHUF) })}</li>
+              )}
+              {g.defaultMajority && (
+                <li>{t("govMajority")}: {tg(`majority.${g.defaultMajority}`)}</li>
+              )}
+              {g.costAllocationBasis && (
+                <li>{t("govCostBasis")}: {tg(`costBasis.${g.costAllocationBasis}`)}</li>
+              )}
+            </ul>
           )}
-
-          {/* Governance review */}
-          {hasGovernance && (
-            <div style={{ marginTop: "16px", paddingTop: "14px", borderTop: "1px solid color-mix(in srgb, var(--color-ink) 8%, transparent)" }}>
-              <span className="font-mono" style={{ fontSize: "11px", color: "var(--color-muted)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
-                {t("governanceFound")}
-              </span>
-              <ul style={{ fontSize: "13px", margin: "6px 0 0", paddingLeft: "16px", listStyle: "disc" }}>
-                {extraction.governance.reserveTargetHUF != null && (
-                  <li>{t("govReserve", { amount: nf.format(extraction.governance.reserveTargetHUF) })}</li>
-                )}
-                {extraction.governance.defaultMajority && (
-                  <li>{t("govMajority")}: {extraction.governance.defaultMajority}</li>
-                )}
-                {extraction.governance.costAllocationBasis && (
-                  <li>{t("govCostBasis")}: {extraction.governance.costAllocationBasis}</li>
-                )}
-              </ul>
-              <div className="flex flex-wrap items-center gap-3" style={{ marginTop: "10px" }}>
-                <button
-                  type="button"
-                  onClick={handleApplyGovernance}
-                  disabled={busy !== "idle"}
-                  className="transition-opacity hover:opacity-90 disabled:opacity-50"
-                  style={{ padding: "9px 14px", borderRadius: "8px", fontSize: "13px", fontWeight: 600, background: "var(--color-card)", color: "var(--color-ink)", border: "1px solid color-mix(in srgb, var(--color-ink) 12%, transparent)" }}
-                >
-                  {busy === "gov" ? t("applying") : t("applyGovCta")}
-                </button>
-                {govMsg && <span style={{ fontSize: "13px", color: "var(--color-ink-soft)" }}>{govMsg}</span>}
-              </div>
-            </div>
-          )}
+          <p style={{ fontSize: "12px", color: "var(--color-moss)", margin: "8px 0 0" }}>
+            {extraction.stored ? `✓ ${t("stored")}` : ""} {t("reviewNext")}
+          </p>
         </div>
       )}
     </div>
   );
-}
-
-function Th({ children }: { children: React.ReactNode }) {
-  return (
-    <th className="font-mono" style={{ padding: "7px 10px", fontSize: "10px", color: "var(--color-muted)", letterSpacing: "0.05em", textTransform: "uppercase", fontWeight: 600 }}>
-      {children}
-    </th>
-  );
-}
-function Td({ children }: { children: React.ReactNode }) {
-  return <td style={{ padding: "6px 10px" }}>{children}</td>;
 }
 
 function fileToBase64(file: File): Promise<string> {

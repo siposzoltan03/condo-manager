@@ -2990,11 +2990,16 @@
       "statusDetail": "Töltsd fel az SZMSZ-t és az alapító okiratot.",
       "openDocuments": "Dokumentumok megnyitása"
     },
+    "prefilledFromSzmsz": "Az SZMSZ-ből előkitöltve — ellenőrizd, mielőtt mented.",
     "ai": {
       "eyebrow": "AI kitöltés",
       "title": "Kitöltés az SZMSZ-ből",
-      "subtitle": "Tölts fel egy SZMSZ / alapító okirat PDF-et, és az AI kiolvassa az albetéteket és az önkormányzási beállításokat. Minden javaslatot te hagysz jóvá.",
+      "subtitle": "Tölts fel egy SZMSZ / alapító okirat PDF-et, és az AI kiolvassa az albetéteket és az önkormányzási beállításokat. Az albetéteket és a beállításokat a következő lépésekben ellenőrizheted és rögzítheted.",
       "uploadCta": "SZMSZ PDF feltöltése",
+      "reupload": "Másik PDF feltöltése",
+      "summaryUnits": "{count} albetét felismerve · Σ {pct}% tulajdoni hányad",
+      "stored": "SZMSZ elmentve a Dokumentumokhoz.",
+      "reviewNext": "Ellenőrizd és rögzítsd a következő lépésekben.",
       "extracting": "Feldolgozás…",
       "gdprNote": "Az SZMSZ személyes adatokat tartalmazhat. A feltöltött PDF-et AI-szolgáltató dolgozza fel; a javaslatokat mentés előtt ellenőrizd.",
       "notPdf": "Csak PDF fájl tölthető fel.",

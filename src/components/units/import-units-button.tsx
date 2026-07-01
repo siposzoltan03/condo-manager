@@ -42,7 +42,7 @@ const unitsImportConfig: ImportConfig = {
   ],
 };
 
-export function ImportUnitsButton() {
+export function ImportUnitsButton({ onImported }: { onImported?: () => void } = {}) {
   const t = useTranslations("import");
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -50,6 +50,7 @@ export function ImportUnitsButton() {
   async function handleImport(rows: ImportRow[]): Promise<ImportResult> {
     const result = await importUnits(rows);
     router.refresh();
+    if (result.created > 0) onImported?.();
     return result;
   }
 
