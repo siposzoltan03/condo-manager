@@ -62,10 +62,21 @@ export async function POST(request: NextRequest) {
         orderBy: { sortOrder: "asc" },
         select: { id: true },
       });
+      const title = fileName.replace(/\.pdf$/i, "");
       if (szmszCategory) {
+        // Dedupe: don't pile up documents when the same SZMSZ is re-uploaded
+        // (e.g. retries). If one with this title already exists in the
+        // category, treat it as stored and skip creating another.
+        const existingDoc = await prisma.document.findFirst({
+          where: { categoryId: szmszCategory.id, title, isArchived: false },
+          select: { id: true },
+        });
+        if (existingDoc) {
+          stored = true;
+        } else {
         await prisma.document.create({
           data: {
-            title: fileName.replace(/\.pdf$/i, ""),
+            title,
             categoryId: szmszCategory.id,
             visibility: "BOARD_ONLY",
             uploadedById: ctx.userId,
@@ -82,6 +93,7 @@ export async function POST(request: NextRequest) {
           },
         });
         stored = true;
+        }
       }
     } catch (storeErr) {
       console.error("SZMSZ document store failed (non-fatal):", storeErr);
