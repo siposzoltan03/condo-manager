@@ -2925,6 +2925,7 @@
       "subtitle": "A few steps to complete your building's data. This list disappears once everything is done.",
       "progress": "{done}/{total} done · {pct}%",
       "action": "Set up",
+      "wizardCta": "Setup wizard",
       "items": {
         "units": "Record units",
         "shares": "Ownership shares reach 100%",
@@ -2933,6 +2934,79 @@
         "documents": "First document uploaded"
       }
     }
+  },
+  "buildingOnboarding": {
+    "eyebrow": "Setup",
+    "title": "Set up your building",
+    "subtitle": "We'll configure your building's data step by step.",
+    "stepCounter": "Step {current} of {total}",
+    "next": "Next",
+    "nextSkippable": "Next (skippable)",
+    "back": "Back",
+    "finish": "Finish",
+    "refresh": "Refresh",
+    "saveFailed": "Could not save. Please try again.",
+    "steps": {
+      "basics": "Basics",
+      "governance": "Governance",
+      "units": "Units",
+      "szmsz": "Bylaws",
+      "invites": "Invites",
+      "review": "Review"
+    },
+    "subtitles": {
+      "basics": "Your building's name and address.",
+      "governance": "Reserve-fund target, voting majority, and cost-allocation basis.",
+      "units": "Record the units so ownership shares reach 100%.",
+      "szmsz": "Upload the organisational & operational rules (SZMSZ).",
+      "invites": "Invite owners and board members.",
+      "review": "Review your settings, then finish setup."
+    },
+    "fields": {
+      "name": "Building name",
+      "address": "Address",
+      "zipCode": "Postal code",
+      "city": "City",
+      "reserveTarget": "Reserve-fund target (HUF)",
+      "reserveTargetHint": "Target balance for the renovation reserve. Editable later.",
+      "defaultMajority": "Default voting majority",
+      "costBasis": "Cost-allocation basis"
+    },
+    "majority": {
+      "SIMPLE_MAJORITY": "Simple majority",
+      "TWO_THIRDS": "Two-thirds majority",
+      "FOUR_FIFTHS": "Four-fifths majority",
+      "UNANIMOUS": "Unanimous"
+    },
+    "costBasis": {
+      "OWNERSHIP_SHARE": "By ownership share",
+      "EQUAL": "Equal per unit",
+      "AREA": "By floor area"
+    },
+    "units": {
+      "statusTitle": "{count} units recorded",
+      "statusShare": "Total ownership share: {pct}% (target 100%)",
+      "openUnits": "Open units"
+    },
+    "szmsz": {
+      "statusTitle": "{count} documents in the bylaws category",
+      "statusDetail": "Upload the SZMSZ and the founding deed.",
+      "openDocuments": "Open documents"
+    },
+    "invites": {
+      "statusTitle": "{count} members in the building",
+      "statusDetail": "Invite owners by email.",
+      "openResidents": "Open residents"
+    },
+    "review": {
+      "units": "{count} units · {pct}% ownership share",
+      "szmsz": "{count} documents",
+      "invites": "{count} members",
+      "note": "You can finish skipped steps anytime. Finishing does not lock the app."
+    },
+    "doneTitle": "Setup complete",
+    "doneBody": "Your building's basics are configured. You can revise any step later.",
+    "doneCta": "Back to dashboard"
   },
   "dashboard": {
     "newTask": "New task",
