@@ -243,3 +243,44 @@ describe("can() — governance: users.assignRole (relational escalation)", () =>
     expect(can(actor({ role: "OWNER" }), "users.assignRole", { targetRole: "TENANT" })).toBe(false);
   });
 });
+
+describe("can() — additive board-permission grants", () => {
+  it("a plain BOARD_MEMBER lacks the delegatable operational caps", () => {
+    const bm = actor({ role: "BOARD_MEMBER" });
+    expect(can(bm, "manage.budget")).toBe(false);
+    expect(can(bm, "approve.invoice")).toBe(false);
+    expect(can(bm, "vote.start")).toBe(false);
+    expect(can(bm, "announcement.publish")).toBe(false);
+    expect(can(bm, "ticket.assign")).toBe(false);
+  });
+
+  it("a matching grant unlocks the mapped capability", () => {
+    expect(can(actor({ role: "BOARD_MEMBER", grants: ["financial_full"] }), "manage.budget")).toBe(true);
+    expect(can(actor({ role: "BOARD_MEMBER", grants: ["invoice_signoff"] }), "approve.invoice")).toBe(true);
+    expect(can(actor({ role: "BOARD_MEMBER", grants: ["vote_create"] }), "vote.start")).toBe(true);
+    expect(can(actor({ role: "BOARD_MEMBER", grants: ["maintenance_orders"] }), "ticket.assign")).toBe(true);
+    // board_post covers both announcement caps
+    const poster = actor({ role: "BOARD_MEMBER", grants: ["board_post"] });
+    expect(can(poster, "announcement.publish")).toBe(true);
+    expect(can(poster, "announcement.boardChannel")).toBe(true);
+  });
+
+  it("a grant only unlocks its own capability, not others", () => {
+    const financeOnly = actor({ role: "BOARD_MEMBER", grants: ["financial_full"] });
+    expect(can(financeOnly, "manage.budget")).toBe(true);
+    expect(can(financeOnly, "vote.start")).toBe(false);
+    expect(can(financeOnly, "approve.invoice")).toBe(false);
+  });
+
+  it("unmapped grant keys (delete_resident, modify_bylaws) do not unlock caps", () => {
+    const a = actor({ role: "BOARD_MEMBER", grants: ["delete_resident", "modify_bylaws"] });
+    expect(can(a, "users.manage")).toBe(false);
+    expect(can(a, "document.publish.public")).toBe(false);
+  });
+
+  it("grants never reduce access below the role baseline", () => {
+    // ADMIN keeps everything even with no grants passed.
+    expect(can(actor({ role: "ADMIN" }), "manage.budget")).toBe(true);
+    expect(can(actor({ role: "ADMIN", grants: [] }), "approve.invoice")).toBe(true);
+  });
+});

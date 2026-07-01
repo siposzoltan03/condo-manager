@@ -783,10 +783,12 @@ export interface DashboardContext {
   ownsAnyUnit: boolean;
   isAuditor: boolean;
   isProfessional: boolean;
+  /** Board-permission grants — so page-level allows() honors delegation. */
+  grants: readonly string[];
 }
 
 export const getDashboardContext = cache(async (): Promise<DashboardContext> => {
-  const { role, isChair, ownsAnyUnit, isAuditor, isProfessional } =
+  const { role, isChair, ownsAnyUnit, isAuditor, isProfessional, grants } =
     await requireBuildingContext();
   // Get user name from session
   const { getCurrentUser } = await import("@/lib/auth");
@@ -798,6 +800,7 @@ export const getDashboardContext = cache(async (): Promise<DashboardContext> => 
     ownsAnyUnit,
     isAuditor,
     isProfessional,
+    grants,
   };
 });
 

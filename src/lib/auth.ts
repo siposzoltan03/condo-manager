@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import { authOptions } from "./auth-options";
+import { prisma } from "./prisma";
 
 export const { handlers, auth, signIn, signOut } = NextAuth(authOptions);
 
@@ -25,10 +26,27 @@ export async function requireBuildingContext() {
   const buildingId = imp?.buildingId ?? user.activeBuildingId;
   if (!buildingId) throw new Error("No building selected");
 
+  const userId = imp?.userId ?? user.id;
+  const role = imp?.role ?? user.activeRole;
+
+  // Board-permission grants are additive delegation (per-resident editor).
+  // Load fresh (not from the session) so an admin's toggle applies immediately,
+  // and only for BOARD_MEMBER — ADMIN/SUPER_ADMIN already hold these caps and
+  // OWNER/TENANT are never granted board permissions.
+  let grants: string[] = [];
+  if (role === "BOARD_MEMBER") {
+    const rows = await prisma.userBuildingPermission.findMany({
+      where: { userBuilding: { userId, buildingId } },
+      select: { permission: { select: { key: true } } },
+    });
+    grants = rows.map((r) => r.permission.key);
+  }
+
   return {
-    userId: imp?.userId ?? user.id,
+    userId,
     buildingId,
-    role: imp?.role ?? user.activeRole,
+    role,
+    grants,
     // ActorContext flags — already hydrated into the session (auth-options.ts).
     // Enables can(actor, capability) at call-sites without extra DB lookups.
     isChair: (imp ? imp.isChair : user.isChair) ?? false,
