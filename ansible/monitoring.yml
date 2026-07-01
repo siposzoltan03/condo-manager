@@ -24,6 +24,18 @@
         dest: "{{ mon_dir }}/.env"
         mode: "0600"
 
+    - name: Ensure the alertmanager config directory exists
+      ansible.builtin.file:
+        path: "{{ mon_dir }}/alertmanager"
+        state: directory
+        mode: "0755"
+
+    - name: Template the Alertmanager config (SMTP creds — reuses the app relay)
+      ansible.builtin.template:
+        src: templates/alertmanager.yml.j2
+        dest: "{{ mon_dir }}/alertmanager/alertmanager.yml"
+        mode: "0600"
+
     - name: Pull and start the monitoring stack
       ansible.builtin.command:
         cmd: docker compose up -d --pull always
@@ -35,6 +47,9 @@
 
     - name: Wait for Grafana
       ansible.builtin.wait_for: { host: 127.0.0.1, port: 3001, timeout: 60 }
+
+    - name: Wait for Alertmanager
+      ansible.builtin.wait_for: { host: 127.0.0.1, port: 9093, timeout: 60 }
 
     - name: Query Prometheus for scrape-target health
       ansible.builtin.uri:
