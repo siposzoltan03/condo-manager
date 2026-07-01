@@ -414,6 +414,7 @@ model Building {
   generatedReports     GeneratedReport[]
   /// Superadmin feature console — per-building feature grant/revoke overrides.
   featureOverrides     BuildingFeatureOverride[]
+  residentRemovalRequests ResidentRemovalRequest[]
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
 }
@@ -443,10 +444,45 @@ model UserBuilding {
   accreditationVerifiedBy     User?     @relation("AccreditationVerifier", fields: [accreditationVerifiedById], references: [id])
   permissions UserBuildingPermission[]
   resignations BoardResignation[]
+  removalRequests ResidentRemovalRequest[]
   createdAt   DateTime     @default(now())
 
   @@unique([userId, buildingId])
   @@index([buildingId])
+}
+
+/// Dual-control resident removal (Tht.-flavoured "requires 2 board members").
+/// One board-level user initiates; a DIFFERENT one approves; on approval the
+/// membership is soft-removed (deactivated). Accounting records + assembly
+/// minutes are retained per statutory periods (Számv. tv. §169: 8y; Ptk.
+/// elévülés: 5y); hard erasure stays the separate GDPR flow.
+enum ResidentRemovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+model ResidentRemovalRequest {
+  id                   String                @id @default(cuid())
+  building             Building              @relation(fields: [buildingId], references: [id])
+  buildingId           String
+  /// The membership proposed for removal.
+  targetUserBuilding   UserBuilding          @relation(fields: [targetUserBuildingId], references: [id], onDelete: Cascade)
+  targetUserBuildingId String
+  /// Board member/admin who initiated (User id — no FK, to avoid User churn).
+  requestedById        String
+  reason               String
+  status               ResidentRemovalStatus @default(PENDING)
+  /// The DIFFERENT board member/admin who approved or rejected (User id).
+  reviewedById         String?
+  reviewedAt           DateTime?
+  reviewNote           String?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+
+  @@index([buildingId, status])
+  @@index([targetUserBuildingId])
 }
 
 /// Phase 2 — Tht. § 27(3) audit committee + § 51/A external auditor.

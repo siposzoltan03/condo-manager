@@ -59,6 +59,11 @@ export type Capability =
   //    building capabilities, SUPER_ADMIN DOES hold these.
   | "users.manage"
   | "users.assignRole"
+  /** Initiate/approve a dual-control resident removal. Baseline ADMIN;
+   *  delegatable to a board member via the delete_resident grant. The
+   *  two-person control (distinct initiator + approver) is enforced in the
+   *  action, not here. */
+  | "resident.remove"
   | "units.manage"
   | "contractor.view"
   | "contractor.manage"
@@ -132,6 +137,7 @@ const GRANT_UNLOCKS: Partial<Record<Capability, string>> = {
   "announcement.boardChannel": "board_post",
   "vote.start": "vote_create",
   "ticket.assign": "maintenance_orders",
+  "resident.remove": "delete_resident",
 };
 
 export function can(
@@ -224,6 +230,12 @@ export function can(
     // ── Governance ───────────────────────────────────────────────────────
     case "users.manage":
       // Create/edit/deactivate users, resident permissions, board perms.
+      return actor.role === "ADMIN";
+
+    case "resident.remove":
+      // Baseline ADMIN; a board member gets it via the delete_resident grant
+      // (handled by the additive GRANT_UNLOCKS check above). Two-person control
+      // (distinct initiator + approver) is enforced in the removal action.
       return actor.role === "ADMIN";
 
     case "users.assignRole": {
