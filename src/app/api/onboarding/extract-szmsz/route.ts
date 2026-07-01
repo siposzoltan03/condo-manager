@@ -64,36 +64,53 @@ export async function POST(request: NextRequest) {
       });
       const title = fileName.replace(/\.pdf$/i, "");
       if (szmszCategory) {
-        // Dedupe: don't pile up documents when the same SZMSZ is re-uploaded
-        // (e.g. retries). If one with this title already exists in the
-        // category, treat it as stored and skip creating another.
+        // If a same-titled SZMSZ already exists, append a new version
+        // (preserving history) rather than creating a duplicate document.
+        // Otherwise create the document at version 1.
         const existingDoc = await prisma.document.findFirst({
           where: { categoryId: szmszCategory.id, title, isArchived: false },
-          select: { id: true },
-        });
-        if (existingDoc) {
-          stored = true;
-        } else {
-        await prisma.document.create({
-          data: {
-            title,
-            categoryId: szmszCategory.id,
-            visibility: "BOARD_ONLY",
-            uploadedById: ctx.userId,
-            versions: {
-              create: {
-                versionNumber: 1,
-                fileUrl: put.url,
-                fileName: put.fileName,
-                fileSize: put.fileSize,
-                mimeType: put.mimeType,
-                uploadedById: ctx.userId,
-              },
-            },
+          select: {
+            id: true,
+            versions: { orderBy: { versionNumber: "desc" }, take: 1, select: { versionNumber: true } },
           },
         });
-        stored = true;
+        if (existingDoc) {
+          await prisma.documentVersion.create({
+            data: {
+              documentId: existingDoc.id,
+              versionNumber: (existingDoc.versions[0]?.versionNumber ?? 0) + 1,
+              fileUrl: put.url,
+              fileName: put.fileName,
+              fileSize: put.fileSize,
+              mimeType: put.mimeType,
+              uploadedById: ctx.userId,
+            },
+          });
+          await prisma.document.update({
+            where: { id: existingDoc.id },
+            data: { updatedAt: new Date() },
+          });
+        } else {
+          await prisma.document.create({
+            data: {
+              title,
+              categoryId: szmszCategory.id,
+              visibility: "BOARD_ONLY",
+              uploadedById: ctx.userId,
+              versions: {
+                create: {
+                  versionNumber: 1,
+                  fileUrl: put.url,
+                  fileName: put.fileName,
+                  fileSize: put.fileSize,
+                  mimeType: put.mimeType,
+                  uploadedById: ctx.userId,
+                },
+              },
+            },
+          });
         }
+        stored = true;
       }
     } catch (storeErr) {
       console.error("SZMSZ document store failed (non-fatal):", storeErr);
