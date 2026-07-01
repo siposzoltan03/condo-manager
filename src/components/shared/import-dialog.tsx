@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useTranslations } from "next-intl";
 import {
   X,
@@ -48,6 +48,7 @@ export function ImportDialog({
   const [result, setResult] = useState<ImportResult | null>(null);
   const [error, setError] = useState("");
   const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   function reset() {
     setStep("upload");
@@ -292,16 +293,21 @@ export function ImportDialog({
               <FileSpreadsheet className="h-12 w-12 text-ink-soft mx-auto mb-4" />
               <p className="text-sm font-medium text-ink mb-1">{t("dropFileHere")}</p>
               <p className="text-xs text-muted mb-4">{t("acceptedFormats")}: .xlsx, .csv</p>
-              <label className="inline-flex items-center gap-2 rounded-lg bg-blue px-4 py-2.5 text-sm font-bold text-card cursor-pointer hover:opacity-90 transition-all">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="inline-flex items-center gap-2 rounded-lg bg-blue px-4 py-2.5 text-sm font-bold text-card cursor-pointer hover:opacity-90 transition-all"
+              >
                 <Upload className="h-4 w-4" />
                 {t("chooseFile")}
-                <input
-                  type="file"
-                  accept=".xlsx,.xls,.csv"
-                  className="hidden"
-                  onChange={handleFileInput}
-                />
-              </label>
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                className="hidden"
+                onChange={handleFileInput}
+              />
             </div>
           )}
 
