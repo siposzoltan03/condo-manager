@@ -216,6 +216,7 @@ const sections: NavSection[] = [
       // their own unit, not on the building's full register.)
       { key: "units", href: "/units", icon: Icons.units, capabilities: ["units.manage"] },
       { key: "residents", href: "/residents", icon: Icons.residents },
+      { key: "governance", href: "/dashboard/governance", icon: Icons.documents, capabilities: ["view.boardContext"] },
     ],
   },
   {

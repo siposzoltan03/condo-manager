@@ -49,6 +49,7 @@
     "admin": "Adminisztráció",
     "users": "Felhasználók",
     "residents": "Lakók",
+    "governance": "Önkormányzás",
     "buildingFinance": "Épület pénzügyek",
     "maintenanceContractors": "Kivitelezők",
     "maintenanceScheduled": "Ütemezett",
@@ -3051,6 +3052,33 @@
     "doneTitle": "Beüzemelés kész",
     "doneBody": "A társasház alapbeállításai elkészültek. Bármelyik lépést később is módosíthatod.",
     "doneCta": "Vissza az áttekintéshez"
+  },
+  "governance": {
+    "title": "Önkormányzás",
+    "subtitle": "A társasház gazdálkodási és döntéshozatali beállításai. A módosításokhoz közgyűlési határozat (szavazás) szükséges.",
+    "reserveTarget": "Tartalékalap cél",
+    "majority": "Alapértelmezett szavazási többség",
+    "costBasis": "Költségmegosztás alapja",
+    "proposeCta": "Módosítás kezdeményezése",
+    "proposeTitle": "Bylaws módosítás javaslata",
+    "assemblyNote": "A módosítás csak akkor lép életbe, ha a hozzá tartozó közgyűlési szavazás elfogadja.",
+    "noChange": "Nincs változás",
+    "voteMajority": "Szükséges szavazási többség",
+    "voteMajorityHint": "SZMSZ-módosításhoz jellemzően minősített többség kell.",
+    "meeting": "Közgyűlés",
+    "noMeeting": "Nincs közelgő közgyűlés — előbb hozz létre egyet.",
+    "submitProposal": "Javaslat beküldése",
+    "cancel": "Mégse",
+    "proposeSuccess": "A javaslat létrejött, és szavazásra vár.",
+    "proposalsTitle": "Módosítási javaslatok",
+    "noProposals": "Még nincs javaslat.",
+    "openVote": "Szavazás megnyitása",
+    "status": {
+      "PENDING_VOTE": "Szavazásra vár",
+      "APPLIED": "Alkalmazva",
+      "REJECTED": "Elutasítva",
+      "CANCELLED": "Visszavonva"
+    }
   },
   "dashboard": {
     "newTask": "Új teendő",

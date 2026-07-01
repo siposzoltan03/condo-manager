@@ -49,6 +49,7 @@
     "admin": "Administration",
     "users": "Users",
     "residents": "Residents",
+    "governance": "Governance",
     "buildingFinance": "Building Finance",
     "maintenanceContractors": "Contractors",
     "maintenanceScheduled": "Scheduled",
@@ -3051,6 +3052,33 @@
     "doneTitle": "Setup complete",
     "doneBody": "Your building's basics are configured. You can revise any step later.",
     "doneCta": "Back to dashboard"
+  },
+  "governance": {
+    "title": "Governance",
+    "subtitle": "The building's financial and decision-making settings. Changes require an assembly resolution (a vote).",
+    "reserveTarget": "Reserve-fund target",
+    "majority": "Default voting majority",
+    "costBasis": "Cost-allocation basis",
+    "proposeCta": "Propose a change",
+    "proposeTitle": "Propose a bylaws change",
+    "assemblyNote": "The change only takes effect if the backing assembly vote passes.",
+    "noChange": "No change",
+    "voteMajority": "Required voting majority",
+    "voteMajorityHint": "Bylaws changes typically need a qualified majority.",
+    "meeting": "Meeting",
+    "noMeeting": "No upcoming meeting — create one first.",
+    "submitProposal": "Submit proposal",
+    "cancel": "Cancel",
+    "proposeSuccess": "Proposal created and awaiting the vote.",
+    "proposalsTitle": "Change proposals",
+    "noProposals": "No proposals yet.",
+    "openVote": "Open vote",
+    "status": {
+      "PENDING_VOTE": "Awaiting vote",
+      "APPLIED": "Applied",
+      "REJECTED": "Rejected",
+      "CANCELLED": "Cancelled"
+    }
   },
   "dashboard": {
     "newTask": "New task",
