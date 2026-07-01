@@ -154,6 +154,20 @@
       "outstanding": "Hátralék",
       "activity": "Aktivitás"
     },
+    "removal": {
+      "removeCta": "Lakó eltávolítása",
+      "reasonLabel": "{name} eltávolításának indoka",
+      "reasonPlaceholder": "Pl. elköltözött, tulajdonos-váltás…",
+      "dualControlNote": "A jóváhagyáshoz egy másik intézőbizottsági tag megerősítése szükséges.",
+      "submitRequest": "Kérelem beküldése",
+      "cancel": "Mégse",
+      "pendingTitle": "Eltávolítás jóváhagyásra vár",
+      "pendingBy": "Kezdeményezte: {name}",
+      "awaitingApproval": "Másik tag jóváhagyására vár.",
+      "approve": "Jóváhagyás",
+      "reject": "Elutasítás",
+      "removed": "Ez a lakó el lett távolítva (inaktív)."
+    },
     "permissions": {
       "managerCta": "Jogosultság szerkeszt",
       "eyebrow": "/ admin · jogosultság",
