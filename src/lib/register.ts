@@ -133,7 +133,10 @@ export async function register(rawInput: unknown, baseUrl: string): Promise<Regi
         data: {
           userId: user.id,
           buildingId: building.id,
-          role: "BOARD_MEMBER",
+          // The person who registers a building is its administrator (közös
+          // képviselő): they run onboarding, manage users/residents and assign
+          // owners to units — all of which require ADMIN (users.manage).
+          role: "ADMIN",
           isActive: true,
         },
       });
