@@ -9,6 +9,7 @@ import type {
   ResidentsRoleDistribution,
 } from "@/lib/residents-dal";
 import { PermissionsEditorModal } from "./permissions-editor-modal";
+import { ResidentRemovalControls } from "./resident-removal-controls";
 
 interface Props {
   isBoardPlus: boolean;
@@ -44,6 +45,7 @@ export function ResidentsExplorer({ groups, distribution, tabCounts, isAdmin }: 
   });
   const [profile, setProfile] = useState<ResidentProfileData | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     if (!selectedId) {
@@ -64,7 +66,7 @@ export function ResidentsExplorer({ groups, distribution, tabCounts, isAdmin }: 
     return () => {
       cancelled = true;
     };
-  }, [selectedId]);
+  }, [selectedId, refreshKey]);
 
   // Filter groups by sub-tab + search
   const visibleGroups = groups
@@ -212,6 +214,7 @@ export function ResidentsExplorer({ groups, distribution, tabCounts, isAdmin }: 
           profile={profile}
           loading={loadingProfile}
           isAdmin={isAdmin}
+          onChanged={() => setRefreshKey((k) => k + 1)}
         />
       </div>
     </>
@@ -538,10 +541,12 @@ function ProfilePanel({
   profile,
   loading,
   isAdmin,
+  onChanged,
 }: {
   profile: ResidentProfileData | null;
   loading: boolean;
   isAdmin: boolean;
+  onChanged: () => void;
 }) {
   const t = useTranslations("residents");
   const [permsOpen, setPermsOpen] = useState(false);
@@ -856,6 +861,7 @@ function ProfilePanel({
             </button>
           </div>
         )}
+        <ResidentRemovalControls profile={profile} onChanged={onChanged} />
       </div>
       <PermissionsEditorModal
         open={permsOpen}

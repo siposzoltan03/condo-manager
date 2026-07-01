@@ -118,6 +118,22 @@ export interface ResidentProfileData {
     sub: string | null;
   }[];
   isBoardPlus: boolean;
+  // ── Dual-control removal ──────────────────────────────────────────────
+  /** The membership id — target of a removal request. */
+  userBuildingId: string;
+  /** False once a removal has been approved (soft-removed). */
+  isActive: boolean;
+  /** Whether the viewer may initiate/approve removals (resident.remove). */
+  canRemove: boolean;
+  /** The viewer's user id — to enforce two-person control in the UI. */
+  currentUserId: string;
+  /** An open removal request for this resident, if any. */
+  pendingRemoval: {
+    id: string;
+    requestedById: string;
+    requesterName: string;
+    reason: string;
+  } | null;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -564,7 +580,32 @@ export const getResidentProfile = cache(
     // Phase 5 — Tht. § 22(2). Same redaction rule as the directory.
     const exposeContact = primary ? mayExposeContactData(primary) : true;
 
+    // Dual-control removal state for this membership.
+    const canRemove = allows(ctx, "resident.remove");
+    const pending = await prisma.residentRemovalRequest.findFirst({
+      where: { targetUserBuildingId: ub.id, status: "PENDING" },
+      select: { id: true, requestedById: true, reason: true },
+    });
+    let pendingRemoval: ResidentProfileData["pendingRemoval"] = null;
+    if (pending) {
+      const requester = await prisma.user.findUnique({
+        where: { id: pending.requestedById },
+        select: { name: true },
+      });
+      pendingRemoval = {
+        id: pending.id,
+        requestedById: pending.requestedById,
+        requesterName: requester?.name ?? "—",
+        reason: pending.reason,
+      };
+    }
+
     return {
+      userBuildingId: ub.id,
+      isActive: ub.isActive,
+      canRemove,
+      currentUserId: userId,
+      pendingRemoval,
       id: u.id,
       kind: "resident",
       name: u.name,

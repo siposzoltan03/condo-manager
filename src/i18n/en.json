@@ -154,6 +154,20 @@
       "outstanding": "Outstanding",
       "activity": "Activity"
     },
+    "removal": {
+      "removeCta": "Remove resident",
+      "reasonLabel": "Reason for removing {name}",
+      "reasonPlaceholder": "e.g. moved out, ownership transferred…",
+      "dualControlNote": "Approval requires confirmation by a second board member.",
+      "submitRequest": "Submit request",
+      "cancel": "Cancel",
+      "pendingTitle": "Removal awaiting approval",
+      "pendingBy": "Initiated by {name}",
+      "awaitingApproval": "Waiting for another board member to approve.",
+      "approve": "Approve",
+      "reject": "Reject",
+      "removed": "This resident has been removed (inactive)."
+    },
     "permissions": {
       "managerCta": "Edit permissions",
       "eyebrow": "/ admin · permissions",
