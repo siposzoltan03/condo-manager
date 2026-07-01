@@ -607,10 +607,6 @@
         "label": "Szavazás indítása",
         "desc": "Minden típus"
       },
-      "edit_resident_contact": {
-        "label": "Lakó adatainak szerkesztése",
-        "desc": "Csak kapcsolat mezők"
-      },
       "maintenance_orders": {
         "label": "Karbantartás megrendelés",
         "desc": "Partner szerződés alapján"

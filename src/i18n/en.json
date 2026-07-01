@@ -607,10 +607,6 @@
         "label": "Start a vote",
         "desc": "All types"
       },
-      "edit_resident_contact": {
-        "label": "Edit resident contact",
-        "desc": "Contact fields only"
-      },
       "maintenance_orders": {
         "label": "Maintenance orders",
         "desc": "Per partner contract"
