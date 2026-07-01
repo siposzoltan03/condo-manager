@@ -64,6 +64,10 @@ export type Capability =
    *  two-person control (distinct initiator + approver) is enforced in the
    *  action, not here. */
   | "resident.remove"
+  /** Propose a bylaws/governance change. Representative authority or ADMIN by
+   *  default; delegatable to a board member via the modify_bylaws grant. The
+   *  change only applies once the backing assembly vote passes. */
+  | "bylaws.modify"
   | "units.manage"
   | "contractor.view"
   | "contractor.manage"
@@ -138,6 +142,7 @@ const GRANT_UNLOCKS: Partial<Record<Capability, string>> = {
   "vote.start": "vote_create",
   "ticket.assign": "maintenance_orders",
   "resident.remove": "delete_resident",
+  "bylaws.modify": "modify_bylaws",
 };
 
 export function can(
@@ -237,6 +242,12 @@ export function can(
       // (handled by the additive GRANT_UNLOCKS check above). Two-person control
       // (distinct initiator + approver) is enforced in the removal action.
       return actor.role === "ADMIN";
+
+    case "bylaws.modify":
+      // Propose a bylaws/governance change (applied only via a passed assembly
+      // vote). Representative authority or ADMIN; a board member gets it via
+      // the modify_bylaws grant (additive check above).
+      return hasRepresentativeAuthority || actor.role === "ADMIN";
 
     case "users.assignRole": {
       // Only ADMIN reaches here (SUPER_ADMIN handled above). An ADMIN may

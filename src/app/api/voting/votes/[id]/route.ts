@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { calculateQuorum, calculateResults, calculateMeetingQuorum, calculateVoteResult } from "@/lib/voting/quorum";
 import { voteUpdated } from "@/lib/voting/events";
 import { resolveAwardVote } from "@/lib/marketplace";
+import { resolveBylawsProposal } from "@/lib/voting/bylaws-proposal";
 import { publishToMeeting } from "@/lib/assembly-bus";
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -232,6 +233,20 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         award = await resolveAwardVote(id, userId);
       } catch (err) {
         console.error("Auto-award on vote close failed:", err);
+      }
+    }
+
+    // Bylaws resolution: if a governance-change vote just closed, apply the
+    // linked proposal iff it passed. Best-effort — must not fail the close.
+    if (
+      data.status === "CLOSED" &&
+      existing.status !== "CLOSED" &&
+      existing.linkedBylawsProposalId
+    ) {
+      try {
+        await resolveBylawsProposal(id, userId);
+      } catch (err) {
+        console.error("Bylaws resolution on vote close failed:", err);
       }
     }
 
