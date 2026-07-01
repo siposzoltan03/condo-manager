@@ -416,6 +416,7 @@ model Building {
   featureOverrides     BuildingFeatureOverride[]
   residentRemovalRequests ResidentRemovalRequest[]
   bylawsChangeProposals   BylawsChangeProposal[]
+  szmszExtractionJobs     SzmszExtractionJob[]
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
 }
@@ -1922,6 +1923,27 @@ model BylawsChangeProposal {
   appliedAt           DateTime?
   createdAt           DateTime              @default(now())
   updatedAt           DateTime              @updatedAt
+
+  @@index([buildingId, status])
+}
+
+/// Async SZMSZ AI extraction (background job). The uploaded PDF is stored, a
+/// job is enqueued, and the worker fills `result` — the client polls status.
+/// Reuses ReportStatus (PENDING/RUNNING/READY/FAILED).
+model SzmszExtractionJob {
+  id           String       @id @default(cuid())
+  building     Building     @relation(fields: [buildingId], references: [id])
+  buildingId   String
+  createdById  String
+  /// Storage key of the uploaded PDF (the worker reads it back).
+  storageKey   String
+  fileName     String
+  status       ReportStatus @default(PENDING)
+  /// Extraction output { units, governance, stored } once READY.
+  result       Json?
+  errorMessage String?      @db.Text
+  createdAt    DateTime     @default(now())
+  finishedAt   DateTime?
 
   @@index([buildingId, status])
 }

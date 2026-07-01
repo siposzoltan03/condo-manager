@@ -51,3 +51,14 @@ export const reportsQueue = new Queue("reports", {
     removeOnFail: { count: 5000 },
   },
 });
+
+export const szmszQueue = new Queue("szmsz", {
+  connection: redis,
+  defaultJobOptions: {
+    // AI extraction is billed per call — no auto-retry (failures surface to the
+    // user, who can re-upload). Long-running (up to a couple of minutes).
+    attempts: 1,
+    removeOnComplete: { count: 200 },
+    removeOnFail: { count: 500 },
+  },
+});

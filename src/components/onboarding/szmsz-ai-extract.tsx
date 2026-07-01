@@ -39,6 +39,7 @@ export function SzmszAiExtract({
   const t = useTranslations("buildingOnboarding.ai");
   const tg = useTranslations("buildingOnboarding");
   const [busy, setBusy] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -55,8 +56,11 @@ export function SzmszAiExtract({
       return;
     }
     setBusy(true);
+    setElapsed(0);
+    const timer = setInterval(() => setElapsed((e) => e + 1), 1000);
     try {
       const base64 = await fileToBase64(file);
+      // Start the background job.
       const res = await fetch("/api/onboarding/extract-szmsz", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -67,14 +71,30 @@ export function SzmszAiExtract({
         setError(d?.error ?? t("extractFailed"));
         return;
       }
-      const result = (await res.json()) as Extraction;
-      onExtracted(result);
+      const { jobId, stored } = (await res.json()) as { jobId: string; stored: boolean };
+      // Poll until the worker finishes (up to 5 min).
+      const result = await pollJob(jobId);
+      onExtracted({ ...result, stored });
       await onReload(); // stored doc → refresh the doc count
-    } catch {
-      setError(t("extractFailed"));
+    } catch (e) {
+      setError(e instanceof Error && e.message ? e.message : t("extractFailed"));
     } finally {
+      clearInterval(timer);
       setBusy(false);
     }
+  }
+
+  async function pollJob(jobId: string): Promise<Extraction> {
+    const startedAt = Date.now();
+    while (Date.now() - startedAt < 5 * 60 * 1000) {
+      await new Promise((r) => setTimeout(r, 2000));
+      const r = await fetch(`/api/onboarding/extract-szmsz/${jobId}`, { cache: "no-store" });
+      if (!r.ok) continue;
+      const d = (await r.json()) as { status: string; result?: Extraction; error?: string };
+      if (d.status === "READY" && d.result) return d.result;
+      if (d.status === "FAILED") throw new Error(d.error || t("extractFailed"));
+    }
+    throw new Error(t("timedOut"));
   }
 
   const shareSum =
@@ -119,8 +139,17 @@ export function SzmszAiExtract({
           opacity: busy ? 0.6 : 1,
         }}
       >
-        {busy ? t("extracting") : extraction ? t("reupload") : t("uploadCta")}
+        {busy
+          ? t("extractingElapsed", { s: elapsed })
+          : extraction
+            ? t("reupload")
+            : t("uploadCta")}
       </button>
+      {busy && (
+        <p style={{ fontSize: "12px", color: "var(--color-ink-soft)", marginTop: "8px" }}>
+          {t("processingNote")}
+        </p>
+      )}
       <input
         ref={fileInputRef}
         type="file"
