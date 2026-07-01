@@ -163,6 +163,7 @@ may require a stricter rule for specific decisions.']
   auditLogs AuditLog [not null]
   generatedReports GeneratedReport [not null]
   featureOverrides BuildingFeatureOverride [not null, note: 'Superadmin feature console — per-building feature grant/revoke overrides.']
+  residentRemovalRequests ResidentRemovalRequest [not null]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
 }
@@ -188,11 +189,28 @@ szakképesítés). Only meaningful when isProfessional = true.']
   accreditationVerifiedBy User
   permissions UserBuildingPermission [not null]
   resignations BoardResignation [not null]
+  removalRequests ResidentRemovalRequest [not null]
   createdAt DateTime [default: `now()`, not null]
 
   indexes {
     (userId, buildingId) [unique]
   }
+}
+
+Table ResidentRemovalRequest {
+  id String [pk]
+  building Building [not null]
+  buildingId String [not null]
+  targetUserBuilding UserBuilding [not null, note: 'The membership proposed for removal.']
+  targetUserBuildingId String [not null]
+  requestedById String [not null, note: 'Board member/admin who initiated (User id — no FK, to avoid User churn).']
+  reason String [not null]
+  status ResidentRemovalStatus [not null, default: 'PENDING']
+  reviewedById String [note: 'The DIFFERENT board member/admin who approved or rejected (User id).']
+  reviewedAt DateTime
+  reviewNote String
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
 }
 
 Table AuditorMembership {
@@ -1588,6 +1606,13 @@ Enum FeatureFlagState {
   KILL_SWITCH
 }
 
+Enum ResidentRemovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
 Enum ResignationStatus {
   PENDING
   ACKNOWLEDGED
@@ -1735,6 +1760,10 @@ Ref: UserBuilding.userId > User.id
 Ref: UserBuilding.buildingId > Building.id
 
 Ref: UserBuilding.accreditationVerifiedById > User.id
+
+Ref: ResidentRemovalRequest.buildingId > Building.id
+
+Ref: ResidentRemovalRequest.targetUserBuildingId > UserBuilding.id [delete: Cascade]
 
 Ref: AuditorMembership.userId > User.id
 
