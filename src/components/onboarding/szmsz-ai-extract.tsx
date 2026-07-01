@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { importUnits } from "@/app/actions/units";
 import type { ImportRow } from "@/lib/import/types";
@@ -35,6 +35,7 @@ export function SzmszAiExtract({
   const [extraction, setExtraction] = useState<Extraction | null>(null);
   const [importMsg, setImportMsg] = useState<string | null>(null);
   const [govMsg, setGovMsg] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const nf = new Intl.NumberFormat(locale === "en" ? "en-US" : "hu-HU");
 
@@ -165,8 +166,10 @@ export function SzmszAiExtract({
         </div>
       </div>
 
-      <label
-        htmlFor="szmsz-ai-file"
+      <button
+        type="button"
+        disabled={busy !== "idle"}
+        onClick={() => fileInputRef.current?.click()}
         className="inline-flex items-center gap-2 transition-opacity hover:opacity-90"
         style={{
           marginTop: "12px",
@@ -181,19 +184,19 @@ export function SzmszAiExtract({
         }}
       >
         {busy === "extracting" ? t("extracting") : t("uploadCta")}
-        <input
-          id="szmsz-ai-file"
-          type="file"
-          accept="application/pdf"
-          disabled={busy !== "idle"}
-          style={{ display: "none" }}
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) handleFile(f);
-            e.target.value = "";
-          }}
-        />
-      </label>
+      </button>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="application/pdf"
+        disabled={busy !== "idle"}
+        style={{ display: "none" }}
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) handleFile(f);
+          e.target.value = "";
+        }}
+      />
 
       <p className="font-mono" style={{ fontSize: "10.5px", color: "var(--color-muted)", marginTop: "8px", letterSpacing: "0.02em" }}>
         {t("gdprNote")}
