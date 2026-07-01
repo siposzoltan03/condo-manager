@@ -129,7 +129,7 @@
       "roleLabel": "Szerep",
       "roleHint": "A szerep meghatározza, mit lát és tehet a lakó.",
       "role_BOARD_MEMBER": "Képviselő",
-      "role_RESIDENT": "Tulajdonos",
+      "role_OWNER": "Tulajdonos",
       "role_TENANT": "Bérlő",
       "unitLabel": "Lakás (opcionális)",
       "unitHint": "Üresen hagyva nem kötjük lakáshoz.",
