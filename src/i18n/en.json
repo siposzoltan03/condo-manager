@@ -134,9 +134,6 @@
       "unitLabel": "Unit (optional)",
       "unitHint": "Leave empty to not associate with a unit.",
       "unitNone": "No unit",
-      "relationshipLabel": "Relationship",
-      "rel_OWNER": "Owner",
-      "rel_TENANT": "Tenant",
       "sendCta": "Send invitation",
       "sent": "Invitation sent"
     },

@@ -134,9 +134,6 @@
       "unitLabel": "Lakás (opcionális)",
       "unitHint": "Üresen hagyva nem kötjük lakáshoz.",
       "unitNone": "Nincs hozzárendelve",
-      "relationshipLabel": "Viszony",
-      "rel_OWNER": "Tulajdonos",
-      "rel_TENANT": "Bérlő",
       "sendCta": "Meghívó küldése",
       "sent": "Meghívó elküldve"
     },
