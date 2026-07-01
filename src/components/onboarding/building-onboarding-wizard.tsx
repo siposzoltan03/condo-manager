@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { ImportUnitsButton } from "@/components/units/import-units-button";
+import { SzmszAiExtract } from "./szmsz-ai-extract";
 
 type StepIndex = 0 | 1 | 2 | 3 | 4 | 5;
 const TOTAL_STEPS = 6;
@@ -491,6 +492,7 @@ function SzmszStep({
 
   return (
     <div>
+      <SzmszAiExtract locale={locale} onReload={onReload} />
       <StatusCard
         done={szmszDocCount > 0}
         title={t("szmsz.statusTitle", { count: szmszDocCount })}
