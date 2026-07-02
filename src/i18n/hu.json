@@ -2965,6 +2965,7 @@
     "saveFailed": "A mentés nem sikerült. Próbáld újra.",
     "steps": {
       "basics": "Alapadatok",
+      "foundingDeed": "Alapító okirat",
       "governance": "Önkormányzás",
       "units": "Albetétek",
       "szmsz": "SZMSZ",
@@ -2975,7 +2976,8 @@
       "basics": "A társasház neve és címe.",
       "governance": "Tartalékalap cél, szavazási többség és költségmegosztás alapja.",
       "units": "Rögzítsd az albetéteket, hogy a tulajdoni hányadok elérjék a 100%-ot.",
-      "szmsz": "Töltsd fel a szervezeti és működési szabályzatot (SZMSZ).",
+      "foundingDeed": "Töltsd fel az alapító okiratot — ebből olvassuk ki az albetéteket és a tulajdoni hányadokat.",
+      "szmsz": "Töltsd fel az SZMSZ-t — ebből olvassuk ki az önkormányzási beállításokat.",
       "invites": "Hívd meg a tulajdonosokat és az intézőbizottság tagjait.",
       "review": "Nézd át a beállításokat, majd fejezd be a beüzemelést."
     },
@@ -3005,14 +3007,29 @@
       "statusShare": "Tulajdoni hányad összesen: {pct}% (cél 100%)",
       "openUnits": "Lakások megnyitása"
     },
+    "foundingDeed": {
+      "combinedLabel": "Az alapító okirat és az SZMSZ egyetlen dokumentumban van",
+      "combinedHint": "Sok régebbi társasháznál egy egyesített PDF tartalmazza mindkettőt. Ilyenkor egyetlen feltöltésből kiolvassuk az albetéteket és az önkormányzási beállításokat is.",
+      "statusTitle": "{count} feltöltött alapdokumentum",
+      "statusDetail": "Töltsd fel az alapító okiratot. Az SZMSZ-t a következő lépésben töltheted fel külön.",
+      "openDocuments": "Dokumentumok megnyitása"
+    },
     "szmsz": {
       "statusTitle": "{count} dokumentum az SZMSZ kategóriában",
       "statusDetail": "Töltsd fel az SZMSZ-t és az alapító okiratot.",
-      "openDocuments": "Dokumentumok megnyitása"
+      "openDocuments": "Dokumentumok megnyitása",
+      "combinedDoneTitle": "Az önkormányzási beállítások az egyesített dokumentumból érkeztek",
+      "combinedDoneDetail": "Az egyesített alapító okirat + SZMSZ feltöltésekor már kiolvastuk az önkormányzási beállításokat. A következő lépésben ellenőrizheted őket."
     },
     "prefilledFromSzmsz": "Az SZMSZ-ből előkitöltve — ellenőrizd, mielőtt mented.",
     "ai": {
       "eyebrow": "AI kitöltés",
+      "deedTitle": "Kitöltés az alapító okiratból",
+      "deedSubtitle": "Töltsd fel az alapító okirat PDF-et, és az AI kiolvassa az albetéteket és a tulajdoni hányadokat. A következő lépésben ellenőrizheted és rögzítheted őket.",
+      "deedUploadCta": "Alapító okirat feltöltése",
+      "szmszTitle": "Kitöltés az SZMSZ-ből",
+      "szmszSubtitle": "Töltsd fel az SZMSZ PDF-et, és az AI kiolvassa az önkormányzási beállításokat (tartalékalap, szavazási többség, költségmegosztás).",
+      "szmszUploadCta": "SZMSZ PDF feltöltése",
       "title": "Kitöltés az SZMSZ-ből",
       "subtitle": "Tölts fel egy SZMSZ / alapító okirat PDF-et, és az AI kiolvassa az albetéteket és az önkormányzási beállításokat. Az albetéteket és a beállításokat a következő lépésekben ellenőrizheted és rögzítheted.",
       "uploadCta": "SZMSZ PDF feltöltése",
