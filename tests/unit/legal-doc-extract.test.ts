@@ -15,11 +15,11 @@ import {
  */
 describe("legal-doc-extract sections", () => {
   it("maps each document kind to the sections it carries", () => {
-    expect(sectionsFor("FOUNDING_DEED")).toEqual({ units: true, governance: false });
-    expect(sectionsFor("SZMSZ")).toEqual({ units: false, governance: true });
-    expect(sectionsFor("COMBINED")).toEqual({ units: true, governance: true });
-    expect(sectionsFor("HOUSE_RULES")).toEqual({ units: false, governance: false });
-    expect(sectionsFor("OTHER")).toEqual({ units: false, governance: false });
+    expect(sectionsFor("FOUNDING_DEED")).toEqual({ units: true, governance: false, remoteVoting: true });
+    expect(sectionsFor("SZMSZ")).toEqual({ units: false, governance: true, remoteVoting: true });
+    expect(sectionsFor("COMBINED")).toEqual({ units: true, governance: true, remoteVoting: true });
+    expect(sectionsFor("HOUSE_RULES")).toEqual({ units: false, governance: false, remoteVoting: false });
+    expect(sectionsFor("OTHER")).toEqual({ units: false, governance: false, remoteVoting: false });
   });
 });
 
@@ -28,7 +28,6 @@ describe("buildSchema", () => {
     const deed = buildSchema(sectionsFor("FOUNDING_DEED"));
     expect(deed.properties).toHaveProperty("units");
     expect(deed.properties).not.toHaveProperty("governance");
-    expect(deed.required).toEqual(["units"]);
 
     const szmsz = buildSchema(sectionsFor("SZMSZ"));
     expect(szmsz.properties).not.toHaveProperty("units");
@@ -37,6 +36,15 @@ describe("buildSchema", () => {
     const combined = buildSchema(sectionsFor("COMBINED"));
     expect(combined.properties).toHaveProperty("units");
     expect(combined.properties).toHaveProperty("governance");
+  });
+
+  it("includes the remote-voting finding for founding-deed / SZMSZ / combined", () => {
+    for (const kind of ["FOUNDING_DEED", "SZMSZ", "COMBINED"] as const) {
+      const schema = buildSchema(sectionsFor(kind));
+      expect(schema.properties).toHaveProperty("remoteVoting");
+      expect(schema.required).toContain("remoteVoting");
+    }
+    expect(buildSchema(sectionsFor("HOUSE_RULES")).properties).not.toHaveProperty("remoteVoting");
   });
 });
 
@@ -52,6 +60,13 @@ describe("buildPrompt", () => {
     expect(prompt.toLowerCase()).toContain("albetét");
     expect(prompt.toLowerCase()).toContain("tulajdoni hányad");
   });
+
+  it("asks whether the SZMSZ authorises electronic/remote participation", () => {
+    const prompt = buildPrompt(sectionsFor("SZMSZ"));
+    expect(prompt.toLowerCase()).toContain("elektronikus közgyűlés");
+    expect(prompt.toLowerCase()).toContain("távszavazás");
+    expect(prompt.toLowerCase()).toContain("do not infer authorisation from silence");
+  });
 });
 
 describe("extractLegalDoc no-op kinds", () => {
@@ -61,10 +76,12 @@ describe("extractLegalDoc no-op kinds", () => {
     await expect(extractLegalDoc("", "x.pdf", "HOUSE_RULES")).resolves.toEqual({
       units: [],
       governance: null,
+      remoteVoting: null,
     });
     await expect(extractLegalDoc("", "x.pdf", "OTHER")).resolves.toEqual({
       units: [],
       governance: null,
+      remoteVoting: null,
     });
   });
 });

@@ -44,25 +44,42 @@ export interface ExtractedGovernance {
   costAllocationBasis: (typeof COST_BASIS_VALUES)[number] | null;
 }
 
+/** Whether the document authorises electronic/hybrid (remote) participation. */
+export interface ExtractedRemoteVoting {
+  /** True only if the document clearly authorises electronic/hybrid meetings. */
+  authorized: boolean;
+  /** The section reference / short quote that authorises it (evidence), or null. */
+  section: string | null;
+}
+
 export interface LegalDocExtraction {
   /** Units from the alapító okirat. Empty for SZMSZ-only documents. */
   units: ExtractedUnit[];
   /** Governance from the SZMSZ. Null for founding-deed-only documents. */
   governance: ExtractedGovernance | null;
+  /** Remote-voting authorisation finding, if the doc could contain one. */
+  remoteVoting: ExtractedRemoteVoting | null;
+}
+
+export interface Sections {
+  units: boolean;
+  governance: boolean;
+  remoteVoting: boolean;
 }
 
 /** Which sections each document kind contributes. */
-export function sectionsFor(docKind: LegalDocKind): { units: boolean; governance: boolean } {
+export function sectionsFor(docKind: LegalDocKind): Sections {
   switch (docKind) {
     case "FOUNDING_DEED":
-      return { units: true, governance: false };
+      // The alapító okirat may itself carry the e-participation authorisation.
+      return { units: true, governance: false, remoteVoting: true };
     case "SZMSZ":
-      return { units: false, governance: true };
+      return { units: false, governance: true, remoteVoting: true };
     case "COMBINED":
-      return { units: true, governance: true };
+      return { units: true, governance: true, remoteVoting: true };
     default:
       // HOUSE_RULES / OTHER carry no structured register/governance data.
-      return { units: false, governance: false };
+      return { units: false, governance: false, remoteVoting: false };
   }
 }
 
@@ -118,8 +135,26 @@ const GOVERNANCE_SCHEMA = {
   required: ["reserveTargetHUF", "defaultMajority", "costAllocationBasis"],
 } as const;
 
+const REMOTE_VOTING_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    authorized: {
+      type: "boolean",
+      description:
+        "True ONLY if the document explicitly authorises electronic/online/hybrid participation or voting in the közgyűlés (távszavazás / elektronikus közgyűlés / online részvétel). If it is silent, false.",
+    },
+    section: {
+      type: ["string", "null"],
+      description:
+        "The section number / heading and a short verbatim quote of the authorising clause, or null if not authorised.",
+    },
+  },
+  required: ["authorized", "section"],
+} as const;
+
 /** Build the JSON schema for exactly the sections this document kind carries. */
-export function buildSchema(sections: { units: boolean; governance: boolean }) {
+export function buildSchema(sections: Sections) {
   const properties: Record<string, unknown> = {};
   const required: string[] = [];
   if (sections.units) {
@@ -130,6 +165,10 @@ export function buildSchema(sections: { units: boolean; governance: boolean }) {
     properties.governance = GOVERNANCE_SCHEMA;
     required.push("governance");
   }
+  if (sections.remoteVoting) {
+    properties.remoteVoting = REMOTE_VOTING_SCHEMA;
+    required.push("remoteVoting");
+  }
   return {
     type: "object",
     additionalProperties: false,
@@ -139,7 +178,7 @@ export function buildSchema(sections: { units: boolean; governance: boolean }) {
 }
 
 /** Build the extraction instructions for exactly the sections requested. */
-export function buildPrompt(sections: { units: boolean; governance: boolean }): string {
+export function buildPrompt(sections: Sections): string {
   const intro =
     "You are extracting structured data from a Hungarian condominium legal document.";
   const parts: string[] = [];
@@ -159,6 +198,11 @@ export function buildPrompt(sections: { units: boolean; governance: boolean }): 
       }`,
     );
   }
+  if (sections.remoteVoting) {
+    parts.push(
+      `Determine whether the document authorises electronic/hybrid (remote) participation or voting in the közgyűlés — e.g. "elektronikus közgyűlés", "online részvétel", "távszavazás", "elektronikus hírközlő eszköz útján". Set authorized=true ONLY if such a clause is clearly present; otherwise false. If true, put the section reference and a short verbatim quote in "section". Do NOT infer authorisation from silence.`,
+    );
+  }
   return `${intro}\n\nExtract:\n${parts
     .map((p, i) => `${i + 1}. ${p}`)
     .join("\n")}\n\nOnly use data actually present in the document. Return the result strictly in the required schema.`;
@@ -175,8 +219,8 @@ export async function extractLegalDoc(
   docKind: LegalDocKind,
 ): Promise<LegalDocExtraction> {
   const sections = sectionsFor(docKind);
-  if (!sections.units && !sections.governance) {
-    return { units: [], governance: null };
+  if (!sections.units && !sections.governance && !sections.remoteVoting) {
+    return { units: [], governance: null, remoteVoting: null };
   }
 
   const apiKey = process.env.OPENAI_API_KEY;
@@ -221,5 +265,10 @@ export async function extractLegalDoc(
     ? (parsed.units ?? []).filter((u) => u.number && Number.isFinite(u.ownershipShare))
     : [];
   const governance = sections.governance ? (parsed.governance ?? null) : null;
-  return { units, governance };
+  const remoteVoting = sections.remoteVoting
+    ? parsed.remoteVoting
+      ? { authorized: !!parsed.remoteVoting.authorized, section: parsed.remoteVoting.section ?? null }
+      : { authorized: false, section: null }
+    : null;
+  return { units, governance, remoteVoting };
 }

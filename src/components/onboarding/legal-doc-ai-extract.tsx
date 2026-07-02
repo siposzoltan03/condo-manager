@@ -14,10 +14,19 @@ export interface ExtractedGovernance {
   defaultMajority: string | null;
   costAllocationBasis: string | null;
 }
+export interface ExtractedRemoteVoting {
+  authorized: boolean;
+  section: string | null;
+}
 export interface Extraction {
   units: ExtractedUnit[];
   governance: ExtractedGovernance | null;
+  /** Whether the uploaded SZMSZ / deed authorises electronic/hybrid voting. */
+  remoteVoting?: ExtractedRemoteVoting | null;
   stored?: boolean;
+  /** The stored document + version (for recording remote-voting authorisation). */
+  documentId?: string | null;
+  versionId?: string | null;
 }
 
 /** Document kinds the onboarding uploader can extract from. */
@@ -49,7 +58,36 @@ export function LegalDocAiExtract({
   const [busy, setBusy] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [rvBusy, setRvBusy] = useState(false);
+  const [rvDone, setRvDone] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function recordRemoteVoting() {
+    if (!extraction?.documentId || !extraction?.versionId) return;
+    setRvBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/buildings/remote-voting/from-document", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          documentId: extraction.documentId,
+          versionId: extraction.versionId,
+          section: extraction.remoteVoting?.section ?? "",
+        }),
+      });
+      if (!res.ok) {
+        const d = (await res.json().catch(() => null)) as { error?: string } | null;
+        setError(d?.error ?? t("rvRecordFailed"));
+        return;
+      }
+      setRvDone(true);
+    } catch {
+      setError(t("rvRecordFailed"));
+    } finally {
+      setRvBusy(false);
+    }
+  }
 
   const nf = new Intl.NumberFormat(locale === "en" ? "en-US" : "hu-HU");
   const isSzmsz = docKind === "SZMSZ";
@@ -83,10 +121,15 @@ export function LegalDocAiExtract({
         setError(d?.error ?? t("extractFailed"));
         return;
       }
-      const { jobId, stored } = (await res.json()) as { jobId: string; stored: boolean };
+      const { jobId, stored, documentId, versionId } = (await res.json()) as {
+        jobId: string;
+        stored: boolean;
+        documentId: string | null;
+        versionId: string | null;
+      };
       // Poll until the worker finishes (up to 5 min).
       const result = await pollJob(jobId);
-      onExtracted({ ...result, stored });
+      onExtracted({ ...result, stored, documentId, versionId });
       await onReload(); // stored doc → refresh the doc count
     } catch (e) {
       setError(e instanceof Error && e.message ? e.message : t("extractFailed"));
@@ -225,6 +268,57 @@ export function LegalDocAiExtract({
           <p style={{ fontSize: "12px", color: "var(--color-moss)", margin: "8px 0 0" }}>
             {extraction?.stored ? `✓ ${t("stored")}` : ""} {t("reviewNext")}
           </p>
+        </div>
+      )}
+
+      {extraction?.remoteVoting?.authorized && (
+        <div
+          className="rounded-lg"
+          style={{
+            marginTop: "12px",
+            padding: "12px 14px",
+            background: "color-mix(in srgb, var(--color-moss) 10%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--color-moss) 28%, transparent)",
+          }}
+        >
+          <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--color-moss)" }}>
+            {t("rvDetectedTitle")}
+          </div>
+          {extraction.remoteVoting.section && (
+            <p style={{ fontSize: "12px", color: "var(--color-ink-soft)", margin: "3px 0 0" }}>
+              {extraction.remoteVoting.section}
+            </p>
+          )}
+          <p style={{ fontSize: "12px", color: "var(--color-ink-soft)", margin: "6px 0 0", maxWidth: "56ch" }}>
+            {t("rvDetectedBody")}
+          </p>
+          {rvDone ? (
+            <p style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--color-moss)", margin: "8px 0 0" }}>
+              ✓ {t("rvRecorded")}
+            </p>
+          ) : (
+            extraction.documentId && extraction.versionId && (
+              <button
+                type="button"
+                onClick={recordRemoteVoting}
+                disabled={rvBusy}
+                style={{
+                  marginTop: "10px",
+                  padding: "8px 14px",
+                  borderRadius: "8px",
+                  fontSize: "12.5px",
+                  fontWeight: 600,
+                  background: "var(--color-ink)",
+                  color: "var(--color-bg)",
+                  border: "none",
+                  cursor: rvBusy ? "not-allowed" : "pointer",
+                  opacity: rvBusy ? 0.6 : 1,
+                }}
+              >
+                {rvBusy ? t("rvRecording") : t("rvRecordCta")}
+              </button>
+            )
+          )}
         </div>
       )}
     </div>
