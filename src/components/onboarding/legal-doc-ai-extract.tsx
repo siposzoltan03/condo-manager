@@ -9,29 +9,37 @@ export interface ExtractedUnit {
   size: number;
   ownershipShare: number;
 }
+export interface ExtractedGovernance {
+  reserveTargetHUF: number | null;
+  defaultMajority: string | null;
+  costAllocationBasis: string | null;
+}
 export interface Extraction {
   units: ExtractedUnit[];
-  governance: {
-    reserveTargetHUF: number | null;
-    defaultMajority: string | null;
-    costAllocationBasis: string | null;
-  };
+  governance: ExtractedGovernance | null;
   stored?: boolean;
 }
 
+/** Document kinds the onboarding uploader can extract from. */
+export type ExtractDocKind = "FOUNDING_DEED" | "SZMSZ" | "COMBINED";
+
 /**
- * SZMSZ upload + AI extraction. On success it lifts the result to the wizard
- * (via onExtracted) so the Units and Governance steps can pre-fill from it,
+ * Legal-document upload + AI extraction, scoped to a document kind. The founding
+ * deed (alapító okirat) yields units + ownership shares; the SZMSZ yields
+ * governance; a combined document yields both. On success it lifts the result
+ * to the wizard (via onExtracted) so the Units / Governance steps can pre-fill,
  * and the extraction survives step navigation. The uploaded PDF is also stored
- * server-side in the Bylaws category (onReload refreshes the doc count).
+ * server-side in its matching category (onReload refreshes the doc count).
  */
-export function SzmszAiExtract({
+export function LegalDocAiExtract({
   locale,
+  docKind,
   extraction,
   onExtracted,
   onReload,
 }: {
   locale: string;
+  docKind: ExtractDocKind;
   extraction: Extraction | null;
   onExtracted: (e: Extraction) => void;
   onReload: () => Promise<void>;
@@ -44,6 +52,10 @@ export function SzmszAiExtract({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const nf = new Intl.NumberFormat(locale === "en" ? "en-US" : "hu-HU");
+  const isSzmsz = docKind === "SZMSZ";
+  const title = t(isSzmsz ? "szmszTitle" : "deedTitle");
+  const subtitle = t(isSzmsz ? "szmszSubtitle" : "deedSubtitle");
+  const uploadCta = t(isSzmsz ? "szmszUploadCta" : "deedUploadCta");
 
   async function handleFile(file: File) {
     setError(null);
@@ -60,11 +72,11 @@ export function SzmszAiExtract({
     const timer = setInterval(() => setElapsed((e) => e + 1), 1000);
     try {
       const base64 = await fileToBase64(file);
-      // Start the background job.
+      // Start the background job for this document kind.
       const res = await fetch("/api/onboarding/extract-szmsz", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pdfBase64: base64, fileName: file.name }),
+        body: JSON.stringify({ pdfBase64: base64, fileName: file.name, docKind }),
       });
       if (!res.ok) {
         const d = (await res.json().catch(() => null)) as { error?: string } | null;
@@ -97,9 +109,12 @@ export function SzmszAiExtract({
     throw new Error(t("timedOut"));
   }
 
-  const shareSum =
-    extraction?.units.reduce((s, u) => s + (u.ownershipShare || 0), 0) ?? 0;
+  const units = extraction?.units ?? [];
+  const shareSum = units.reduce((s, u) => s + (u.ownershipShare || 0), 0);
   const g = extraction?.governance;
+  const hasGov = !!g && (g.reserveTargetHUF != null || !!g.defaultMajority || !!g.costAllocationBasis);
+  // Show the summary once this upload has produced its relevant section.
+  const showSummary = isSzmsz ? hasGov : units.length > 0;
 
   return (
     <div
@@ -117,9 +132,9 @@ export function SzmszAiExtract({
       >
         {t("eyebrow")}
       </div>
-      <div style={{ fontSize: "15px", fontWeight: 600, marginTop: "3px" }}>{t("title")}</div>
+      <div style={{ fontSize: "15px", fontWeight: 600, marginTop: "3px" }}>{title}</div>
       <p style={{ fontSize: "13px", color: "var(--color-ink-soft)", margin: "3px 0 0", maxWidth: "56ch" }}>
-        {t("subtitle")}
+        {subtitle}
       </p>
 
       <button
@@ -141,9 +156,9 @@ export function SzmszAiExtract({
       >
         {busy
           ? t("extractingElapsed", { s: elapsed })
-          : extraction
+          : showSummary
             ? t("reupload")
-            : t("uploadCta")}
+            : uploadCta}
       </button>
       {busy && (
         <p style={{ fontSize: "12px", color: "var(--color-ink-soft)", marginTop: "8px" }}>
@@ -173,7 +188,7 @@ export function SzmszAiExtract({
         </div>
       )}
 
-      {extraction && (
+      {showSummary && (
         <div
           className="rounded-lg"
           style={{
@@ -183,30 +198,32 @@ export function SzmszAiExtract({
             border: "1px solid color-mix(in srgb, var(--color-ink) 10%, transparent)",
           }}
         >
-          <div style={{ fontSize: "13px", fontWeight: 600 }}>
-            {t("summaryUnits", {
-              count: extraction.units.length,
-              pct: (shareSum * 100).toLocaleString(locale === "en" ? "en-US" : "hu-HU", {
-                minimumFractionDigits: 1,
-                maximumFractionDigits: 1,
-              }),
-            })}
-          </div>
-          {g && (g.reserveTargetHUF != null || g.defaultMajority || g.costAllocationBasis) && (
-            <ul style={{ fontSize: "13px", margin: "6px 0 0", paddingLeft: "16px", listStyle: "disc", color: "var(--color-ink-soft)" }}>
-              {g.reserveTargetHUF != null && (
-                <li>{t("govReserve", { amount: nf.format(g.reserveTargetHUF) })}</li>
+          {units.length > 0 && (
+            <div style={{ fontSize: "13px", fontWeight: 600 }}>
+              {t("summaryUnits", {
+                count: units.length,
+                pct: (shareSum * 100).toLocaleString(locale === "en" ? "en-US" : "hu-HU", {
+                  minimumFractionDigits: 1,
+                  maximumFractionDigits: 1,
+                }),
+              })}
+            </div>
+          )}
+          {hasGov && (
+            <ul style={{ fontSize: "13px", margin: units.length > 0 ? "6px 0 0" : 0, paddingLeft: "16px", listStyle: "disc", color: "var(--color-ink-soft)" }}>
+              {g!.reserveTargetHUF != null && (
+                <li>{t("govReserve", { amount: nf.format(g!.reserveTargetHUF) })}</li>
               )}
-              {g.defaultMajority && (
-                <li>{t("govMajority")}: {tg(`majority.${g.defaultMajority}`)}</li>
+              {g!.defaultMajority && (
+                <li>{t("govMajority")}: {tg(`majority.${g!.defaultMajority}`)}</li>
               )}
-              {g.costAllocationBasis && (
-                <li>{t("govCostBasis")}: {tg(`costBasis.${g.costAllocationBasis}`)}</li>
+              {g!.costAllocationBasis && (
+                <li>{t("govCostBasis")}: {tg(`costBasis.${g!.costAllocationBasis}`)}</li>
               )}
             </ul>
           )}
           <p style={{ fontSize: "12px", color: "var(--color-moss)", margin: "8px 0 0" }}>
-            {extraction.stored ? `✓ ${t("stored")}` : ""} {t("reviewNext")}
+            {extraction?.stored ? `✓ ${t("stored")}` : ""} {t("reviewNext")}
           </p>
         </div>
       )}

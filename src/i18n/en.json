@@ -2965,6 +2965,7 @@
     "saveFailed": "Could not save. Please try again.",
     "steps": {
       "basics": "Basics",
+      "foundingDeed": "Founding deed",
       "governance": "Governance",
       "units": "Units",
       "szmsz": "Bylaws",
@@ -2975,7 +2976,8 @@
       "basics": "Your building's name and address.",
       "governance": "Reserve-fund target, voting majority, and cost-allocation basis.",
       "units": "Record the units so ownership shares reach 100%.",
-      "szmsz": "Upload the organisational & operational rules (SZMSZ).",
+      "foundingDeed": "Upload the founding deed (alapító okirat) — we read out the units and ownership shares from it.",
+      "szmsz": "Upload the SZMSZ — we read out the governance settings from it.",
       "invites": "Invite owners and board members.",
       "review": "Review your settings, then finish setup."
     },
@@ -3005,14 +3007,29 @@
       "statusShare": "Total ownership share: {pct}% (target 100%)",
       "openUnits": "Open units"
     },
+    "foundingDeed": {
+      "combinedLabel": "The founding deed and SZMSZ are a single document",
+      "combinedHint": "Many older condos have both in one combined PDF. Then a single upload extracts the units and the governance settings together.",
+      "statusTitle": "{count} founding documents uploaded",
+      "statusDetail": "Upload the founding deed. You can upload the SZMSZ separately in the next step.",
+      "openDocuments": "Open documents"
+    },
     "szmsz": {
       "statusTitle": "{count} documents in the bylaws category",
       "statusDetail": "Upload the SZMSZ and the founding deed.",
-      "openDocuments": "Open documents"
+      "openDocuments": "Open documents",
+      "combinedDoneTitle": "Governance came from the combined document",
+      "combinedDoneDetail": "We already read the governance settings from the combined founding deed + SZMSZ upload. You can review them in the next step."
     },
     "prefilledFromSzmsz": "Pre-filled from the SZMSZ — review before saving.",
     "ai": {
       "eyebrow": "AI fill",
+      "deedTitle": "Fill from the founding deed",
+      "deedSubtitle": "Upload the founding-deed PDF and AI reads out the units and ownership shares. You review and commit them in the next step.",
+      "deedUploadCta": "Upload founding deed",
+      "szmszTitle": "Fill from the SZMSZ",
+      "szmszSubtitle": "Upload the SZMSZ PDF and AI reads out the governance settings (reserve fund, voting majority, cost allocation).",
+      "szmszUploadCta": "Upload SZMSZ PDF",
       "title": "Fill from the SZMSZ",
       "subtitle": "Upload an SZMSZ / founding-deed PDF and AI reads out the units and governance settings. You review and commit the units and settings in the next steps.",
       "uploadCta": "Upload SZMSZ PDF",

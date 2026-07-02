@@ -5,12 +5,16 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { ImportUnitsButton } from "@/components/units/import-units-button";
-import { SzmszAiExtract, type Extraction } from "./szmsz-ai-extract";
+import { LegalDocAiExtract, type Extraction } from "./legal-doc-ai-extract";
 import { importUnits } from "@/app/actions/units";
 import type { ImportRow } from "@/lib/import/types";
 
-type StepIndex = 0 | 1 | 2 | 3 | 4 | 5;
-const TOTAL_STEPS = 6;
+type StepIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+const TOTAL_STEPS = 7;
+// Step order — the founding deed (register: units + shares) comes before the
+// SZMSZ (governance), matching their legal roles. A combined document uploaded
+// on the founding-deed step satisfies both.
+const STEP_KEYS = ["basics", "foundingDeed", "units", "szmsz", "governance", "invites", "review"] as const;
 
 const MAJORITY_OPTIONS = [
   "SIMPLE_MAJORITY",
@@ -53,8 +57,22 @@ export function BuildingOnboardingWizard({ locale }: { locale: string }) {
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   // AI extraction is lifted here so it pre-fills the Units + Governance steps
-  // and survives step navigation (no re-upload/re-process).
+  // and survives step navigation (no re-upload/re-process). Merged across the
+  // founding-deed upload (units) and the SZMSZ upload (governance).
   const [extraction, setExtraction] = useState<Extraction | null>(null);
+  // Whether the founding deed and SZMSZ are a single combined PDF — then the
+  // founding-deed upload extracts both and the SZMSZ step is satisfied.
+  const [combinedDoc, setCombinedDoc] = useState(false);
+
+  const handleExtracted = useCallback((r: Extraction) => {
+    // Merge so the deed upload's units and the SZMSZ upload's governance
+    // coexist rather than clobbering each other.
+    setExtraction((prev) => ({
+      units: r.units.length ? r.units : (prev?.units ?? []),
+      governance: r.governance ?? prev?.governance ?? null,
+      stored: r.stored || prev?.stored,
+    }));
+  }, []);
 
   const reload = useCallback(async () => {
     const res = await fetch("/api/onboarding", { cache: "no-store" });
@@ -137,14 +155,7 @@ export function BuildingOnboardingWizard({ locale }: { locale: string }) {
     );
   }
 
-  const stepTitles = [
-    t("steps.basics"),
-    t("steps.szmsz"),
-    t("steps.units"),
-    t("steps.governance"),
-    t("steps.invites"),
-    t("steps.review"),
-  ];
+  const stepTitles = STEP_KEYS.map((k) => t(`steps.${k}`));
 
   return (
     <div style={{ maxWidth: "720px", margin: "0 auto", padding: "32px 28px 80px" }}>
@@ -192,7 +203,7 @@ export function BuildingOnboardingWizard({ locale }: { locale: string }) {
         {stepTitles[step]}
       </h2>
       <p style={{ color: "var(--color-ink-soft)", fontSize: "14px", margin: "0 0 24px" }}>
-        {t(`subtitles.${["basics", "szmsz", "units", "governance", "invites", "review"][step]}`)}
+        {t(`subtitles.${STEP_KEYS[step]}`)}
       </p>
 
       {error && (
@@ -222,11 +233,13 @@ export function BuildingOnboardingWizard({ locale }: { locale: string }) {
         />
       )}
       {step === 1 && (
-        <SzmszStep
+        <FoundingDeedStep
           state={state}
           locale={locale}
           extraction={extraction}
-          onExtracted={setExtraction}
+          combinedDoc={combinedDoc}
+          onCombinedChange={setCombinedDoc}
+          onExtracted={handleExtracted}
           onReload={reload}
           onBack={() => setStep(0)}
           onNext={() => setStep(2)}
@@ -243,30 +256,42 @@ export function BuildingOnboardingWizard({ locale }: { locale: string }) {
         />
       )}
       {step === 3 && (
+        <SzmszStep
+          state={state}
+          locale={locale}
+          extraction={extraction}
+          combinedDoc={combinedDoc}
+          onExtracted={handleExtracted}
+          onReload={reload}
+          onBack={() => setStep(2)}
+          onNext={() => setStep(4)}
+        />
+      )}
+      {step === 4 && (
         <GovernanceStep
           state={state}
           saving={saving}
           extraction={extraction}
-          onBack={() => setStep(2)}
+          onBack={() => setStep(3)}
           onSave={async (p) => {
-            if (await savePatch({ action: "governance", ...p })) setStep(4);
+            if (await savePatch({ action: "governance", ...p })) setStep(5);
           }}
         />
       )}
-      {step === 4 && (
+      {step === 5 && (
         <InvitesStep
           state={state}
           locale={locale}
           onReload={reload}
-          onBack={() => setStep(3)}
-          onNext={() => setStep(5)}
+          onBack={() => setStep(4)}
+          onNext={() => setStep(6)}
         />
       )}
-      {step === 5 && (
+      {step === 6 && (
         <ReviewStep
           state={state}
           saving={saving}
-          onBack={() => setStep(4)}
+          onBack={() => setStep(5)}
           onFinalize={finalize}
         />
       )}
@@ -602,12 +627,14 @@ function ExtractTd({ children }: { children: React.ReactNode }) {
   return <td style={{ padding: "6px 10px" }}>{children}</td>;
 }
 
-// ── Step: SZMSZ ─────────────────────────────────────────────────────────────
+// ── Step: founding deed (alapító okirat) ─────────────────────────────────────
 
-function SzmszStep({
+function FoundingDeedStep({
   state,
   locale,
   extraction,
+  combinedDoc,
+  onCombinedChange,
   onExtracted,
   onReload,
   onBack,
@@ -616,6 +643,8 @@ function SzmszStep({
   state: OnboardingState;
   locale: string;
   extraction: Extraction | null;
+  combinedDoc: boolean;
+  onCombinedChange: (v: boolean) => void;
   onExtracted: (e: Extraction) => void;
   onReload: () => Promise<void>;
   onBack: () => void;
@@ -629,25 +658,92 @@ function SzmszStep({
 
   return (
     <div>
-      <SzmszAiExtract
+      <label
+        className="flex items-start gap-2"
+        style={{ marginBottom: "14px", fontSize: "13px", cursor: "pointer" }}
+      >
+        <input
+          type="checkbox"
+          checked={combinedDoc}
+          onChange={(e) => onCombinedChange(e.target.checked)}
+          style={{ marginTop: "2px" }}
+        />
+        <span>
+          <span style={{ fontWeight: 600 }}>{t("foundingDeed.combinedLabel")}</span>
+          <span className="block" style={{ color: "var(--color-ink-soft)", marginTop: "2px" }}>
+            {t("foundingDeed.combinedHint")}
+          </span>
+        </span>
+      </label>
+
+      <LegalDocAiExtract
         locale={locale}
+        docKind={combinedDoc ? "COMBINED" : "FOUNDING_DEED"}
         extraction={extraction}
         onExtracted={onExtracted}
         onReload={onReload}
       />
       <StatusCard
         done={szmszDocCount > 0}
-        title={t("szmsz.statusTitle", { count: szmszDocCount })}
-        detail={t("szmsz.statusDetail")}
+        title={t("foundingDeed.statusTitle", { count: szmszDocCount })}
+        detail={t("foundingDeed.statusDetail")}
       />
       <div className="flex flex-wrap items-center gap-3" style={{ marginTop: "16px" }}>
         <Link href={docsHref} style={primaryLinkStyle}>
-          {t("szmsz.openDocuments")} →
+          {t("foundingDeed.openDocuments")} →
         </Link>
         <button type="button" onClick={onReload} style={ghostButtonStyle}>
           {t("refresh")}
         </button>
       </div>
+      <WizardActions onBack={onBack} back={t("back")} next={t("nextSkippable")} loading={false} onNextClick={onNext} />
+    </div>
+  );
+}
+
+// ── Step: SZMSZ (governance source) ──────────────────────────────────────────
+
+function SzmszStep({
+  state,
+  locale,
+  extraction,
+  combinedDoc,
+  onExtracted,
+  onReload,
+  onBack,
+  onNext,
+}: {
+  state: OnboardingState;
+  locale: string;
+  extraction: Extraction | null;
+  combinedDoc: boolean;
+  onExtracted: (e: Extraction) => void;
+  onReload: () => Promise<void>;
+  onBack: () => void;
+  onNext: () => void;
+}) {
+  const t = useTranslations("buildingOnboarding");
+  const g = extraction?.governance;
+  const govFromCombined =
+    combinedDoc && !!g && (g.reserveTargetHUF != null || !!g.defaultMajority || !!g.costAllocationBasis);
+
+  return (
+    <div>
+      {govFromCombined ? (
+        <StatusCard
+          done
+          title={t("szmsz.combinedDoneTitle")}
+          detail={t("szmsz.combinedDoneDetail")}
+        />
+      ) : (
+        <LegalDocAiExtract
+          locale={locale}
+          docKind="SZMSZ"
+          extraction={extraction}
+          onExtracted={onExtracted}
+          onReload={onReload}
+        />
+      )}
       <WizardActions onBack={onBack} back={t("back")} next={t("nextSkippable")} loading={false} onNextClick={onNext} />
     </div>
   );
@@ -719,7 +815,7 @@ function ReviewStep({
         value={`${t(`majority.${building.defaultMajority}`)} · ${t(`costBasis.${building.costAllocationBasis}`)} · ${building.reserveTargetHUF.toLocaleString("hu-HU")} Ft`}
       />
       <ReviewRow label={t("steps.units")} value={t("review.units", { count: progress.unitCount, pct })} done={progress.sharesComplete} />
-      <ReviewRow label={t("steps.szmsz")} value={t("review.szmsz", { count: progress.szmszDocCount })} done={progress.szmszDocCount > 0} />
+      <ReviewRow label={t("steps.foundingDeed")} value={t("review.szmsz", { count: progress.szmszDocCount })} done={progress.szmszDocCount > 0} />
       <ReviewRow label={t("steps.invites")} value={t("review.invites", { count: progress.memberCount })} done={progress.memberCount > 1} />
 
       <p
