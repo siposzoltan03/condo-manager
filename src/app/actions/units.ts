@@ -151,12 +151,17 @@ export async function updateUnit(id: string, input: Partial<UnitInput>): Promise
     }
 
     if (input.ownershipShare !== undefined) {
-      if (input.ownershipShare < 0 || input.ownershipShare > 1) {
-        return { error: "Ownership share must be between 0 and 1" };
+      // Ownership share (tulajdoni hányad) is legal-register data from the
+      // alapító okirat — it can only be changed via the audited "amend founding
+      // deed" flow, not a casual unit edit. Reject an actual change here; a
+      // no-op resubmit of the same value is allowed so other fields can save.
+      const SHARE_EPS = 0.00005;
+      if (Math.abs(input.ownershipShare - Number(existing.ownershipShare)) > SHARE_EPS) {
+        return {
+          error:
+            "A tulajdoni hányad csak az alapító okirat módosításával változtatható meg. / Ownership share can only be changed by amending the founding deed.",
+        };
       }
-      oldValue.ownershipShare = Number(existing.ownershipShare);
-      newValue.ownershipShare = input.ownershipShare;
-      updateData.ownershipShare = new Prisma.Decimal(input.ownershipShare);
     }
 
     if (Object.keys(updateData).length === 0) {

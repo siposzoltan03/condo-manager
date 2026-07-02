@@ -380,6 +380,7 @@
     "size": "Size (m\u00b2)",
     "ownershipShare": "Ownership Share",
     "ownershipPercent": "Ownership Share",
+    "ownershipLocked": "Ownership share comes from the founding deed — change it only by amending the founding deed (in Documents).",
     "primaryContact": "Primary Contact",
     "residents": "Residents",
     "totalUnits": "Total Units",

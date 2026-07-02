@@ -697,6 +697,13 @@ model Unit {
   /// Position within the floor (1-based, left-to-right). Null = unspecified.
   positionOnFloor Int?
   ownershipShare Decimal  @db.Decimal(5, 4)
+  /// Provenance: the founding-deed (alapító okirat) DocumentVersion that
+  /// established the current ownership share. Null for legacy/unverified
+  /// shares. Set only via the audited "amend founding deed" flow — ownership
+  /// share is legal-register data (changing it needs all owners' consent), not
+  /// a casually-editable field.
+  ownershipShareSourceVersionId String?
+  ownershipShareSource          DocumentVersion? @relation("UnitOwnershipShareSource", fields: [ownershipShareSourceVersionId], references: [id])
   size           Decimal  @db.Decimal(8, 2)
   building       Building @relation(fields: [buildingId], references: [id])
   buildingId     String
@@ -2095,6 +2102,9 @@ model DocumentVersion {
   uploadedBy    User     @relation("DocumentVersionUploader", fields: [uploadedById], references: [id])
   uploadedById  String
   uploadedAt    DateTime @default(now())
+  /// Units whose current ownership share was established by this founding-deed
+  /// version (provenance for the voting-weight math).
+  unitsSourced  Unit[]   @relation("UnitOwnershipShareSource")
 
   @@unique([documentId, versionNumber])
   @@index([documentId])

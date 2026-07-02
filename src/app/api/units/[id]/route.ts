@@ -127,16 +127,21 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     }
 
     if (ownershipShare !== undefined) {
+      // Ownership share (tulajdoni hányad) is legal-register data from the
+      // alapító okirat — changeable only via the audited amend-founding-deed
+      // flow (POST /api/documents/[id]/amend-shares), not a casual unit edit.
+      // Reject an actual change; a no-op resubmit of the same value is allowed.
       const shareValue = Number(ownershipShare);
-      if (shareValue < 0 || shareValue > 1) {
+      const SHARE_EPS = 0.00005;
+      if (Math.abs(shareValue - Number(existing.ownershipShare)) > SHARE_EPS) {
         return NextResponse.json(
-          { error: "Ownership share must be between 0 and 1" },
-          { status: 400 }
+          {
+            error:
+              "Ownership share can only be changed by amending the founding deed.",
+          },
+          { status: 403 }
         );
       }
-      oldValue.ownershipShare = Number(existing.ownershipShare);
-      newValue.ownershipShare = shareValue;
-      updateData.ownershipShare = new Prisma.Decimal(shareValue);
     }
 
     if (Object.keys(updateData).length === 0) {

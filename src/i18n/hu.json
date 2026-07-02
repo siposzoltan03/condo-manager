@@ -380,6 +380,7 @@
     "size": "Méret (m\u00b2)",
     "ownershipShare": "Tulajdoni hányad",
     "ownershipPercent": "Tulajdoni hányad",
+    "ownershipLocked": "A tulajdoni hányad az alapító okiratból származik — csak az alapító okirat módosításával (a Dokumentumoknál) változtatható.",
     "primaryContact": "Kapcsolattartó",
     "residents": "Lakók",
     "totalUnits": "Összes lakás",
