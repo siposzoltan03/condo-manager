@@ -1398,6 +1398,9 @@ Table Document {
   category DocumentCategory [not null]
   categoryId String [not null]
   visibility DocumentVisibility [not null, default: 'PUBLIC']
+  kind LegalDocKind [note: 'The legal role this document plays (alapító okirat / SZMSZ / házirend /
+combined). Null = untyped. Lets the app resolve the authoritative founding
+deed vs. SZMSZ per building; drives which extraction runs on upload.']
   tags Json [not null, default: '[]']
   isArchived Boolean [not null, default: false]
   isPinned Boolean [not null, default: false, note: 'Pinned to the top of its category as a featured document.']
@@ -1577,6 +1580,14 @@ Enum DocumentVisibility {
   PUBLIC
   BOARD_ONLY
   ADMIN_ONLY
+}
+
+Enum LegalDocKind {
+  FOUNDING_DEED
+  SZMSZ
+  HOUSE_RULES
+  COMBINED
+  OTHER
 }
 
 Enum BuildingRole {
