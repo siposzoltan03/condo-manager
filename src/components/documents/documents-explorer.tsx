@@ -11,6 +11,7 @@ import type {
   VersionPanelData,
 } from "@/lib/documents-dal";
 import { VersionCompare } from "./version-compare";
+import { AmendSharesModal } from "./amend-shares-modal";
 
 interface Props {
   data: DocumentsOverviewData;
@@ -1203,6 +1204,7 @@ function VersionPanel({
 }) {
   const t = useTranslations("documents");
   const router = useRouter();
+  const [amendOpen, setAmendOpen] = useState(false);
 
   if (!documentId || !panel || loading) {
     return (
@@ -1356,7 +1358,33 @@ function VersionPanel({
           />
         ))}
         <VersionCompare documentId={panel.document.id} versions={panel.versions} />
+
+        {panel.canAmendShares && (
+          <div style={{ marginTop: "16px", paddingTop: "14px", borderTop: "1px solid color-mix(in srgb, var(--color-ink) 8%, transparent)" }}>
+            <button
+              type="button"
+              onClick={() => setAmendOpen(true)}
+              style={{ padding: "8px 14px", borderRadius: "8px", fontSize: "12.5px", fontWeight: 600, background: "color-mix(in srgb, var(--color-ochre) 16%, transparent)", color: "var(--color-ink)", border: "1px solid color-mix(in srgb, var(--color-ochre) 40%, transparent)", cursor: "pointer" }}
+            >
+              {t("amendShares.openCta")}
+            </button>
+            <p style={{ fontSize: "11.5px", color: "var(--color-muted)", margin: "6px 0 0", maxWidth: "48ch" }}>
+              {t("amendShares.openHint")}
+            </p>
+          </div>
+        )}
       </div>
+
+      {amendOpen && (
+        <AmendSharesModal
+          documentId={panel.document.id}
+          onClose={() => setAmendOpen(false)}
+          onDone={() => {
+            setAmendOpen(false);
+            router.refresh();
+          }}
+        />
+      )}
 
       <div
         style={{

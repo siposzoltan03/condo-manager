@@ -93,6 +93,8 @@ export interface VersionPanelData {
     isPinned: boolean;
     visibility: DocVisibilityKey;
     expiresAt: string | null;
+    /** Legal role (alapító okirat / SZMSZ / …); drives the amend-shares action. */
+    kind: string | null;
   };
   versions: DocVersionLite[];
   /** Current version (most recent). */
@@ -106,6 +108,8 @@ export interface VersionPanelData {
   /** "External" audience count — currently a placeholder of 0. */
   externalCount: number;
   isBoardPlus: boolean;
+  /** Whether the viewer may amend ownership shares from this founding deed. */
+  canAmendShares: boolean;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -495,6 +499,7 @@ export const getVersionPanel = cache(
         isPinned: doc.isPinned,
         visibility: doc.visibility as DocVisibilityKey,
         expiresAt: doc.expiresAt?.toISOString() ?? null,
+        kind: doc.kind ?? null,
       },
       versions: doc.versions.map((v) => ({
         id: v.id,
@@ -513,6 +518,9 @@ export const getVersionPanel = cache(
       boardCount,
       externalCount: 0,
       isBoardPlus,
+      canAmendShares:
+        (doc.kind === "FOUNDING_DEED" || doc.kind === "COMBINED") &&
+        allows(ctx, "foundingDeed.amend"),
     };
   },
 );
