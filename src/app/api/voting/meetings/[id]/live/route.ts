@@ -44,7 +44,13 @@ export async function POST(request: NextRequest, ctx: RouteContext) {
   const { id } = await ctx.params;
   const meeting = await prisma.meeting.findUnique({
     where: { id },
-    select: { id: true, buildingId: true, agenda: true, liveStatus: true },
+    select: {
+      id: true,
+      buildingId: true,
+      agenda: true,
+      liveStatus: true,
+      building: { select: { remoteVotingAuthorized: true } },
+    },
   });
   if (!meeting || meeting.buildingId !== actor.buildingId) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -63,6 +69,21 @@ export async function POST(request: NextRequest, ctx: RouteContext) {
       // Online has no show-of-hands — force device voting.
       let voteMode: MeetingVoteMode = body.voteMode === "HANDS" ? "HANDS" : "DEVICE";
       if (format === "ONLINE") voteMode = "DEVICE";
+      // Legal gate (Tht.): electronic/hybrid participation or device voting may
+      // only be used if the SZMSZ authorises remote voting. Otherwise the
+      // resolution is challengeable — refuse to start.
+      const needsRemoteAuth =
+        format === "ONLINE" || format === "HYBRID" || voteMode === "DEVICE";
+      if (needsRemoteAuth && !meeting.building.remoteVotingAuthorized) {
+        return NextResponse.json(
+          {
+            error:
+              "Remote/electronic voting is not authorised by this building's SZMSZ. Record the SZMSZ authorisation (or amend the SZMSZ) before starting an online/hybrid or device-voting assembly.",
+            code: "REMOTE_VOTING_NOT_AUTHORIZED",
+          },
+          { status: 403 },
+        );
+      }
       await prisma.meeting.update({
         where: { id },
         data: {

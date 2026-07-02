@@ -19,6 +19,12 @@ export interface GovernanceOverview {
   reserveTargetHUF: number;
   defaultMajority: string;
   costAllocationBasis: string;
+  /** Whether the SZMSZ authorises electronic/hybrid (remote) voting. */
+  remoteVotingAuthorized: boolean;
+  remoteVotingSzmszRef: string | null;
+  remoteVotingParams: Record<string, string> | null;
+  /** Whether the viewer may declare/revoke remote-voting authorisation. */
+  canManageRemoteVoting: boolean;
   /** Whether the viewer may propose a change (bylaws.modify). */
   canPropose: boolean;
   /** Upcoming meetings a proposal's vote can be attached to. */
@@ -45,6 +51,9 @@ export const getGovernanceOverview = cache(
           reserveTargetHUF: true,
           defaultMajority: true,
           costAllocationBasis: true,
+          remoteVotingAuthorized: true,
+          remoteVotingSzmszRef: true,
+          remoteVotingParams: true,
         },
       }),
       prisma.meeting.findMany({
@@ -65,6 +74,11 @@ export const getGovernanceOverview = cache(
       reserveTargetHUF: Number(building?.reserveTargetHUF ?? 0),
       defaultMajority: building?.defaultMajority ?? "SIMPLE_MAJORITY",
       costAllocationBasis: building?.costAllocationBasis ?? "OWNERSHIP_SHARE",
+      remoteVotingAuthorized: building?.remoteVotingAuthorized ?? false,
+      remoteVotingSzmszRef: building?.remoteVotingSzmszRef ?? null,
+      remoteVotingParams:
+        (building?.remoteVotingParams as Record<string, string> | null) ?? null,
+      canManageRemoteVoting: canPropose,
       canPropose,
       upcomingMeetings: meetings.map((m) => ({
         id: m.id,

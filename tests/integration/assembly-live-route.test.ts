@@ -58,6 +58,8 @@ describe("POST /api/voting/meetings/[id]/live", () => {
 
   it("starts the session; ONLINE forces device voting", async () => {
     const { building } = await makeBuilding();
+    // ONLINE/HYBRID/device voting requires SZMSZ remote-voting authorisation.
+    await prisma.building.update({ where: { id: building.id }, data: { remoteVotingAuthorized: true } });
     const u = await makeUser({ buildingId: building.id, role: "BOARD_MEMBER" });
     const m = await makeMeeting(building.id, u.id);
     asActor(building.id, u.id, "BOARD_MEMBER", true);
@@ -73,6 +75,8 @@ describe("POST /api/voting/meetings/[id]/live", () => {
 
   it("moves the agenda point and ends the session", async () => {
     const { building } = await makeBuilding();
+    // Started HYBRID + device voting below → needs remote-voting authorisation.
+    await prisma.building.update({ where: { id: building.id }, data: { remoteVotingAuthorized: true } });
     const u = await makeUser({ buildingId: building.id, role: "ADMIN" });
     const m = await makeMeeting(building.id, u.id);
     asActor(building.id, u.id, "ADMIN");

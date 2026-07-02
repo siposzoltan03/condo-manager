@@ -70,6 +70,34 @@ export function GovernancePanel({
         <SettingRow label={t("costBasis")} value={tg(`costBasis.${data.costAllocationBasis}`)} last />
       </div>
 
+      {/* Remote voting (e-közgyűlés) SZMSZ authorisation — status only. It is
+          established from the SZMSZ itself (detected on upload) or by a passed
+          SZMSZ-amendment resolution; never a manual toggle here. */}
+      <div style={{ ...card, marginTop: "18px" }}>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div style={{ fontSize: "15px", fontWeight: 600 }}>{t("rv.title")}</div>
+            <p style={{ fontSize: "12.5px", color: "var(--color-ink-soft)", margin: "3px 0 0", maxWidth: "58ch" }}>
+              {t("rv.subtitle")}
+            </p>
+          </div>
+          <StatusBadge
+            status={data.remoteVotingAuthorized ? "APPLIED" : "REJECTED"}
+            label={data.remoteVotingAuthorized ? t("rv.authorized") : t("rv.notAuthorized")}
+          />
+        </div>
+
+        {data.remoteVotingAuthorized && data.remoteVotingSzmszRef ? (
+          <p style={{ fontSize: "12px", color: "var(--color-muted)", marginTop: "10px" }}>
+            {t("rv.refLabel")}: <b style={{ color: "var(--color-ink)" }}>{data.remoteVotingSzmszRef}</b>
+          </p>
+        ) : !data.remoteVotingAuthorized ? (
+          <p style={{ fontSize: "12px", color: "var(--color-muted)", marginTop: "10px", maxWidth: "58ch" }}>
+            {t("rv.howToAuthorize")}
+          </p>
+        ) : null}
+      </div>
+
       {/* Propose */}
       {data.canPropose && (
         <div style={{ marginTop: "18px" }}>

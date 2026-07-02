@@ -42,15 +42,19 @@ const fmtHMS = (ms: number) => {
 export function AssemblyPresenter({
   meeting,
   locale,
+  remoteVotingAuthorized,
 }: {
   meeting: MeetingDetailData;
   locale: string;
+  remoteVotingAuthorized: boolean;
 }) {
   const t = useTranslations("assembly");
   const router = useRouter();
   const [busy, setBusy] = useState(false);
-  const [format, setFormat] = useState<Format>("HYBRID");
-  const [voteMode, setVoteMode] = useState<VoteMode>("DEVICE");
+  // Without SZMSZ authorisation, remote/electronic modes are off-limits — start
+  // from the only legal option (in-person, show of hands).
+  const [format, setFormat] = useState<Format>(remoteVotingAuthorized ? "HYBRID" : "IN_PERSON");
+  const [voteMode, setVoteMode] = useState<VoteMode>(remoteVotingAuthorized ? "DEVICE" : "HANDS");
 
   // Refetch authoritative state on every live signal.
   useAssemblyStream(meeting.id, () => router.refresh());
@@ -121,6 +125,8 @@ export function AssemblyPresenter({
       setFormat={setFormat}
       setVoteMode={setVoteMode}
       busy={busy}
+      remoteVotingAuthorized={remoteVotingAuthorized}
+      locale={locale}
       onStart={() => post({ action: "start", format, voteMode })}
       t={t}
     />;
@@ -431,6 +437,8 @@ function SetupView({
   setFormat,
   setVoteMode,
   busy,
+  remoteVotingAuthorized,
+  locale,
   onStart,
   t,
 }: {
@@ -440,11 +448,16 @@ function SetupView({
   setFormat: (f: Format) => void;
   setVoteMode: (v: VoteMode) => void;
   busy: boolean;
+  remoteVotingAuthorized: boolean;
+  locale: string;
   onStart: () => void;
   t: ReturnType<typeof useTranslations>;
 }) {
   const onlineForcesDevice = format === "ONLINE";
   const effectiveVoteMode = onlineForcesDevice ? "DEVICE" : voteMode;
+  // Remote/electronic modes require SZMSZ authorisation.
+  const remoteLocked = !remoteVotingAuthorized;
+  const isRemoteFormat = (f: Format) => f === "ONLINE" || f === "HYBRID";
 
   const Choice = ({ active, onClick, title, desc, disabled }: { active: boolean; onClick: () => void; title: string; desc: string; disabled?: boolean }) => (
     <button onClick={disabled ? undefined : onClick} disabled={disabled}
@@ -464,11 +477,21 @@ function SetupView({
       <h1 className="font-display mt-3" style={{ fontSize: 40, letterSpacing: "-0.04em" }}>{t("setupHeading")}</h1>
       <p className="mt-3 mb-8" style={{ color: "var(--color-ink-soft)", maxWidth: "54ch" }}>{t("setupLede")}</p>
 
+      {remoteLocked && (
+        <div className="rounded-2xl p-5 mb-4" style={{ background: "color-mix(in srgb, var(--color-ochre) 12%, var(--color-card))", border: "1px solid color-mix(in srgb, var(--color-ochre) 30%, transparent)" }}>
+          <strong className="font-display" style={{ color: "var(--color-ochre)" }}>{t("remoteLockedTitle")}</strong>
+          <p className="text-[13px] mt-1" style={{ color: "var(--color-ink-soft)" }}>{t("remoteLockedBody")}</p>
+          <a href={`/${locale}/dashboard/governance`} className="inline-block mt-2 font-semibold text-[13px]" style={{ color: "var(--color-ochre)" }}>
+            {t("remoteLockedCta")} →
+          </a>
+        </div>
+      )}
+
       <div className="rounded-2xl p-6 mb-4" style={{ background: "var(--color-card)", border: "1px solid color-mix(in srgb, var(--color-ink) 11%, transparent)" }}>
         <h3 className="font-display text-lg mb-4">{t("formatLabel")}</h3>
         <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
           {(["IN_PERSON", "HYBRID", "ONLINE"] as Format[]).map((f) => (
-            <Choice key={f} active={format === f} onClick={() => setFormat(f)} title={t(`format_${f}`)} desc={t(`formatDesc_${f}`)} />
+            <Choice key={f} active={format === f} onClick={() => setFormat(f)} title={t(`format_${f}`)} desc={t(`formatDesc_${f}`)} disabled={remoteLocked && isRemoteFormat(f)} />
           ))}
         </div>
       </div>
@@ -476,11 +499,14 @@ function SetupView({
       <div className="rounded-2xl p-6 mb-6" style={{ background: "var(--color-card)", border: "1px solid color-mix(in srgb, var(--color-ink) 11%, transparent)" }}>
         <h3 className="font-display text-lg mb-4">{t("voteModeLabel")}</h3>
         <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-          <Choice active={effectiveVoteMode === "DEVICE"} onClick={() => setVoteMode("DEVICE")} title={t("voteMode_DEVICE")} desc={t("voteModeDesc_DEVICE")} />
+          <Choice active={effectiveVoteMode === "DEVICE"} onClick={() => setVoteMode("DEVICE")} title={t("voteMode_DEVICE")} desc={t("voteModeDesc_DEVICE")} disabled={remoteLocked} />
           <Choice active={effectiveVoteMode === "HANDS"} onClick={() => setVoteMode("HANDS")} title={t("voteMode_HANDS")} desc={t("voteModeDesc_HANDS")} disabled={onlineForcesDevice} />
         </div>
         {onlineForcesDevice && (
           <p className="font-mono text-[11.5px] mt-3" style={{ color: "var(--color-ochre)" }}>{t("onlineNoHands")}</p>
+        )}
+        {remoteLocked && (
+          <p className="font-mono text-[11.5px] mt-3" style={{ color: "var(--color-ochre)" }}>{t("remoteLockedHint")}</p>
         )}
       </div>
 
@@ -494,7 +520,7 @@ function SetupView({
         <div className="font-display font-bold" style={{ fontSize: 32, color: "var(--color-moss)" }}>{meeting.quorum.presentPercentage.toFixed(0)}%</div>
       </div>
 
-      <button onClick={onStart} disabled={busy}
+      <button onClick={onStart} disabled={busy || (remoteLocked && (isRemoteFormat(format) || effectiveVoteMode === "DEVICE"))}
         className="inline-flex items-center gap-2 rounded-2xl px-8 py-4 font-bold disabled:opacity-50"
         style={{ background: "var(--color-ink)", color: "var(--color-bg)", fontSize: 18 }}>
         ▶ {t("start")}
