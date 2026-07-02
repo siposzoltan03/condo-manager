@@ -34,11 +34,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     const next = body.pinned !== undefined ? body.pinned : !doc.isPinned;
 
-    const updated = await prisma.document.update({
-      where: { id },
-      data: { isPinned: next },
-      select: { id: true, isPinned: true },
-    });
+    // Pinning is metadata, not a content change — set isPinned via raw SQL so
+    // Prisma's @updatedAt does NOT bump. Otherwise pinning would falsely mark
+    // the document "modified now" and reorder it by recency.
+    await prisma.$executeRaw`UPDATE "Document" SET "isPinned" = ${next} WHERE "id" = ${id}`;
+    const updated = { id, isPinned: next };
 
     await documentPinToggled({
       documentId: id,
