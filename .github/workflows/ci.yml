@@ -169,6 +169,12 @@ jobs:
             docker compose pull
             docker compose run --rm worker npx prisma migrate deploy
             docker compose up -d
+            # Rolling to the new :latest leaves the previous app/worker images
+            # untagged (dangling). Prune them now — otherwise they accumulate and
+            # fill the disk (they once grew to 70 images / ~90GB and took the
+            # server down). Only dangling images are removed, so images still in
+            # use by Home Assistant, the monitoring stack, etc. are untouched.
+            docker image prune -f
             curl -sS -o /dev/null -w "health: HTTP %{http_code}\n" \
               --retry 10 --retry-delay 3 --retry-all-errors http://localhost:3000
           '
