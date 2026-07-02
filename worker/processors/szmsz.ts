@@ -2,12 +2,14 @@ import type { Job } from "bullmq";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "../../src/lib/prisma";
 import { getStorage } from "../../src/lib/storage";
-import { extractSzmszFromPdf } from "../../src/lib/szmsz-extract";
+import { extractLegalDoc } from "../../src/lib/legal-doc-extract";
 
 /**
- * Background SZMSZ AI extraction. Reads the uploaded PDF from storage, runs the
- * OpenAI extraction, and writes the result onto the SzmszExtractionJob row so
- * the client (polling) can pick it up. Long-running (tens of seconds+).
+ * Background legal-document AI extraction. Reads the uploaded PDF from storage,
+ * runs the OpenAI extraction scoped to the job's docKind (founding deed → units,
+ * SZMSZ → governance, combined → both), and writes the result onto the
+ * SzmszExtractionJob row so the client (polling) can pick it up. Long-running
+ * (tens of seconds+).
  */
 export async function processSzmszJob(job: Job): Promise<void> {
   const jobId = job.data?.jobId as string | undefined;
@@ -15,6 +17,7 @@ export async function processSzmszJob(job: Job): Promise<void> {
 
   const rec = await prisma.szmszExtractionJob.findUnique({ where: { id: jobId } });
   if (!rec || rec.status === "READY") return;
+  const docKind = rec.docKind;
 
   await prisma.szmszExtractionJob.update({
     where: { id: jobId },
@@ -24,7 +27,7 @@ export async function processSzmszJob(job: Job): Promise<void> {
   try {
     const { body } = await getStorage().read(rec.storageKey);
     const buffer = Buffer.isBuffer(body) ? body : await streamToBuffer(body);
-    const extraction = await extractSzmszFromPdf(buffer.toString("base64"), rec.fileName);
+    const extraction = await extractLegalDoc(buffer.toString("base64"), rec.fileName, docKind);
 
     await prisma.szmszExtractionJob.update({
       where: { id: jobId },

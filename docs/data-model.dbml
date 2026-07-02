@@ -1321,15 +1321,19 @@ Table SzmszExtractionJob {
   createdById String [not null]
   storageKey String [not null, note: 'Storage key of the uploaded PDF (the worker reads it back).']
   fileName String [not null]
+  docKind LegalDocKind [not null, default: 'COMBINED', note: 'Which legal document this is — decides which sections the worker extracts
+(FOUNDING_DEED → units, SZMSZ → governance, COMBINED → both). Defaults to
+COMBINED for backward compatibility with onboarding\'s single upload.']
   status ReportStatus [not null, default: 'PENDING']
   result Json [note: 'Extraction output { units, governance, stored } once READY.']
   errorMessage String
   createdAt DateTime [default: `now()`, not null]
   finishedAt DateTime
 
-  Note: 'Async SZMSZ AI extraction (background job). The uploaded PDF is stored, a
-job is enqueued, and the worker fills `result` — the client polls status.
-Reuses ReportStatus (PENDING/RUNNING/READY/FAILED).'
+  Note: 'Async legal-document AI extraction (background job). The uploaded PDF is
+stored, a job is enqueued, and the worker fills `result` — the client polls
+status. Reuses ReportStatus (PENDING/RUNNING/READY/FAILED). Named for its
+original SZMSZ use; now handles all extractable legal-doc kinds via docKind.'
 }
 
 Table VoteOption {

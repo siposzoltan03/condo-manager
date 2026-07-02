@@ -40,10 +40,10 @@ export async function GET() {
       return NextResponse.json({ error: "Building not found" }, { status: 404 });
     }
 
-    // SZMSZ category — the seeded "SZMSZ és alapító okirat" (older buildings
-    // may not have it; then szmszCategoryId is null and the step links to docs).
-    const szmszCategory = await prisma.documentCategory.findFirst({
-      where: { buildingId, name: { contains: "SZMSZ", mode: "insensitive" } },
+    // The founding-document category the onboarding upload files into ("Alapító
+    // okirat"; older buildings may lack it, then the step links to all docs).
+    const foundingCategory = await prisma.documentCategory.findFirst({
+      where: { buildingId, name: { contains: "alapító okirat", mode: "insensitive" } },
       orderBy: { sortOrder: "asc" },
       select: { id: true },
     });
@@ -54,9 +54,14 @@ export async function GET() {
         where: { buildingId },
         _sum: { ownershipShare: true },
       }),
-      szmszCategory
-        ? prisma.document.count({ where: { categoryId: szmszCategory.id } })
-        : Promise.resolve(0),
+      // Count by legal role (robust to the category split) — any founding deed,
+      // SZMSZ, or combined document satisfies the "founding docs uploaded" step.
+      prisma.document.count({
+        where: {
+          category: { buildingId },
+          kind: { in: ["FOUNDING_DEED", "SZMSZ", "COMBINED"] },
+        },
+      }),
       prisma.userBuilding.count({ where: { buildingId } }),
     ]);
 
@@ -82,7 +87,7 @@ export async function GET() {
         szmszDocCount,
         memberCount,
       },
-      szmszCategoryId: szmszCategory?.id ?? null,
+      szmszCategoryId: foundingCategory?.id ?? null,
     });
   } catch (error) {
     console.error("Failed to load onboarding state:", error);

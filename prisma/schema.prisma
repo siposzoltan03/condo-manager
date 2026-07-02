@@ -1944,9 +1944,10 @@ model BylawsChangeProposal {
   @@index([buildingId, status])
 }
 
-/// Async SZMSZ AI extraction (background job). The uploaded PDF is stored, a
-/// job is enqueued, and the worker fills `result` — the client polls status.
-/// Reuses ReportStatus (PENDING/RUNNING/READY/FAILED).
+/// Async legal-document AI extraction (background job). The uploaded PDF is
+/// stored, a job is enqueued, and the worker fills `result` — the client polls
+/// status. Reuses ReportStatus (PENDING/RUNNING/READY/FAILED). Named for its
+/// original SZMSZ use; now handles all extractable legal-doc kinds via docKind.
 model SzmszExtractionJob {
   id           String       @id @default(cuid())
   building     Building     @relation(fields: [buildingId], references: [id])
@@ -1955,6 +1956,10 @@ model SzmszExtractionJob {
   /// Storage key of the uploaded PDF (the worker reads it back).
   storageKey   String
   fileName     String
+  /// Which legal document this is — decides which sections the worker extracts
+  /// (FOUNDING_DEED → units, SZMSZ → governance, COMBINED → both). Defaults to
+  /// COMBINED for backward compatibility with onboarding's single upload.
+  docKind      LegalDocKind @default(COMBINED)
   status       ReportStatus @default(PENDING)
   /// Extraction output { units, governance, stored } once READY.
   result       Json?
