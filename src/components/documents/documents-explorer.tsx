@@ -38,7 +38,7 @@ export function DocumentsExplorer({
     "ALL" | "pdf" | "doc" | "xls" | "img"
   >("ALL");
   const [selectedDocId, setSelectedDocId] = useState<string | null>(
-    data.pinnedDocument?.id ?? data.documents[0]?.id ?? null,
+    data.pinnedDocuments[0]?.id ?? data.documents[0]?.id ?? null,
   );
 
   const [versionPanel, setVersionPanel] = useState<VersionPanelData | null>(null);
@@ -129,12 +129,13 @@ export function DocumentsExplorer({
           lastUpdate={data.selectedLastUpdateLabel}
         />
 
-        {data.pinnedDocument && (
+        {data.pinnedDocuments.map((doc) => (
           <PinnedHero
-            doc={data.pinnedDocument}
-            onClick={() => setSelectedDocId(data.pinnedDocument!.id)}
+            key={doc.id}
+            doc={doc}
+            onClick={() => setSelectedDocId(doc.id)}
           />
-        )}
+        ))}
 
         <FilterBar
           search={search}
@@ -480,9 +481,18 @@ function PinnedHero({
   }
 
   return (
-    <button
-      type="button"
+    // A div (not a button) so the inner Open/Download buttons are valid HTML —
+    // nested <button>s cause a hydration error. Kept keyboard-accessible.
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
       className="grid items-start text-left transition-shadow hover:shadow-lg grid-cols-[64px_minmax(0,1fr)] gap-4 sm:items-center sm:grid-cols-[64px_minmax(0,1fr)_auto] sm:gap-[22px]"
       style={{
         background: "var(--color-ink)",
@@ -610,7 +620,7 @@ function PinnedHero({
           {t("hero.downloadCta")}
         </button>
       </div>
-    </button>
+    </div>
   );
 }
 
