@@ -96,6 +96,10 @@ services:
   alertmanager:
     image: prom/alertmanager:latest
     restart: unless-stopped
+    # Run as root so it can read its 0600 config (Ansible renders it owned by the
+    # deploy user because it holds SMTP creds; the default 'nobody' user can't).
+    # Same approach as the alloy service above.
+    user: root
     volumes:
       - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
       - alertmanagerdata:/alertmanager
