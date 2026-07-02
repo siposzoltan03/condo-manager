@@ -226,16 +226,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
 
     await ballotCast({
+      voteId,
       ballotId: created[0].id,
       voterUserId: userId,
       buildingId,
-      newValue: {
-        voteId,
-        unitIds: created.map((c) => c.unitId),
-        isProxy: !!proxyForUnitId || !!proxyForGrantorId,
-        isOnBehalf: !!onBehalfOfUnitId,
-        isSecret: vote.isSecret,
-      },
+      isSecret: vote.isSecret,
+      unitIds: created.map((c) => c.unitId),
+      isProxy: !!proxyForUnitId || !!proxyForGrantorId,
+      isOnBehalf: !!onBehalfOfUnitId,
     });
 
     // Live assembly: nudge the presenter's tally to refresh.
