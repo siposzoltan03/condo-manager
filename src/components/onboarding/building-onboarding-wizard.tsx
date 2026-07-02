@@ -70,6 +70,10 @@ export function BuildingOnboardingWizard({ locale }: { locale: string }) {
     setExtraction((prev) => ({
       units: r.units.length ? r.units : (prev?.units ?? []),
       governance: r.governance ?? prev?.governance ?? null,
+      // Carry the latest upload's remote-voting finding + doc reference.
+      remoteVoting: r.remoteVoting ?? prev?.remoteVoting ?? null,
+      documentId: r.documentId ?? prev?.documentId ?? null,
+      versionId: r.versionId ?? prev?.versionId ?? null,
       stored: r.stored || prev?.stored,
     }));
   }, []);
