@@ -88,11 +88,29 @@ services:
       - "127.0.0.1:12345:12345" # Alloy's own UI (localhost only)
     depends_on: [loki]
 
+  # Alertmanager: receives firing alerts from Prometheus and delivers them (here,
+  # by email). Prometheus only *evaluates* rules — without this, alerts fire into
+  # the void (which is exactly why the 2026-06-30 disk-full went unnoticed). The
+  # config is rendered by Ansible from ansible/secrets.yml (SMTP creds), so it's
+  # NOT committed — see ansible/templates/alertmanager.yml.j2.
+  alertmanager:
+    image: prom/alertmanager:latest
+    restart: unless-stopped
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanagerdata:/alertmanager
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+    ports:
+      - "127.0.0.1:9093:9093" # Alertmanager UI (localhost only)
+
 volumes:
   promdata:
   grafanadata:
   lokidata:
   alloydata:
+  alertmanagerdata:
 
 networks:
   default: {} # this monitoring project's own network

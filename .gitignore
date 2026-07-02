@@ -37,6 +37,10 @@ yarn-error.log*
 .env
 .env*.local
 
+# rendered Alertmanager config — contains SMTP creds; Ansible renders it on the
+# server from ansible/templates/alertmanager.yml.j2
+monitoring/alertmanager/alertmanager.yml
+
 # vercel
 .vercel
 
