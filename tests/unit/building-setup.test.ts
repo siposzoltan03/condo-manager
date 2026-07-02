@@ -6,11 +6,13 @@ import {
 
 /**
  * Every new building is seeded with the default document categories so the
- * onboarding flow has somewhere to drop the SZMSZ and other founding docs.
+ * onboarding flow has somewhere to drop the founding deed and the SZMSZ. The
+ * alapító okirat (register of ownership) comes first, the SZMSZ second — they
+ * play distinct legal roles and are kept as separate categories.
  */
 describe("createDefaultDocumentCategories", () => {
-  it("seeds the SZMSZ category first, scoped to the building", async () => {
-    const createMany = vi.fn().mockResolvedValue({ count: 5 });
+  it("seeds the founding-deed and SZMSZ categories first, scoped to the building", async () => {
+    const createMany = vi.fn().mockResolvedValue({ count: DEFAULT_DOCUMENT_CATEGORIES.length });
     const client = { documentCategory: { createMany } };
 
     await createDefaultDocumentCategories(client as never, "building-123");
@@ -18,12 +20,15 @@ describe("createDefaultDocumentCategories", () => {
     expect(createMany).toHaveBeenCalledTimes(1);
     const { data } = createMany.mock.calls[0][0];
     expect(data).toHaveLength(DEFAULT_DOCUMENT_CATEGORIES.length);
-    // SZMSZ is first (sortOrder 0) so onboarding can target it directly.
+    // Alapító okirat is first (sortOrder 0), SZMSZ second (sortOrder 1).
     expect(data[0]).toMatchObject({ sortOrder: 0, buildingId: "building-123" });
-    expect(data[0].name).toMatch(/SZMSZ/);
+    expect(data[0].name).toMatch(/[Aa]lapító okirat/);
+    expect(data[1].name).toMatch(/SZMSZ/);
     // Every category is scoped to the building.
     expect(data.every((c: { buildingId: string }) => c.buildingId === "building-123")).toBe(true);
     // sortOrder is contiguous from 0.
-    expect(data.map((c: { sortOrder: number }) => c.sortOrder)).toEqual([0, 1, 2, 3, 4]);
+    expect(data.map((c: { sortOrder: number }) => c.sortOrder)).toEqual(
+      DEFAULT_DOCUMENT_CATEGORIES.map((_, i) => i),
+    );
   });
 });

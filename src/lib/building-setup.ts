@@ -12,20 +12,22 @@ type DocumentCategoryCreator = {
 };
 
 /**
- * Default document categories created for every new building. The SZMSZ
- * (szervezeti és működési szabályzat — Tht. § 13) is first so onboarding can
- * drop the bylaws straight into it; the onboarding checklist's "first document"
- * step and the SZMSZ wizard step both target these.
+ * Default document categories created for every new building. The alapító
+ * okirat (founding deed — Tht. § 5) comes first as the building's register of
+ * ownership, then the SZMSZ (szervezeti és működési szabályzat — Tht. § 13) as
+ * its operational rulebook. These are kept separate because they play distinct
+ * legal roles (see LegalDocKind); the onboarding steps target them by name.
  */
 export const DEFAULT_DOCUMENT_CATEGORIES: Pick<
   Prisma.DocumentCategoryCreateManyInput,
   "name" | "icon" | "sortOrder"
 >[] = [
-  { name: "SZMSZ és alapító okirat", icon: "📕", sortOrder: 0 },
-  { name: "Szabályzatok", icon: "📜", sortOrder: 1 },
-  { name: "Közgyűlési jegyzőkönyvek", icon: "📋", sortOrder: 2 },
-  { name: "Pénzügyi anyagok", icon: "💰", sortOrder: 3 },
-  { name: "Szerződések", icon: "📝", sortOrder: 4 },
+  { name: "Alapító okirat", icon: "📕", sortOrder: 0 },
+  { name: "SZMSZ", icon: "📘", sortOrder: 1 },
+  { name: "Szabályzatok", icon: "📜", sortOrder: 2 },
+  { name: "Közgyűlési jegyzőkönyvek", icon: "📋", sortOrder: 3 },
+  { name: "Pénzügyi anyagok", icon: "💰", sortOrder: 4 },
+  { name: "Szerződések", icon: "📝", sortOrder: 5 },
 ];
 
 /**
