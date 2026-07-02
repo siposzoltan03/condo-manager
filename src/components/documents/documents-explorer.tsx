@@ -10,6 +10,7 @@ import type {
   DocumentsOverviewData,
   VersionPanelData,
 } from "@/lib/documents-dal";
+import { VersionCompare } from "./version-compare";
 
 interface Props {
   data: DocumentsOverviewData;
@@ -1354,6 +1355,7 @@ function VersionPanel({
             isLast={i === panel.versions.length - 1}
           />
         ))}
+        <VersionCompare documentId={panel.document.id} versions={panel.versions} />
       </div>
 
       <div

@@ -1979,6 +1979,15 @@
       "expiringSoon": "{n} lejár 90 napon belül",
       "empty": "Nincs a szűrőknek megfelelő dokumentum."
     },
+    "compare": {
+      "title": "Verziók összehasonlítása",
+      "compareBtn": "Összehasonlítás",
+      "processing": "Összehasonlítás…",
+      "samePicked": "Válassz két különböző verziót.",
+      "failed": "Az összehasonlítás nem sikerült.",
+      "noText": "Ebből a fájltípusból nem nyerhető ki szöveg az összehasonlításhoz.",
+      "noChanges": "Nincs szövegbeli eltérés a verziók között."
+    },
     "panel": {
       "loading": "Betöltés…",
       "empty": "Válassz egy dokumentumot.",

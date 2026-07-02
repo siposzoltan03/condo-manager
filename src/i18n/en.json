@@ -1979,6 +1979,15 @@
       "expiringSoon": "{n} expire within 90 days",
       "empty": "No documents match the filters."
     },
+    "compare": {
+      "title": "Compare versions",
+      "compareBtn": "Compare",
+      "processing": "Comparing…",
+      "samePicked": "Pick two different versions.",
+      "failed": "Comparison failed.",
+      "noText": "No extractable text in this file type to compare.",
+      "noChanges": "No text differences between these versions."
+    },
     "panel": {
       "loading": "Loading…",
       "empty": "Pick a document.",
