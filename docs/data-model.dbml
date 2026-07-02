@@ -380,6 +380,12 @@ Table Unit {
   stairwell String [note: 'Stairwell label (e.g. "A", "B"). Null for single-stairwell buildings.']
   positionOnFloor Int [note: 'Position within the floor (1-based, left-to-right). Null = unspecified.']
   ownershipShare Decimal [not null]
+  ownershipShareSourceVersionId String [note: 'Provenance: the founding-deed (alapító okirat) DocumentVersion that
+established the current ownership share. Null for legacy/unverified
+shares. Set only via the audited "amend founding deed" flow — ownership
+share is legal-register data (changing it needs all owners\' consent), not
+a casually-editable field.']
+  ownershipShareSource DocumentVersion
   size Decimal [not null]
   building Building [not null]
   buildingId String [not null]
@@ -1433,6 +1439,8 @@ Table DocumentVersion {
   uploadedBy User [not null]
   uploadedById String [not null]
   uploadedAt DateTime [default: `now()`, not null]
+  unitsSourced Unit [not null, note: 'Units whose current ownership share was established by this founding-deed
+version (provenance for the voting-weight math).']
 
   indexes {
     (documentId, versionNumber) [unique]
@@ -1848,6 +1856,8 @@ Ref: BoardResignation.userBuildingId > UserBuilding.id
 Ref: UnitUser.userId > User.id
 
 Ref: UnitUser.unitId > Unit.id
+
+Ref: Unit.ownershipShareSourceVersionId > DocumentVersion.id
 
 Ref: Unit.buildingId > Building.id
 

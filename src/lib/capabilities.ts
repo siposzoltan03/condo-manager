@@ -68,6 +68,11 @@ export type Capability =
    *  default; delegatable to a board member via the modify_bylaws grant. The
    *  change only applies once the backing assembly vote passes. */
   | "bylaws.modify"
+  /** Amend the alapító okirat (founding deed): change unit ownership shares
+   *  (tulajdoni hányad). ADMIN only — ownership share is legal-register data
+   *  whose change legally needs all owners' consent + notarial/attorney form,
+   *  captured as an attestation. Not delegatable via a board grant. */
+  | "foundingDeed.amend"
   | "units.manage"
   | "contractor.view"
   | "contractor.manage"
@@ -257,6 +262,12 @@ export function can(
       const target = opts?.targetRole;
       return target !== "ADMIN" && target !== "SUPER_ADMIN";
     }
+
+    case "foundingDeed.amend":
+      // Amend ownership shares from the founding deed. ADMIN only — this is a
+      // high-integrity change (all owners' consent + notarial/attorney form),
+      // attested at the amend endpoint. Not board-delegatable.
+      return actor.role === "ADMIN";
 
     case "units.manage":
     case "contractor.view":

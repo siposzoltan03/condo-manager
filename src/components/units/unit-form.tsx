@@ -174,13 +174,22 @@ export function UnitFormModal({
                 value={ownershipShare}
                 onChange={(e) => setOwnershipShare(e.target.value)}
                 required
-                className={inputClass}
+                disabled={isEdit}
+                readOnly={isEdit}
+                aria-readonly={isEdit}
+                className={`${inputClass}${isEdit ? " opacity-60 cursor-not-allowed" : ""}`}
                 placeholder={tUnits("ownershipPlaceholder")}
               />
+              {isEdit && (
+                <p className="flex items-start gap-2 text-xs text-ink-soft">
+                  <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                  {tUnits("ownershipLocked")}
+                </p>
+              )}
             </div>
 
-            {/* Ownership info box */}
-            {shareValue > 0 && (
+            {/* Ownership info box — only while creating (edit locks the share) */}
+            {!isEdit && shareValue > 0 && (
               <div
                 className={`flex items-start gap-3 rounded-lg border p-4 ${
                   projectedTotal > 1.0001
