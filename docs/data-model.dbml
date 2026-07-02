@@ -143,6 +143,14 @@ heuristic default until the board configures it).']
   defaultMajority MajorityType [not null, default: 'SIMPLE_MAJORITY', note: 'Default majority rule applied to new votes (Tht. § 17–18). The SZMSZ
 may require a stricter rule for specific decisions.']
   costAllocationBasis CostAllocationBasis [not null, default: 'OWNERSHIP_SHARE', note: 'Basis for splitting common costs across units (Tht. § 24(1)).']
+  remoteVotingAuthorized Boolean [not null, default: false, note: 'Whether the SZMSZ authorises electronic/hybrid (remote) participation in
+the közgyűlés. Default false — an online/hybrid or device-voting live
+assembly may NOT be started until this is true (otherwise the resolution
+is legally challengeable). Flipped by an ADMIN declaring the existing
+SZMSZ authorisation, or by a passed SZMSZ-amendment proposal.']
+  remoteVotingSzmszRef String [note: 'Reference to the authorising SZMSZ (document title / version / section).']
+  remoteVotingParams Json [note: 'Snapshot of the SZMSZ-mandated remote-voting parameters (platform,
+identification, proxy, voting mode, disconnection handling, authentication).']
   onboardingCompletedAt DateTime [note: 'Set when the onboarding wizard is completed; null while setup is pending.']
   units Unit [not null]
   userBuildings UserBuilding [not null]

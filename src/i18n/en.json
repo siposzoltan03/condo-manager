@@ -2135,6 +2135,10 @@
     "voteModeDesc_DEVICE": "Owners vote on their phones, live tally",
     "voteModeDesc_HANDS": "The chair records votes by ownership share",
     "onlineNoHands": "An online assembly has no show-of-hands — device voting only.",
+    "remoteLockedTitle": "Electronic participation not authorised",
+    "remoteLockedBody": "The SZMSZ does not authorise online/hybrid assemblies or device voting. Record the SZMSZ authorisation (or amend the SZMSZ) before starting the assembly in such a mode.",
+    "remoteLockedCta": "Governance → SZMSZ authorisation",
+    "remoteLockedHint": "Device voting requires SZMSZ authorisation.",
     "quorumEstimate": "Expected quorum",
     "quorumEstimateBody": "{present} / {total} units present — estimated ownership share against the threshold.",
     "start": "Start assembly",
@@ -3112,6 +3116,14 @@
     "doneCta": "Back to dashboard"
   },
   "governance": {
+    "rv": {
+      "title": "Electronic assembly (remote participation)",
+      "subtitle": "An online/hybrid assembly or device voting can only be started if the SZMSZ authorises electronic participation.",
+      "authorized": "Authorised",
+      "notAuthorized": "Not authorised",
+      "refLabel": "Authorising SZMSZ",
+      "howToAuthorize": "Authorisation comes from the SZMSZ itself (checked on upload) or from an SZMSZ amendment passed by the assembly. It cannot be toggled on manually."
+    },
     "title": "Governance",
     "subtitle": "The building's financial and decision-making settings. Changes require an assembly resolution (a vote).",
     "reserveTarget": "Reserve-fund target",

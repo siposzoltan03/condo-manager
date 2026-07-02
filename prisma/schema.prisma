@@ -406,6 +406,19 @@ model Building {
   defaultMajority      MajorityType           @default(SIMPLE_MAJORITY)
   /// Basis for splitting common costs across units (Tht. § 24(1)).
   costAllocationBasis  CostAllocationBasis    @default(OWNERSHIP_SHARE)
+
+  /// Whether the SZMSZ authorises electronic/hybrid (remote) participation in
+  /// the közgyűlés. Default false — an online/hybrid or device-voting live
+  /// assembly may NOT be started until this is true (otherwise the resolution
+  /// is legally challengeable). Flipped by an ADMIN declaring the existing
+  /// SZMSZ authorisation, or by a passed SZMSZ-amendment proposal.
+  remoteVotingAuthorized Boolean              @default(false)
+  /// Reference to the authorising SZMSZ (document title / version / section).
+  remoteVotingSzmszRef   String?
+  /// Snapshot of the SZMSZ-mandated remote-voting parameters (platform,
+  /// identification, proxy, voting mode, disconnection handling, authentication).
+  remoteVotingParams     Json?
+
   /// Set when the onboarding wizard is completed; null while setup is pending.
   onboardingCompletedAt DateTime?
 
