@@ -480,9 +480,18 @@ function PinnedHero({
   }
 
   return (
-    <button
-      type="button"
+    // A div (not a button) so the inner Open/Download buttons are valid HTML —
+    // nested <button>s cause a hydration error. Kept keyboard-accessible.
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
       className="grid items-start text-left transition-shadow hover:shadow-lg grid-cols-[64px_minmax(0,1fr)] gap-4 sm:items-center sm:grid-cols-[64px_minmax(0,1fr)_auto] sm:gap-[22px]"
       style={{
         background: "var(--color-ink)",
@@ -610,7 +619,7 @@ function PinnedHero({
           {t("hero.downloadCta")}
         </button>
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -994,14 +1003,23 @@ function DocRow({
           </span>
           <div className="min-w-0">
             <div
-              className="truncate"
+              className="truncate flex items-center gap-1.5"
               style={{
                 fontWeight: 600,
                 fontSize: "13.5px",
                 letterSpacing: "-0.005em",
               }}
             >
-              {doc.title}
+              {doc.isPinned && (
+                <span
+                  aria-label={t("hero.pinned")}
+                  title={t("hero.pinned")}
+                  style={{ color: "var(--color-ochre)", flexShrink: 0 }}
+                >
+                  ★
+                </span>
+              )}
+              <span className="truncate">{doc.title}</span>
             </div>
             <div
               className="truncate"
