@@ -72,8 +72,8 @@ export interface DocumentsOverviewData {
   selectedTotalBytes: number;
   /** "X órája" / "X napja" relative to most-recent updatedAt in the category. */
   selectedLastUpdateLabel: string | null;
-  /** First pinned document in current category — rendered as the dark hero. */
-  pinnedDocument: DocumentRow | null;
+  /** All pinned documents in the current selection — rendered as hero cards. */
+  pinnedDocuments: DocumentRow[];
   /** Documents in current category (excluding pinned). */
   documents: DocumentRow[];
   /** All categories total — for the "Összes" tree node count. */
@@ -188,7 +188,6 @@ function buildCategoryTree(
 }
 
 const STORAGE_QUOTA_BYTES = 20 * 1024 * 1024 * 1024; // 20 GB demo quota
-const PINNED_FALLBACK_LIMIT = 1;
 
 // Visibility filter expressed as a Prisma where clause.
 function visibilityWhereForRole(
@@ -408,15 +407,18 @@ export const getDocumentsOverview = cache(
       return true;
     });
 
-    // Pinned hero: first pinned in selection.
-    const pinnedDocument =
-      filteredRows.find((r) => r.isPinned) ??
-      (filteredRows.length > 0 && !selectedCategoryId
-        ? filteredRows.slice(0, PINNED_FALLBACK_LIMIT)[0] ?? null
-        : null);
-    const documents = filteredRows.filter(
-      (r) => r.id !== pinnedDocument?.id,
-    );
+    // Pinned heroes: every pinned doc in the selection (ordered pinned-first,
+    // newest-first by the query). If none are pinned, fall back to spotlighting
+    // the single newest doc in the All view, matching the prior UX.
+    const pinnedRows = filteredRows.filter((r) => r.isPinned);
+    const pinnedDocuments =
+      pinnedRows.length > 0
+        ? pinnedRows
+        : filteredRows.length > 0 && !selectedCategoryId
+          ? filteredRows.slice(0, 1)
+          : [];
+    const pinnedIds = new Set(pinnedDocuments.map((d) => d.id));
+    const documents = filteredRows.filter((r) => !pinnedIds.has(r.id));
 
     const selectedDocumentCount = filteredRows.length;
     const selectedTotalBytes = filteredRows.reduce(
@@ -440,7 +442,7 @@ export const getDocumentsOverview = cache(
       selectedDocumentCount,
       selectedTotalBytes,
       selectedLastUpdateLabel,
-      pinnedDocument,
+      pinnedDocuments,
       documents,
       totalDocuments,
       totalBytesUsed,

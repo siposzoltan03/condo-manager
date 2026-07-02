@@ -38,7 +38,7 @@ export function DocumentsExplorer({
     "ALL" | "pdf" | "doc" | "xls" | "img"
   >("ALL");
   const [selectedDocId, setSelectedDocId] = useState<string | null>(
-    data.pinnedDocument?.id ?? data.documents[0]?.id ?? null,
+    data.pinnedDocuments[0]?.id ?? data.documents[0]?.id ?? null,
   );
 
   const [versionPanel, setVersionPanel] = useState<VersionPanelData | null>(null);
@@ -129,12 +129,13 @@ export function DocumentsExplorer({
           lastUpdate={data.selectedLastUpdateLabel}
         />
 
-        {data.pinnedDocument && (
+        {data.pinnedDocuments.map((doc) => (
           <PinnedHero
-            doc={data.pinnedDocument}
-            onClick={() => setSelectedDocId(data.pinnedDocument!.id)}
+            key={doc.id}
+            doc={doc}
+            onClick={() => setSelectedDocId(doc.id)}
           />
-        )}
+        ))}
 
         <FilterBar
           search={search}
@@ -1003,23 +1004,14 @@ function DocRow({
           </span>
           <div className="min-w-0">
             <div
-              className="truncate flex items-center gap-1.5"
+              className="truncate"
               style={{
                 fontWeight: 600,
                 fontSize: "13.5px",
                 letterSpacing: "-0.005em",
               }}
             >
-              {doc.isPinned && (
-                <span
-                  aria-label={t("hero.pinned")}
-                  title={t("hero.pinned")}
-                  style={{ color: "var(--color-ochre)", flexShrink: 0 }}
-                >
-                  ★
-                </span>
-              )}
-              <span className="truncate">{doc.title}</span>
+              {doc.title}
             </div>
             <div
               className="truncate"
