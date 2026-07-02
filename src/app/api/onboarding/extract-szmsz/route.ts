@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { LegalDocKind } from "@prisma/client";
 import { requireBuildingContext } from "@/lib/auth";
 import { requireCapability } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
@@ -8,12 +9,27 @@ import { szmszQueue } from "@/lib/queue";
 // Base64 inflates ~33%; cap the decoded PDF around 15 MB.
 const MAX_BASE64_LENGTH = 21_000_000;
 
+// Document kinds this endpoint can extract from.
+const EXTRACTABLE_KINDS = ["FOUNDING_DEED", "SZMSZ", "COMBINED"] as const;
+type ExtractableKind = (typeof EXTRACTABLE_KINDS)[number];
+
 /**
- * POST /api/onboarding/extract-szmsz — start an async SZMSZ AI extraction.
- * Body: { pdfBase64, fileName? }. Uploads the PDF, stores it as a Bylaws
- * document (best-effort), enqueues a background extraction job, and returns
- * `{ jobId, stored }` immediately. The client polls GET .../[jobId] for the
- * result — the OpenAI call runs in the worker (no request timeout).
+ * Category name pattern a document of this kind is filed under. FOUNDING_DEED
+ * and COMBINED go to "Alapító okirat" (the register); SZMSZ to "SZMSZ". Matched
+ * with `contains` so renamed / legacy categories still resolve.
+ */
+function categoryPatternFor(docKind: ExtractableKind): string {
+  return docKind === "SZMSZ" ? "SZMSZ" : "alapító okirat";
+}
+
+/**
+ * POST /api/onboarding/extract-szmsz — start an async legal-document AI
+ * extraction. Body: { pdfBase64, fileName?, docKind? }. docKind decides which
+ * sections are extracted (FOUNDING_DEED → units, SZMSZ → governance, COMBINED →
+ * both; defaults to COMBINED). Uploads the PDF, files it as a typed document in
+ * the matching category (best-effort), enqueues a background extraction job,
+ * and returns `{ jobId, stored }` immediately. The client polls GET .../[jobId]
+ * for the result — the OpenAI call runs in the worker (no request timeout).
  */
 export async function POST(request: NextRequest) {
   try {
@@ -26,10 +42,15 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json().catch(() => null);
     const pdfBase64 = body?.pdfBase64;
+    const docKind: ExtractableKind = EXTRACTABLE_KINDS.includes(body?.docKind)
+      ? (body.docKind as ExtractableKind)
+      : "COMBINED";
     const fileName =
       typeof body?.fileName === "string" && body.fileName.trim()
         ? body.fileName.trim()
-        : "SZMSZ.pdf";
+        : docKind === "SZMSZ"
+          ? "SZMSZ.pdf"
+          : "Alapito_okirat.pdf";
 
     if (typeof pdfBase64 !== "string" || pdfBase64.length === 0) {
       return NextResponse.json({ error: "Missing pdfBase64" }, { status: 400 });
@@ -53,22 +74,25 @@ export async function POST(request: NextRequest) {
       body: Buffer.from(pdfBase64, "base64"),
     });
 
-    // Persist as a Bylaws-category document (best-effort) so the "first
-    // document uploaded" step is satisfied. board.manage-gated here.
+    // File as a typed document in the matching category (best-effort) so the
+    // "first document uploaded" step is satisfied. board.manage-gated here.
     let stored = false;
     try {
-      const szmszCategory = await prisma.documentCategory.findFirst({
-        where: { buildingId: ctx.buildingId, name: { contains: "SZMSZ", mode: "insensitive" } },
+      const category = await prisma.documentCategory.findFirst({
+        where: {
+          buildingId: ctx.buildingId,
+          name: { contains: categoryPatternFor(docKind), mode: "insensitive" },
+        },
         orderBy: { sortOrder: "asc" },
         select: { id: true },
       });
       const title = fileName.replace(/\.pdf$/i, "");
-      if (szmszCategory) {
-        // If a same-titled SZMSZ already exists, append a new version
-        // (preserving history) rather than creating a duplicate document.
-        // Otherwise create the document at version 1.
+      if (category) {
+        // If a same-titled document already exists, append a new version
+        // (preserving history) rather than creating a duplicate. Otherwise
+        // create the document at version 1.
         const existingDoc = await prisma.document.findFirst({
-          where: { categoryId: szmszCategory.id, title, isArchived: false },
+          where: { categoryId: category.id, title, isArchived: false },
           select: {
             id: true,
             versions: { orderBy: { versionNumber: "desc" }, take: 1, select: { versionNumber: true } },
@@ -88,13 +112,14 @@ export async function POST(request: NextRequest) {
           });
           await prisma.document.update({
             where: { id: existingDoc.id },
-            data: { updatedAt: new Date() },
+            data: { updatedAt: new Date(), kind: docKind as LegalDocKind },
           });
         } else {
           await prisma.document.create({
             data: {
               title,
-              categoryId: szmszCategory.id,
+              categoryId: category.id,
+              kind: docKind as LegalDocKind,
               visibility: "BOARD_ONLY",
               uploadedById: ctx.userId,
               versions: {
@@ -113,7 +138,7 @@ export async function POST(request: NextRequest) {
         stored = true;
       }
     } catch (storeErr) {
-      console.error("SZMSZ document store failed (non-fatal):", storeErr);
+      console.error("Legal-doc store failed (non-fatal):", storeErr);
     }
 
     const jobRec = await prisma.szmszExtractionJob.create({
@@ -122,6 +147,7 @@ export async function POST(request: NextRequest) {
         createdById: ctx.userId,
         storageKey: put.key,
         fileName,
+        docKind: docKind as LegalDocKind,
       },
     });
     await szmszQueue.add("extract", { jobId: jobRec.id });
