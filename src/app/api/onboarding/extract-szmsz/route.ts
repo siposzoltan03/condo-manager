@@ -45,6 +45,10 @@ export async function POST(request: NextRequest) {
     const docKind: ExtractableKind = EXTRACTABLE_KINDS.includes(body?.docKind)
       ? (body.docKind as ExtractableKind)
       : "COMBINED";
+    // Optional: append the upload as a new version of a specific existing
+    // document (the amend-founding-deed flow) rather than title-matching.
+    const targetDocumentId =
+      typeof body?.documentId === "string" && body.documentId ? body.documentId : null;
     const fileName =
       typeof body?.fileName === "string" && body.fileName.trim()
         ? body.fileName.trim()
@@ -74,67 +78,86 @@ export async function POST(request: NextRequest) {
       body: Buffer.from(pdfBase64, "base64"),
     });
 
-    // File as a typed document in the matching category (best-effort) so the
-    // "first document uploaded" step is satisfied. board.manage-gated here.
+    // File as a typed document (best-effort). For the amend flow a specific
+    // target document is given → append the new version to it; otherwise file
+    // into the matching category, appending to a same-titled doc or creating
+    // one. Capture the resulting version id so the caller can amend from it.
     let stored = false;
+    let documentId: string | null = null;
+    let versionId: string | null = null;
     try {
-      const category = await prisma.documentCategory.findFirst({
-        where: {
-          buildingId: ctx.buildingId,
-          name: { contains: categoryPatternFor(docKind), mode: "insensitive" },
-        },
-        orderBy: { sortOrder: "asc" },
-        select: { id: true },
-      });
-      const title = fileName.replace(/\.pdf$/i, "");
-      if (category) {
-        // If a same-titled document already exists, append a new version
-        // (preserving history) rather than creating a duplicate. Otherwise
-        // create the document at version 1.
-        const existingDoc = await prisma.document.findFirst({
-          where: { categoryId: category.id, title, isArchived: false },
+      const versionData = {
+        fileUrl: put.url,
+        fileName: put.fileName,
+        fileSize: put.fileSize,
+        mimeType: put.mimeType,
+        uploadedById: ctx.userId,
+      };
+
+      let targetDoc: { id: string; nextVersion: number } | null = null;
+      if (targetDocumentId) {
+        // Amend flow: append to this exact document (must be this building's).
+        const doc = await prisma.document.findUnique({
+          where: { id: targetDocumentId },
           select: {
             id: true,
+            category: { select: { buildingId: true } },
             versions: { orderBy: { versionNumber: "desc" }, take: 1, select: { versionNumber: true } },
           },
         });
-        if (existingDoc) {
-          await prisma.documentVersion.create({
-            data: {
-              documentId: existingDoc.id,
-              versionNumber: (existingDoc.versions[0]?.versionNumber ?? 0) + 1,
-              fileUrl: put.url,
-              fileName: put.fileName,
-              fileSize: put.fileSize,
-              mimeType: put.mimeType,
-              uploadedById: ctx.userId,
-            },
-          });
-          await prisma.document.update({
-            where: { id: existingDoc.id },
-            data: { updatedAt: new Date(), kind: docKind as LegalDocKind },
-          });
-        } else {
-          await prisma.document.create({
-            data: {
-              title,
-              categoryId: category.id,
-              kind: docKind as LegalDocKind,
-              visibility: "BOARD_ONLY",
-              uploadedById: ctx.userId,
-              versions: {
-                create: {
-                  versionNumber: 1,
-                  fileUrl: put.url,
-                  fileName: put.fileName,
-                  fileSize: put.fileSize,
-                  mimeType: put.mimeType,
-                  uploadedById: ctx.userId,
-                },
-              },
-            },
-          });
+        if (doc && doc.category.buildingId === ctx.buildingId) {
+          targetDoc = { id: doc.id, nextVersion: (doc.versions[0]?.versionNumber ?? 0) + 1 };
         }
+      } else {
+        const category = await prisma.documentCategory.findFirst({
+          where: {
+            buildingId: ctx.buildingId,
+            name: { contains: categoryPatternFor(docKind), mode: "insensitive" },
+          },
+          orderBy: { sortOrder: "asc" },
+          select: { id: true },
+        });
+        const title = fileName.replace(/\.pdf$/i, "");
+        if (category) {
+          const existingDoc = await prisma.document.findFirst({
+            where: { categoryId: category.id, title, isArchived: false },
+            select: {
+              id: true,
+              versions: { orderBy: { versionNumber: "desc" }, take: 1, select: { versionNumber: true } },
+            },
+          });
+          if (existingDoc) {
+            targetDoc = { id: existingDoc.id, nextVersion: (existingDoc.versions[0]?.versionNumber ?? 0) + 1 };
+          } else {
+            const created = await prisma.document.create({
+              data: {
+                title,
+                categoryId: category.id,
+                kind: docKind as LegalDocKind,
+                visibility: "BOARD_ONLY",
+                uploadedById: ctx.userId,
+                versions: { create: { versionNumber: 1, ...versionData } },
+              },
+              select: { id: true, versions: { select: { id: true } } },
+            });
+            documentId = created.id;
+            versionId = created.versions[0]?.id ?? null;
+            stored = true;
+          }
+        }
+      }
+
+      if (targetDoc) {
+        const v = await prisma.documentVersion.create({
+          data: { documentId: targetDoc.id, versionNumber: targetDoc.nextVersion, ...versionData },
+          select: { id: true },
+        });
+        await prisma.document.update({
+          where: { id: targetDoc.id },
+          data: { updatedAt: new Date(), kind: docKind as LegalDocKind },
+        });
+        documentId = targetDoc.id;
+        versionId = v.id;
         stored = true;
       }
     } catch (storeErr) {
@@ -152,7 +175,7 @@ export async function POST(request: NextRequest) {
     });
     await szmszQueue.add("extract", { jobId: jobRec.id });
 
-    return NextResponse.json({ jobId: jobRec.id, stored }, { status: 202 });
+    return NextResponse.json({ jobId: jobRec.id, stored, documentId, versionId }, { status: 202 });
   } catch (error) {
     console.error("SZMSZ extraction enqueue failed:", error);
     return NextResponse.json(
