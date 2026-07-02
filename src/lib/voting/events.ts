@@ -69,19 +69,58 @@ export async function voteUpdated(opts: {
 
 // ── Ballot ───────────────────────────────────────────────────────────
 
+/**
+ * Process-audit record for a cast ballot. Secrecy-preserving: for a SECRET
+ * vote it records only that the voter participated (turnout) — never anything
+ * that links the voter to a unit, a specific ballot row, or the chosen option.
+ *
+ * For a secret vote the entity is the Vote (not the Ballot) and the payload
+ * carries only counts/flags, because the Ballot row holds the optionId and a
+ * Ballot-scoped audit entry (with the caster's userId) would let anyone join
+ * caster → ballot → option and break the secret ballot. For an open vote the
+ * per-unit detail is recorded as before (open votes are not secret).
+ */
 export async function ballotCast(opts: {
+  voteId: string;
   ballotId: string;
   voterUserId: string;
   buildingId: string;
-  newValue: Record<string, unknown>;
+  isSecret: boolean;
+  unitIds: string[];
+  isProxy: boolean;
+  isOnBehalf: boolean;
 }) {
+  if (opts.isSecret) {
+    await createAuditLog({
+      entityType: "Vote",
+      entityId: opts.voteId,
+      action: "CREATE",
+      userId: opts.voterUserId,
+      buildingId: opts.buildingId,
+      newValue: {
+        voteId: opts.voteId,
+        isSecret: true,
+        isProxy: opts.isProxy,
+        isOnBehalf: opts.isOnBehalf,
+        // count only — never the unit ids (would tie the voter to their ballot)
+        count: opts.unitIds.length,
+      },
+    });
+    return;
+  }
   await createAuditLog({
     entityType: "Ballot",
     entityId: opts.ballotId,
     action: "CREATE",
     userId: opts.voterUserId,
     buildingId: opts.buildingId,
-    newValue: opts.newValue,
+    newValue: {
+      voteId: opts.voteId,
+      unitIds: opts.unitIds,
+      isProxy: opts.isProxy,
+      isOnBehalf: opts.isOnBehalf,
+      isSecret: false,
+    },
   });
 }
 
