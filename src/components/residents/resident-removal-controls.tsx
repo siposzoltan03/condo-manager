@@ -9,7 +9,9 @@ import {
   requestResidentRemoval,
   reviewResidentRemoval,
   cancelResidentRemoval,
+  anonymizeRemovedResident,
 } from "@/app/actions/resident-removal";
+import { useConfirm } from "@/components/shared/confirm-dialog";
 
 /**
  * Dual-control resident removal controls in the profile panel. Initiates a
@@ -25,6 +27,7 @@ export function ResidentRemovalControls({
 }) {
   const t = useTranslations("residents.removal");
   const router = useRouter();
+  const confirm = useConfirm();
   const [reasonOpen, setReasonOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
@@ -32,6 +35,7 @@ export function ResidentRemovalControls({
   const {
     canRemove,
     isActive,
+    anonymized,
     isCurrentUser,
     role,
     pendingRemoval,
@@ -101,6 +105,29 @@ export function ResidentRemovalControls({
     return (
       <div style={cardStyle("muted")}>
         <span style={{ fontSize: "12px", color: "var(--color-muted)" }}>{t("removed")}</span>
+        {anonymized ? (
+          <p style={{ fontSize: "12px", color: "var(--color-muted)", margin: "8px 0 0" }}>
+            {t("erasedNote")}
+          </p>
+        ) : (
+          <div style={{ marginTop: "10px" }}>
+            <button
+              type="button"
+              disabled={busy}
+              style={dangerGhostBtn}
+              onClick={async () => {
+                const ok = await confirm({ title: t("eraseConfirm"), danger: true });
+                if (!ok) return;
+                run(() => anonymizeRemovedResident({ targetUserBuildingId: userBuildingId }));
+              }}
+            >
+              {t("eraseCta")}
+            </button>
+            <p className="font-mono" style={{ fontSize: "10.5px", color: "var(--color-muted)", margin: "8px 0 0", letterSpacing: "0.02em" }}>
+              {t("eraseNote")}
+            </p>
+          </div>
+        )}
       </div>
     );
   }

@@ -167,7 +167,11 @@
       "awaitingApproval": "Másik tag jóváhagyására vár.",
       "approve": "Jóváhagyás",
       "reject": "Elutasítás",
-      "removed": "Ez a lakó el lett távolítva (inaktív)."
+      "removed": "Ez a lakó el lett távolítva (inaktív).",
+      "eraseCta": "Személyes adatok törlése (GDPR)",
+      "eraseConfirm": "Biztosan véglegesen törli ennek a lakónak a személyes adatait? A név, e-mail és elérhetőségek anonimizálásra kerülnek. A jogszabály által előírt megőrzésű nyilvántartások (könyvelés, szavazatok, jegyzőkönyvek) megmaradnak.",
+      "eraseNote": "GDPR 17. cikk — az adatok anonimizálásra kerülnek, a nyilvántartási bejegyzések megmaradnak. Nem visszavonható.",
+      "erasedNote": "A lakó személyes adatai törölve lettek (GDPR 17. cikk)."
     },
     "permissions": {
       "managerCta": "Jogosultság szerkeszt",

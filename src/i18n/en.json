@@ -167,7 +167,11 @@
       "awaitingApproval": "Waiting for another board member to approve.",
       "approve": "Approve",
       "reject": "Reject",
-      "removed": "This resident has been removed (inactive)."
+      "removed": "This resident has been removed (inactive).",
+      "eraseCta": "Erase personal data (GDPR)",
+      "eraseConfirm": "Permanently erase this resident’s personal data? Name, email and contact details will be anonymised. Records under statutory retention (accounting, ballots, minutes) are kept.",
+      "eraseNote": "GDPR Article 17 — data is anonymised while retained records survive. Not reversible.",
+      "erasedNote": "This resident’s personal data has been erased (GDPR Art. 17)."
     },
     "permissions": {
       "managerCta": "Edit permissions",

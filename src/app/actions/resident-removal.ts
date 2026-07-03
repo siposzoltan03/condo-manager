@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireBuildingContext } from "@/lib/auth";
 import { requireCapability } from "@/lib/authz";
 import { createAuditLog } from "@/lib/audit";
+import { anonymizeUser } from "@/lib/gdpr";
 import { prisma } from "@/lib/prisma";
 
 interface ActionResult {
@@ -187,6 +188,73 @@ export async function cancelResidentRemoval(input: {
     return { success: true };
   } catch (e) {
     console.error("cancelResidentRemoval failed:", e);
+    return { error: e instanceof Error ? e.message : "Internal error" };
+  }
+}
+
+/**
+ * GDPR Art. 17 erasure — the "separate hard-erasure flow" the removal path
+ * defers to. Anonymises a REMOVED resident's PII (name/email/phone/addresses/
+ * 2FA nulled) while retaining the foreign-key rows required by statutory
+ * retention (ledger, ballots, minutes). resident.remove-gated + audited.
+ *
+ * Guardrails: the membership must already be inactive (erase only after the
+ * dual-control removal), the target may not be an admin or the caller, and —
+ * because PII lives on the shared User row — the person must not still be an
+ * ACTIVE member of any other building (that would erase them out from under a
+ * building that still needs them). Such cases require coordination.
+ */
+export async function anonymizeRemovedResident(input: {
+  targetUserBuildingId: string;
+  reason?: string;
+}): Promise<ActionResult> {
+  try {
+    const ctx = await requireBuildingContext();
+    requireCapability(ctx, "resident.remove");
+
+    const target = await prisma.userBuilding.findUnique({
+      where: { id: input.targetUserBuildingId },
+      select: { id: true, userId: true, buildingId: true, isActive: true, role: true },
+    });
+    if (!target || target.buildingId !== ctx.buildingId) {
+      return { error: "Resident not found." };
+    }
+    if (target.userId === ctx.userId) return { error: "You cannot erase yourself here." };
+    if (target.role === "ADMIN" || target.role === "SUPER_ADMIN") {
+      return { error: "An administrator cannot be erased this way." };
+    }
+    if (target.isActive) {
+      return { error: "Remove the resident first — erasure applies to removed residents only." };
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: target.userId },
+      select: { anonymizedAt: true },
+    });
+    if (!user) return { error: "Resident not found." };
+    if (user.anonymizedAt) return { error: "This resident's data has already been erased." };
+
+    // PII is on the shared User row — refuse if they're active elsewhere.
+    const activeElsewhere = await prisma.userBuilding.findFirst({
+      where: { userId: target.userId, isActive: true, buildingId: { not: ctx.buildingId } },
+    });
+    if (activeElsewhere) {
+      return {
+        error:
+          "This person is an active member of another building; erasure must be coordinated.",
+      };
+    }
+
+    await anonymizeUser(prisma, target.userId, {
+      actorId: ctx.userId,
+      buildingId: ctx.buildingId,
+      reason: input.reason?.trim() || undefined,
+    });
+
+    revalidatePath("/residents");
+    return { success: true };
+  } catch (e) {
+    console.error("anonymizeRemovedResident failed:", e);
     return { error: e instanceof Error ? e.message : "Internal error" };
   }
 }
