@@ -30,8 +30,11 @@ export function GovernancePanel({
   const [voteMajority, setVoteMajority] = useState("TWO_THIRDS");
   const [meetingId, setMeetingId] = useState(data.upcomingMeetings[0]?.id ?? "");
   const [busy, setBusy] = useState(false);
+  // SZMSZ amendment authorising electronic/hybrid participation.
+  const [rvAmend, setRvAmend] = useState(false);
+  const [rvClause, setRvClause] = useState(t("rvAmend.clauseTemplate"));
 
-  const hasChange = reserve.trim() !== "" || majority !== "" || basis !== "";
+  const hasChange = reserve.trim() !== "" || majority !== "" || basis !== "" || rvAmend;
 
   async function submit() {
     setBusy(true);
@@ -41,6 +44,8 @@ export function GovernancePanel({
         reserveTargetHUF: reserve.trim() !== "" ? Number(reserve) : null,
         defaultMajority: majority || null,
         costAllocationBasis: basis || null,
+        authorizeRemoteVoting: rvAmend || undefined,
+        remoteVotingClause: rvAmend ? rvClause : undefined,
         voteMajorityType: voteMajority,
       });
       if (res.error) {
@@ -49,7 +54,7 @@ export function GovernancePanel({
       }
       toast.success(t("proposeSuccess"));
       setOpen(false);
-      setReserve(""); setMajority(""); setBasis("");
+      setReserve(""); setMajority(""); setBasis(""); setRvAmend(false);
       router.refresh();
     } finally {
       setBusy(false);
@@ -127,6 +132,31 @@ export function GovernancePanel({
                   {COST_BASIS.map((c) => <option key={c} value={c}>{tg(`costBasis.${c}`)}</option>)}
                 </select>
               </Field>
+
+              {!data.remoteVotingAuthorized && (
+                <div style={{ marginBottom: "12px" }}>
+                  <label className="flex items-start gap-2" style={{ fontSize: "13px", fontWeight: 600, cursor: "pointer" }}>
+                    <input type="checkbox" checked={rvAmend} onChange={(e) => setRvAmend(e.target.checked)} style={{ marginTop: "2px" }} />
+                    <span>
+                      {t("rvAmend.label")}
+                      <span className="block" style={{ fontWeight: 400, color: "var(--color-ink-soft)", marginTop: "2px" }}>
+                        {t("rvAmend.hint")}
+                      </span>
+                    </span>
+                  </label>
+                  {rvAmend && (
+                    <div style={{ marginTop: "10px" }}>
+                      <label className="block" style={{ fontSize: "12px", fontWeight: 600, marginBottom: "5px" }}>{t("rvAmend.clauseLabel")}</label>
+                      <textarea
+                        value={rvClause}
+                        onChange={(e) => setRvClause(e.target.value)}
+                        rows={6}
+                        style={{ ...input, fontFamily: "var(--font-mono, monospace)", fontSize: "12.5px", lineHeight: 1.5, resize: "vertical" }}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div style={{ height: "1px", background: "color-mix(in srgb, var(--color-ink) 8%, transparent)", margin: "8px 0 14px" }} />
 

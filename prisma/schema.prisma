@@ -1954,6 +1954,12 @@ model BylawsChangeProposal {
   reserveTargetHUF    BigInt?
   defaultMajority     MajorityType?
   costAllocationBasis CostAllocationBasis?
+  /// SZMSZ amendment authorising electronic/hybrid (remote) participation. When
+  /// the backing vote passes, Building.remoteVotingAuthorized is set true — the
+  /// passed közgyűlési határozat is the authorisation's proof.
+  authorizeRemoteVoting Boolean?
+  /// The SZMSZ clause text put to the assembly (recorded with the resolution).
+  remoteVotingClause    String?             @db.Text
   status              BylawsProposalStatus  @default(PENDING_VOTE)
   /// The backing assembly vote (set once created).
   vote                Vote?                 @relation("BylawsVote")
