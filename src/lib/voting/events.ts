@@ -79,6 +79,9 @@ export async function voteUpdated(opts: {
  * Ballot-scoped audit entry (with the caster's userId) would let anyone join
  * caster → ballot → option and break the secret ballot. For an open vote the
  * per-unit detail is recorded as before (open votes are not secret).
+ *
+ * `castAt` (minute-quantised) is used as the secret turnout entry's timestamp
+ * so it can't be time-correlated to a specific ballot row's createdAt.
  */
 export async function ballotCast(opts: {
   voteId: string;
@@ -89,6 +92,9 @@ export async function ballotCast(opts: {
   unitIds: string[];
   isProxy: boolean;
   isOnBehalf: boolean;
+  castAt?: Date;
+  /** Total ownership weight cast (turnout aggregate; no per-unit linkage). */
+  weight?: number;
 }) {
   if (opts.isSecret) {
     await createAuditLog({
@@ -97,13 +103,16 @@ export async function ballotCast(opts: {
       action: "CREATE",
       userId: opts.voterUserId,
       buildingId: opts.buildingId,
+      createdAt: opts.castAt,
       newValue: {
         voteId: opts.voteId,
         isSecret: true,
         isProxy: opts.isProxy,
         isOnBehalf: opts.isOnBehalf,
-        // count only — never the unit ids (would tie the voter to their ballot)
+        // Turnout aggregate only — count + weight, never the unit ids (which
+        // would tie the voter to their ballot and reveal the choice).
         count: opts.unitIds.length,
+        weight: opts.weight,
       },
     });
     return;
