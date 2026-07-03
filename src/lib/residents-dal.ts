@@ -7,7 +7,7 @@ import { mayExposeContactData } from "@/lib/tenant-consent";
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
-export type ResidentGroup = "board" | "owners" | "tenants" | "partners";
+export type ResidentGroup = "board" | "owners" | "tenants" | "partners" | "removed";
 
 export type BuildingRoleKey =
   | "SUPER_ADMIN"
@@ -123,6 +123,8 @@ export interface ResidentProfileData {
   userBuildingId: string;
   /** False once a removal has been approved (soft-removed). */
   isActive: boolean;
+  /** True once the resident's PII has been erased (GDPR Art. 17). */
+  anonymized: boolean;
   /** Whether the viewer may initiate/approve removals (resident.remove). */
   canRemove: boolean;
   /** The viewer's user id — to enforce two-person control in the UI. */
@@ -203,6 +205,20 @@ export const getResidentsOverview = cache(
         orderBy: { name: "asc" },
       }),
     ]);
+
+    // Removed (soft-deleted) members — surfaced only to board+ so the GDPR
+    // Art. 17 erasure entry point (in the profile panel) is reachable after a
+    // resident has been removed. Regular residents never see this.
+    const removedMembers = isBoardPlus
+      ? await prisma.userBuilding.findMany({
+          where: { buildingId, isActive: false },
+          select: {
+            role: true,
+            user: { select: { id: true, name: true, anonymizedAt: true } },
+          },
+          orderBy: { user: { name: "asc" } },
+        })
+      : [];
 
     // Compute charge balances per unit for "hátralék" tags.
     const unitIds = members.flatMap((m) =>
@@ -328,6 +344,31 @@ export const getResidentsOverview = cache(
       };
     });
 
+    // ── Removed members as cards (board+ only) ───────────────────────────
+    const removedCards: ResidentCard[] = removedMembers.map((mb) => ({
+      id: mb.user.id,
+      kind: "resident" as const,
+      name: mb.user.name,
+      initials: initialsOf(mb.user.name),
+      metaLine: mb.user.anonymizedAt ? "TÖRÖLVE (GDPR)" : "ELTÁVOLÍTVA",
+      group: "removed" as const,
+      role: mb.role as BuildingRoleKey,
+      unitRelationship: null,
+      unitNumber: null,
+      unitStairwell: null,
+      unitFloor: null,
+      unitSize: null,
+      tags: [
+        {
+          kind: "default" as const,
+          text: mb.user.anonymizedAt ? "Törölve" : "Eltávolítva",
+        },
+      ],
+      footerLabel: "ÁLLAPOT",
+      footerValue: mb.user.anonymizedAt ? "Anonimizált" : "Inaktív",
+      hasOverdue: false,
+    }));
+
     // ── Group the cards ──────────────────────────────────────────────────
     const board = residentCards.filter((c) => c.group === "board");
     const owners = residentCards.filter((c) => c.group === "owners");
@@ -408,6 +449,16 @@ export const getResidentsOverview = cache(
           subtitle: `· ${partnerCount} KAPCSOLAT`,
           cards: partnerCards,
         },
+        ...(removedCards.length > 0
+          ? [
+              {
+                key: "removed" as const,
+                title: "Eltávolított lakók",
+                subtitle: `· ${removedCards.length} · GDPR-TÖRLÉSHEZ`,
+                cards: removedCards,
+              },
+            ]
+          : []),
       ],
     };
   },
@@ -430,6 +481,7 @@ export const getResidentProfile = cache(
             name: true,
             email: true,
             language: true,
+            anonymizedAt: true,
             unitUsers: {
               where: { unit: { buildingId } },
               include: {
@@ -603,6 +655,7 @@ export const getResidentProfile = cache(
     return {
       userBuildingId: ub.id,
       isActive: ub.isActive,
+      anonymized: u.anonymizedAt != null,
       canRemove,
       currentUserId: userId,
       pendingRemoval,

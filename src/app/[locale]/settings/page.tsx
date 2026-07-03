@@ -10,6 +10,7 @@ import { PersonalDataLauncher } from "@/components/settings/personal-data-launch
 import { TwoFactorLauncher } from "@/components/settings/two-factor-launcher";
 import { ChangePasswordLauncher } from "@/components/settings/change-password-launcher";
 import { SessionsTable } from "@/components/settings/sessions-table";
+import { DataExportButton } from "@/components/settings/data-export-button";
 import { AuditSlicePdfButton } from "@/components/reports/audit-slice-pdf-button";
 
 type Props = { params: Promise<{ locale: string }> };
@@ -356,7 +357,7 @@ export default async function ProfilePage({ params }: Props) {
 
           <Section title={t("quick.title")}>
             <div className="flex flex-col gap-1.5">
-              <QuickAction label={t("quick.gdpr")} disabled />
+              <DataExportButton label={t("quick.gdpr")} />
               <QuickAction label={t("quick.payments")} disabled />
               <QuickAction label={t("quick.calendar")} disabled />
               <QuickAction label={t("quick.integrations")} disabled />

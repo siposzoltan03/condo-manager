@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireBuildingContext } from "@/lib/auth";
 import { createAuditLog } from "@/lib/audit";
+import { anonymizeUser } from "@/lib/gdpr";
 import { prisma } from "@/lib/prisma";
 import type {
   NotificationMatrix,
@@ -281,42 +282,10 @@ export async function requestAccountDeletion(): Promise<ActionResult> {
       };
     }
 
-    const now = new Date();
-    const anonEmail = `deleted-${userId.slice(-8)}@anonymized.local`;
-
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        name: "Volt lakó",
-        email: anonEmail,
-        phone: null,
-        secondaryEmail: null,
-        secondaryEmailVerifiedAt: null,
-        birthDate: null,
-        permanentAddress: null,
-        mailingAddress: null,
-        isActive: false,
-        deletedAt: now,
-        anonymizedAt: now,
-      },
-    });
-
-    // Deactivate all UserBuilding memberships for this user.
-    await prisma.userBuilding.updateMany({
-      where: { userId },
-      data: { isActive: false },
-    });
-
-    // Revoke all push subscriptions.
-    await prisma.pushSubscription.deleteMany({ where: { userId } });
-
-    await createAuditLog({
-      entityType: "User",
-      entityId: userId,
-      action: "DELETE",
-      userId,
-      newValue: { soft: true, anonymized: true, deletedAt: now.toISOString() },
-    });
+    // Shared erasure: nulls PII, deactivates memberships, revokes sessions /
+    // push / backup codes, writes the DELETE audit row. Self-service ⇒ actor
+    // is the user themselves.
+    await anonymizeUser(prisma, userId, { actorId: userId });
 
     return { success: true };
   } catch (error) {
