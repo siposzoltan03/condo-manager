@@ -26,12 +26,19 @@ async function meetingIn(buildingId: string) {
 
 /** Build a proposal + backing vote + a single-owner (100% share) YES/NO vote,
  *  casting `yes` (or not) so calculateVoteResult can tally it. */
-async function proposalWithVote(buildingId: string, opts: { yes: boolean }) {
+async function proposalWithVote(
+  buildingId: string,
+  opts: { yes: boolean; proposalData?: Record<string, unknown> },
+) {
   const unit = await prisma.unit.create({
     data: { number: "1", floor: 1, size: 50, ownershipShare: 1, buildingId },
   });
   const proposal = await prisma.bylawsChangeProposal.create({
-    data: { buildingId, proposedById: "proposer", reserveTargetHUF: BigInt(9_000_000) },
+    data: {
+      buildingId,
+      proposedById: "proposer",
+      ...(opts.proposalData ?? { reserveTargetHUF: BigInt(9_000_000) }),
+    },
   });
   const vote = await prisma.vote.create({
     data: {
@@ -80,6 +87,32 @@ describe("bylaws change — propose", () => {
     expect(vote?.options).toHaveLength(3);
   });
 
+  it("proposes a remote-voting SZMSZ amendment (with clause) + backing vote", async () => {
+    const { building } = await makeBuilding();
+    const meeting = await meetingIn(building.id);
+    const proposer = await makeUser({ buildingId: building.id, role: "ADMIN" });
+    ctxMock.mockResolvedValue({ userId: proposer.id, buildingId: building.id, role: "ADMIN" });
+
+    const res = await proposeBylawsChange({
+      meetingId: meeting.id,
+      authorizeRemoteVoting: true,
+      remoteVotingClause: "A közgyűlés elektronikus úton is megtartható…",
+    });
+    expect(res.success).toBe(true);
+    const proposal = await prisma.bylawsChangeProposal.findUnique({ where: { id: res.proposalId! } });
+    expect(proposal?.authorizeRemoteVoting).toBe(true);
+    expect(proposal?.remoteVotingClause).toContain("elektronikus");
+  });
+
+  it("rejects a remote-voting amendment without clause text", async () => {
+    const { building } = await makeBuilding();
+    const meeting = await meetingIn(building.id);
+    const proposer = await makeUser({ buildingId: building.id, role: "ADMIN" });
+    ctxMock.mockResolvedValue({ userId: proposer.id, buildingId: building.id, role: "ADMIN" });
+    const res = await proposeBylawsChange({ meetingId: meeting.id, authorizeRemoteVoting: true, remoteVotingClause: "  " });
+    expect(res.error).toMatch(/clause/i);
+  });
+
   it("rejects an empty changeset", async () => {
     const { building } = await makeBuilding();
     const meeting = await meetingIn(building.id);
@@ -109,6 +142,34 @@ describe("bylaws change — resolve on vote close", () => {
     const p = await prisma.bylawsChangeProposal.findUnique({ where: { id: proposal.id } });
     expect(p?.status).toBe("APPLIED");
     expect(p?.appliedAt).not.toBeNull();
+  });
+
+  it("authorises remote voting on the building when a remote-voting amendment passes", async () => {
+    const { building } = await makeBuilding();
+    const { vote } = await proposalWithVote(building.id, {
+      yes: true,
+      proposalData: { authorizeRemoteVoting: true, remoteVotingClause: "Elektronikus közgyűlés engedélyezve." },
+    });
+    const before = await prisma.building.findUnique({ where: { id: building.id } });
+    expect(before?.remoteVotingAuthorized).toBe(false);
+
+    const r = await resolveBylawsProposal(vote.id, "closer");
+    expect(r.applied).toBe(true);
+    const b = await prisma.building.findUnique({ where: { id: building.id } });
+    expect(b?.remoteVotingAuthorized).toBe(true);
+    expect(b?.remoteVotingSzmszRef).toContain("Közgyűlési határozat");
+  });
+
+  it("does NOT authorise remote voting if the amendment vote fails", async () => {
+    const { building } = await makeBuilding();
+    const { vote } = await proposalWithVote(building.id, {
+      yes: false,
+      proposalData: { authorizeRemoteVoting: true, remoteVotingClause: "x" },
+    });
+    const r = await resolveBylawsProposal(vote.id, "closer");
+    expect(r.applied).toBe(false);
+    const b = await prisma.building.findUnique({ where: { id: building.id } });
+    expect(b?.remoteVotingAuthorized).toBe(false);
   });
 
   it("rejects (no change) when the vote fails the majority", async () => {

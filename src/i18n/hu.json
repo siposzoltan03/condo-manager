@@ -3130,6 +3130,12 @@
       "refLabel": "Felhatalmazó SZMSZ",
       "howToAuthorize": "A felhatalmazás az SZMSZ-ből származik (feltöltéskor ellenőrizzük), vagy az SZMSZ közgyűlési határozattal történő módosításából ered. Kézzel nem kapcsolható be."
     },
+    "rvAmend": {
+      "label": "Elektronikus közgyűlés engedélyezése (SZMSZ-módosítás)",
+      "hint": "Az SZMSZ nem tartalmaz erről rendelkezést. A módosítás közgyűlési szavazást igényel — a rendszer szavazási pontot hoz létre a kiválasztott közgyűlésre.",
+      "clauseLabel": "Beillesztendő SZMSZ-passzus (szerkeszthető)",
+      "clauseTemplate": "A közgyűlés elektronikus hírközlő eszköz igénybevételével (online vagy hibrid formában) is megtartható. A részvétel és szavazás feltételei:\n1. Platform: a közös képviselő által biztosított, jelen SZMSZ szerinti rendszer.\n2. Azonosítás: a tulajdonos a névjegyzék szerinti belépési adataival azonosítja magát.\n3. Meghatalmazás: írásbeli meghatalmazással más tulajdonos vagy harmadik személy is eljárhat.\n4. Szavazás módja: a rendszerben, tulajdoni hányad szerinti súlyozással.\n5. Kapcsolatmegszakadás: a jelenlét és a határozatképesség a rendszer szerint kerül megállapításra; újracsatlakozás lehetséges.\n6. Hitelesítés: a jegyzőkönyvet a levezető elnök és a hitelesítők írják alá."
+    },
     "title": "Önkormányzás",
     "subtitle": "A társasház gazdálkodási és döntéshozatali beállításai. A módosításokhoz közgyűlési határozat (szavazás) szükséges.",
     "reserveTarget": "Tartalékalap cél",

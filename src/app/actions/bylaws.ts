@@ -12,6 +12,9 @@ interface ProposeInput {
   reserveTargetHUF?: number | null;
   defaultMajority?: string | null;
   costAllocationBasis?: string | null;
+  /** SZMSZ amendment authorising electronic/hybrid participation + its clause. */
+  authorizeRemoteVoting?: boolean;
+  remoteVotingClause?: string | null;
   /** Required majority of the backing vote (Tht. bylaws changes: qualified). */
   voteMajorityType?: string;
   deadlineISO?: string;
@@ -39,6 +42,8 @@ export async function proposeBylawsChange(input: ProposeInput): Promise<ActionRe
       reserveTargetHUF?: bigint;
       defaultMajority?: MajorityType;
       costAllocationBasis?: CostAllocationBasis;
+      authorizeRemoteVoting?: boolean;
+      remoteVotingClause?: string;
     } = {};
     if (input.reserveTargetHUF != null) {
       const n = Number(input.reserveTargetHUF);
@@ -56,6 +61,12 @@ export async function proposeBylawsChange(input: ProposeInput): Promise<ActionRe
         return { error: "Invalid cost allocation basis." };
       }
       data.costAllocationBasis = input.costAllocationBasis as CostAllocationBasis;
+    }
+    if (input.authorizeRemoteVoting) {
+      const clause = input.remoteVotingClause?.trim();
+      if (!clause) return { error: "The SZMSZ clause text is required." };
+      data.authorizeRemoteVoting = true;
+      data.remoteVotingClause = clause;
     }
     if (Object.keys(data).length === 0) {
       return { error: "Propose at least one change." };
@@ -84,6 +95,8 @@ export async function proposeBylawsChange(input: ProposeInput): Promise<ActionRe
           reserveTargetHUF: data.reserveTargetHUF,
           defaultMajority: data.defaultMajority,
           costAllocationBasis: data.costAllocationBasis,
+          authorizeRemoteVoting: data.authorizeRemoteVoting,
+          remoteVotingClause: data.remoteVotingClause,
         },
       });
       const vote = await tx.vote.create({
@@ -123,6 +136,7 @@ export async function proposeBylawsChange(input: ProposeInput): Promise<ActionRe
         reserveTargetHUF: data.reserveTargetHUF != null ? Number(data.reserveTargetHUF) : undefined,
         defaultMajority: data.defaultMajority,
         costAllocationBasis: data.costAllocationBasis,
+        authorizeRemoteVoting: data.authorizeRemoteVoting,
       },
     });
 

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { MajorityType, CostAllocationBasis } from "@prisma/client";
+import { MajorityType, CostAllocationBasis, Prisma } from "@prisma/client";
 import { calculateVoteResult } from "@/lib/voting/quorum";
 import { createAuditLog } from "@/lib/audit";
 
@@ -55,6 +55,9 @@ export async function resolveBylawsProposal(
     reserveTargetHUF?: bigint;
     defaultMajority?: MajorityType;
     costAllocationBasis?: CostAllocationBasis;
+    remoteVotingAuthorized?: boolean;
+    remoteVotingSzmszRef?: string;
+    remoteVotingParams?: Prisma.InputJsonValue;
   } = {};
   const auditApplied: Record<string, unknown> = {};
   if (proposal.reserveTargetHUF != null) {
@@ -68,6 +71,15 @@ export async function resolveBylawsProposal(
   if (proposal.costAllocationBasis != null) {
     data.costAllocationBasis = proposal.costAllocationBasis;
     auditApplied.costAllocationBasis = proposal.costAllocationBasis;
+  }
+  if (proposal.authorizeRemoteVoting) {
+    // The passed assembly resolution is the authorisation's proof.
+    data.remoteVotingAuthorized = true;
+    data.remoteVotingSzmszRef = `Közgyűlési határozat (${voteId})`;
+    if (proposal.remoteVotingClause) {
+      data.remoteVotingParams = { szmszClause: proposal.remoteVotingClause };
+    }
+    auditApplied.remoteVotingAuthorized = true;
   }
 
   await prisma.$transaction([

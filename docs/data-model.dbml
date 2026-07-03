@@ -1321,6 +1321,10 @@ Table BylawsChangeProposal {
   reserveTargetHUF BigInt [note: 'Proposed values — only the non-null fields are applied on approval.']
   defaultMajority MajorityType
   costAllocationBasis CostAllocationBasis
+  authorizeRemoteVoting Boolean [note: 'SZMSZ amendment authorising electronic/hybrid (remote) participation. When
+the backing vote passes, Building.remoteVotingAuthorized is set true — the
+passed közgyűlési határozat is the authorisation\'s proof.']
+  remoteVotingClause String [note: 'The SZMSZ clause text put to the assembly (recorded with the resolution).']
   status BylawsProposalStatus [not null, default: 'PENDING_VOTE']
   vote Vote [note: 'The backing assembly vote (set once created).']
   appliedAt DateTime

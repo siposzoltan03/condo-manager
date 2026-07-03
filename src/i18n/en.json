@@ -3130,6 +3130,12 @@
       "refLabel": "Authorising SZMSZ",
       "howToAuthorize": "Authorisation comes from the SZMSZ itself (checked on upload) or from an SZMSZ amendment passed by the assembly. It cannot be toggled on manually."
     },
+    "rvAmend": {
+      "label": "Authorize electronic assembly (SZMSZ amendment)",
+      "hint": "The SZMSZ has no such clause. This requires an assembly vote — the system creates a voting point on the selected meeting.",
+      "clauseLabel": "SZMSZ clause to adopt (editable)",
+      "clauseTemplate": "The general meeting may also be held using electronic means of communication (online or hybrid). Conditions of participation and voting:\n1. Platform: the system provided by the property manager under this SZMSZ.\n2. Identification: owners identify themselves with their registered login credentials.\n3. Proxy: another owner or a third party may act on a written authorisation.\n4. Voting: within the system, weighted by ownership share.\n5. Disconnection: attendance and quorum during voting are determined by the system; reconnection is possible.\n6. Authentication: the minutes are signed by the chair and the authenticators."
+    },
     "title": "Governance",
     "subtitle": "The building's financial and decision-making settings. Changes require an assembly resolution (a vote).",
     "reserveTarget": "Reserve-fund target",
