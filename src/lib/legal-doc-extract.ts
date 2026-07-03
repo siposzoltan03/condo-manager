@@ -29,6 +29,13 @@ const MAJORITY_VALUES = [
   "UNANIMOUS",
 ] as const;
 const COST_BASIS_VALUES = ["OWNERSHIP_SHARE", "EQUAL", "AREA"] as const;
+const SPECIAL_RIGHT_KINDS = [
+  "EXCLUSIVE_USE",
+  "PRE_EMPTION",
+  "PARKING",
+  "STORAGE",
+  "OTHER",
+] as const;
 
 export interface ExtractedUnit {
   number: string;
@@ -52,6 +59,21 @@ export interface ExtractedRemoteVoting {
   section: string | null;
 }
 
+/** A special right (különleges jog) granted by the alapító okirat. */
+export interface ExtractedSpecialRight {
+  kind: (typeof SPECIAL_RIGHT_KINDS)[number];
+  /** The right as worded in the deed. */
+  description: string;
+  /** The unit identifier (albetét szám) the right attaches to, or null. */
+  unitNumber: string | null;
+  /** Location label (e.g. "P-12", "kert D-i része"), or null. */
+  location: string | null;
+  /** Area in m² where relevant, or null. */
+  areaSize: number | null;
+  /** Section reference / short quote (evidence), or null. */
+  section: string | null;
+}
+
 export interface LegalDocExtraction {
   /** Units from the alapító okirat. Empty for SZMSZ-only documents. */
   units: ExtractedUnit[];
@@ -59,27 +81,31 @@ export interface LegalDocExtraction {
   governance: ExtractedGovernance | null;
   /** Remote-voting authorisation finding, if the doc could contain one. */
   remoteVoting: ExtractedRemoteVoting | null;
+  /** Special rights from the alapító okirat. Empty for SZMSZ-only documents. */
+  specialRights: ExtractedSpecialRight[];
 }
 
 export interface Sections {
   units: boolean;
   governance: boolean;
   remoteVoting: boolean;
+  specialRights: boolean;
 }
 
 /** Which sections each document kind contributes. */
 export function sectionsFor(docKind: LegalDocKind): Sections {
   switch (docKind) {
     case "FOUNDING_DEED":
-      // The alapító okirat may itself carry the e-participation authorisation.
-      return { units: true, governance: false, remoteVoting: true };
+      // The alapító okirat may itself carry the e-participation authorisation
+      // and the special-rights grants (exclusive use, parking, storage, …).
+      return { units: true, governance: false, remoteVoting: true, specialRights: true };
     case "SZMSZ":
-      return { units: false, governance: true, remoteVoting: true };
+      return { units: false, governance: true, remoteVoting: true, specialRights: false };
     case "COMBINED":
-      return { units: true, governance: true, remoteVoting: true };
+      return { units: true, governance: true, remoteVoting: true, specialRights: true };
     default:
       // HOUSE_RULES / OTHER carry no structured register/governance data.
-      return { units: false, governance: false, remoteVoting: false };
+      return { units: false, governance: false, remoteVoting: false, specialRights: false };
   }
 }
 
@@ -153,6 +179,46 @@ const REMOTE_VOTING_SCHEMA = {
   required: ["authorized", "section"],
 } as const;
 
+const SPECIAL_RIGHTS_SCHEMA = {
+  type: "array",
+  description:
+    "One entry per special right (különleges jog) the alapító okirat grants — exclusive-use rights over common area, pre-emption rights, parking spaces, storage units.",
+  items: {
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      kind: {
+        type: "string",
+        enum: [...SPECIAL_RIGHT_KINDS],
+        description:
+          "EXCLUSIVE_USE = kizárólagos használati jog (közös tulajdon részére); PRE_EMPTION = elővásárlási jog; PARKING = parkolóhely; STORAGE = tároló/pince; OTHER = anything else.",
+      },
+      description: {
+        type: "string",
+        description: "The right as worded in the deed (short, faithful).",
+      },
+      unitNumber: {
+        type: ["string", "null"],
+        description:
+          "The unit identifier (albetét szám) the right attaches to, or null if building-wide / not attributable.",
+      },
+      location: {
+        type: ["string", "null"],
+        description: "Location label such as 'P-12', 'kert D-i része', or null.",
+      },
+      areaSize: {
+        type: ["number", "null"],
+        description: "Area in m² where the deed states one, else null.",
+      },
+      section: {
+        type: ["string", "null"],
+        description: "Section/clause reference and a short verbatim quote, or null.",
+      },
+    },
+    required: ["kind", "description", "unitNumber", "location", "areaSize", "section"],
+  },
+} as const;
+
 /** Build the JSON schema for exactly the sections this document kind carries. */
 export function buildSchema(sections: Sections) {
   const properties: Record<string, unknown> = {};
@@ -168,6 +234,10 @@ export function buildSchema(sections: Sections) {
   if (sections.remoteVoting) {
     properties.remoteVoting = REMOTE_VOTING_SCHEMA;
     required.push("remoteVoting");
+  }
+  if (sections.specialRights) {
+    properties.specialRights = SPECIAL_RIGHTS_SCHEMA;
+    required.push("specialRights");
   }
   return {
     type: "object",
@@ -203,6 +273,11 @@ export function buildPrompt(sections: Sections): string {
       `Determine whether the document authorises electronic/hybrid (remote) participation or voting in the közgyűlés — e.g. "elektronikus közgyűlés", "online részvétel", "távszavazás", "elektronikus hírközlő eszköz útján". Set authorized=true ONLY if such a clause is clearly present; otherwise false. If true, put the section reference and a short verbatim quote in "section". Do NOT infer authorisation from silence.`,
     );
   }
+  if (sections.specialRights) {
+    parts.push(
+      `List the special rights (különleges jogok) the alapító okirat grants. Include: kizárólagos használati jog over a portion of the common area (EXCLUSIVE_USE), elővásárlási jog (PRE_EMPTION), parkolóhely / gépkocsibeálló (PARKING), and tároló / pince (STORAGE); use OTHER for anything else. For each: the kind, a short faithful description, the unit identifier (albetét szám) it attaches to if stated (else null), a location label if any, the area in m² if stated, and the section reference. Only include rights actually granted in the deed — do not invent any. Return an empty array if none.`,
+    );
+  }
   return `${intro}\n\nExtract:\n${parts
     .map((p, i) => `${i + 1}. ${p}`)
     .join("\n")}\n\nOnly use data actually present in the document. Return the result strictly in the required schema.`;
@@ -219,8 +294,13 @@ export async function extractLegalDoc(
   docKind: LegalDocKind,
 ): Promise<LegalDocExtraction> {
   const sections = sectionsFor(docKind);
-  if (!sections.units && !sections.governance && !sections.remoteVoting) {
-    return { units: [], governance: null, remoteVoting: null };
+  if (
+    !sections.units &&
+    !sections.governance &&
+    !sections.remoteVoting &&
+    !sections.specialRights
+  ) {
+    return { units: [], governance: null, remoteVoting: null, specialRights: [] };
   }
 
   const apiKey = process.env.OPENAI_API_KEY;
@@ -270,5 +350,17 @@ export async function extractLegalDoc(
       ? { authorized: !!parsed.remoteVoting.authorized, section: parsed.remoteVoting.section ?? null }
       : { authorized: false, section: null }
     : null;
-  return { units, governance, remoteVoting };
+  const specialRights = sections.specialRights
+    ? (parsed.specialRights ?? [])
+        .filter((r) => r && r.description && SPECIAL_RIGHT_KINDS.includes(r.kind))
+        .map((r) => ({
+          kind: r.kind,
+          description: r.description,
+          unitNumber: r.unitNumber ?? null,
+          location: r.location ?? null,
+          areaSize: Number.isFinite(r.areaSize as number) ? (r.areaSize as number) : null,
+          section: r.section ?? null,
+        }))
+    : [];
+  return { units, governance, remoteVoting, specialRights };
 }

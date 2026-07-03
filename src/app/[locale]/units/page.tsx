@@ -4,10 +4,13 @@ import { setRequestLocale, getTranslations } from "next-intl/server";
 import { getDashboardContext } from "@/lib/dal";
 import { allows } from "@/lib/authz";
 import { getUnitsOverview } from "@/lib/units-dal";
+import { listSpecialRights } from "@/lib/special-rights";
+import { prisma } from "@/lib/prisma";
 import { UnitsShell } from "@/components/units/units-shell";
 import { UnitsKpiStrip } from "@/components/units/units-kpis";
 import { UnitsExplorer } from "@/components/units/units-explorer";
 import { UnitsHeaderActions } from "@/components/units/units-header-actions";
+import { SpecialRightsPanel } from "@/components/units/special-rights-panel";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -33,6 +36,7 @@ export default async function UnitsPage({ params }: Props) {
   }
 
   const data = await getUnitsOverview();
+  const specialRights = await listSpecialRights(prisma, data.building.id);
   const t = await getTranslations({ locale, namespace: "units.shell" });
 
   const subtitle = t("subtitle", {
@@ -59,6 +63,10 @@ export default async function UnitsPage({ params }: Props) {
         units={data.units}
         floorMap={data.floorMap}
         tabCounts={data.tabCounts}
+      />
+      <SpecialRightsPanel
+        rights={specialRights}
+        units={data.units.map((u) => ({ id: u.id, number: u.number }))}
       />
     </UnitsShell>
   );
