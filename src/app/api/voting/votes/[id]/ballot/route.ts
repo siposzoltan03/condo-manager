@@ -209,13 +209,20 @@ export async function POST(request: NextRequest, context: RouteContext) {
       }
     }
 
+    // Secret ballots get a minute-quantised createdAt (all ballots in this cast
+    // share it, and it matches the turnout audit's timestamp) so the audit row
+    // can't be time-correlated to a specific ballot to de-anonymise the vote.
+    const secretCastAt = vote.isSecret
+      ? new Date(Math.floor(Date.now() / 60000) * 60000)
+      : undefined;
+
     // Fan out: one ballot per target unit (same option).
     const created: { id: string; unitId: string; weight: number; receiptHash: string | null }[] = [];
     for (const t of fresh) {
       const share = shareById.get(t.unitId);
       if (share === undefined) continue;
       const ballot = await prisma.ballot.create({
-        data: { voteId, optionId, unitId: t.unitId, userId: t.ballotUserId, castById, weight: share, receiptHash: null },
+        data: { voteId, optionId, unitId: t.unitId, userId: t.ballotUserId, castById, weight: share, receiptHash: null, createdAt: secretCastAt },
       });
       let receiptHash: string | null = null;
       if (secret) {
@@ -234,6 +241,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
       unitIds: created.map((c) => c.unitId),
       isProxy: !!proxyForUnitId || !!proxyForGrantorId,
       isOnBehalf: !!onBehalfOfUnitId,
+      castAt: secretCastAt,
+      weight: created.reduce((s, c) => s + c.weight, 0),
     });
 
     // Live assembly: nudge the presenter's tally to refresh.

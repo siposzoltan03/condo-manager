@@ -14,6 +14,10 @@ interface CreateAuditLogInput {
   oldValue?: Record<string, unknown>;
   newValue?: Record<string, unknown>;
   reason?: string;
+  /** Override the timestamp (default now()). Used to quantise secret-ballot
+   *  turnout entries to the minute so they can't be time-correlated to a
+   *  specific ballot row. */
+  createdAt?: Date;
 }
 
 interface GetAuditLogsParams {
@@ -39,6 +43,7 @@ export async function createAuditLog(input: CreateAuditLogInput) {
       oldValue: (input.oldValue as Prisma.InputJsonValue) ?? undefined,
       newValue: (input.newValue as Prisma.InputJsonValue) ?? undefined,
       reason: input.reason ?? undefined,
+      createdAt: input.createdAt ?? undefined,
     },
   });
 

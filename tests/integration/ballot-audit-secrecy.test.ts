@@ -15,6 +15,7 @@ describe("ballotCast audit — secret-ballot secrecy", () => {
     const { building } = await makeBuilding();
     const voter = await makeUser({ buildingId: building.id, role: "OWNER" });
 
+    const castAt = new Date(Math.floor(Date.now() / 60000) * 60000); // minute-quantised
     await ballotCast({
       voteId: "vote-secret-1",
       ballotId: "ballot-should-not-be-referenced",
@@ -24,6 +25,7 @@ describe("ballotCast audit — secret-ballot secrecy", () => {
       unitIds: ["unit-a", "unit-b"],
       isProxy: false,
       isOnBehalf: false,
+      castAt,
     });
 
     const row = await prisma.auditLog.findFirst({
@@ -31,6 +33,11 @@ describe("ballotCast audit — secret-ballot secrecy", () => {
       orderBy: { createdAt: "desc" },
     });
     expect(row).not.toBeNull();
+    // Turnout timestamp is minute-quantised (no seconds) to prevent
+    // time-correlation with a specific ballot row.
+    expect(row!.createdAt.getTime()).toBe(castAt.getTime());
+    expect(row!.createdAt.getSeconds()).toBe(0);
+    expect(row!.createdAt.getMilliseconds()).toBe(0);
     // Never points at a specific (secret) ballot row.
     expect(row!.entityType).toBe("Vote");
     expect(row!.entityId).toBe("vote-secret-1");
