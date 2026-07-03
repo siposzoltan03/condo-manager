@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { VoteStatus } from "@prisma/client";
 import { votingQueue } from "@/lib/queue";
 import { voteCreated } from "@/lib/voting/events";
+import { createHash } from "crypto";
 
 export async function GET(request: NextRequest) {
   try {
@@ -156,6 +157,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Turnout snapshot: record the eligible electorate (unit count + a hash of
+    // the sorted eligible unit ids) at open, so "who was entitled to vote" is
+    // provable independently of the (secret) ballots.
+    const eligibleUnits = await prisma.unit.findMany({
+      where: { buildingId },
+      select: { id: true },
+      orderBy: { id: "asc" },
+    });
+    const eligibleUnitsHash = createHash("sha256")
+      .update(eligibleUnits.map((u) => u.id).join(","))
+      .digest("hex");
+
     const vote = await prisma.vote.create({
       data: {
         title,
@@ -169,6 +182,9 @@ export async function POST(request: NextRequest) {
         buildingId,
         meetingId: meetingId ?? null,
         createdById: userId,
+        eligibleUnitCount: eligibleUnits.length,
+        eligibleUnitsHash,
+        eligibleSnapshotAt: new Date(),
         options: {
           create: options.map((opt: { label: string }, index: number) => ({
             label: opt.label,
