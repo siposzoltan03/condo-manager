@@ -1309,6 +1309,11 @@ bid is awarded automatically. Null for ordinary votes.']
   linkedBylawsProposal BylawsChangeProposal [note: 'Set when this vote backs a bylaws/governance change (assembly resolution):
 on close-as-passed the proposal\'s changeset is applied to the Building.']
   linkedBylawsProposalId String [unique]
+  eligibleUnitCount Int [note: 'Turnout snapshot taken when the vote opens: the eligible electorate
+(unit count + a hash of the sorted eligible unit ids) at that moment.
+Proves "who was entitled to vote" independently of the (secret) ballots.']
+  eligibleUnitsHash String
+  eligibleSnapshotAt DateTime
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
 }

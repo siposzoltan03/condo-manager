@@ -1924,6 +1924,12 @@ model Vote {
   /// on close-as-passed the proposal's changeset is applied to the Building.
   linkedBylawsProposal   BylawsChangeProposal? @relation("BylawsVote", fields: [linkedBylawsProposalId], references: [id])
   linkedBylawsProposalId String?               @unique
+  /// Turnout snapshot taken when the vote opens: the eligible electorate
+  /// (unit count + a hash of the sorted eligible unit ids) at that moment.
+  /// Proves "who was entitled to vote" independently of the (secret) ballots.
+  eligibleUnitCount  Int?
+  eligibleUnitsHash  String?
+  eligibleSnapshotAt DateTime?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
