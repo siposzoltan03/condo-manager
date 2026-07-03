@@ -127,6 +127,21 @@ enum LegalDocKind {
   OTHER
 }
 
+/// Special rights recorded in the alapító okirat (founding deed). These attach
+/// to a unit/owner and are register facts, not casually-editable config.
+enum SpecialRightKind {
+  /// Kizárólagos használati jog — exclusive use of a portion of the common area.
+  EXCLUSIVE_USE
+  /// Elővásárlási jog — right of first refusal / pre-emption.
+  PRE_EMPTION
+  /// Parkolóhely — a parking space right.
+  PARKING
+  /// Tároló — a storage/cellar space right.
+  STORAGE
+  /// Anything else the deed grants that doesn't fit the above.
+  OTHER
+}
+
 enum BuildingRole {
   SUPER_ADMIN
   ADMIN
@@ -447,6 +462,7 @@ model Building {
   residentRemovalRequests ResidentRemovalRequest[]
   bylawsChangeProposals   BylawsChangeProposal[]
   szmszExtractionJobs     SzmszExtractionJob[]
+  specialRights           SpecialRight[]
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
 }
@@ -726,11 +742,42 @@ model Unit {
   attendances    MeetingAttendance[]
   invitations    Invitation[]
   complaintsAgainst Complaint[]   @relation("ComplaintRespondent")
+  specialRights  SpecialRight[]
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   @@unique([buildingId, number])
   @@index([buildingId, stairwell, floor, positionOnFloor])
+}
+
+/// A special right granted by the alapító okirat (founding deed) — e.g. an
+/// exclusive-use right over common area, a pre-emption right, a parking space
+/// or a storage unit. Optionally attaches to a specific unit/owner. Provenance
+/// points at the founding-deed DocumentVersion + clause it came from.
+model SpecialRight {
+  id            String           @id @default(cuid())
+  building      Building         @relation(fields: [buildingId], references: [id])
+  buildingId    String
+  /// The unit/albetét the right attaches to, if attributable. Null = building-wide.
+  unit          Unit?            @relation(fields: [unitId], references: [id])
+  unitId        String?
+  kind          SpecialRightKind
+  /// The right as worded in the deed (free text).
+  description   String           @db.Text
+  /// Optional location label (e.g. "P-12 parkoló", "kert D-i része").
+  location      String?
+  /// Optional area in m² where relevant (parking/storage/exclusive-use).
+  areaSize      Float?
+  /// Provenance: the founding-deed DocumentVersion this right was recorded from.
+  sourceVersionId String?
+  sourceVersion   DocumentVersion? @relation("SpecialRightSource", fields: [sourceVersionId], references: [id])
+  /// The clause/section reference in that document (evidence).
+  sourceSection   String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([buildingId])
+  @@index([unitId])
 }
 
 model User {
@@ -2130,6 +2177,7 @@ model DocumentVersion {
   /// Units whose current ownership share was established by this founding-deed
   /// version (provenance for the voting-weight math).
   unitsSourced  Unit[]   @relation("UnitOwnershipShareSource")
+  specialRights SpecialRight[] @relation("SpecialRightSource")
 
   @@unique([documentId, versionNumber])
   @@index([documentId])

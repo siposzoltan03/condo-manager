@@ -18,11 +18,21 @@ export interface ExtractedRemoteVoting {
   authorized: boolean;
   section: string | null;
 }
+export interface ExtractedSpecialRight {
+  kind: "EXCLUSIVE_USE" | "PRE_EMPTION" | "PARKING" | "STORAGE" | "OTHER";
+  description: string;
+  unitNumber: string | null;
+  location: string | null;
+  areaSize: number | null;
+  section: string | null;
+}
 export interface Extraction {
   units: ExtractedUnit[];
   governance: ExtractedGovernance | null;
   /** Whether the uploaded SZMSZ / deed authorises electronic/hybrid voting. */
   remoteVoting?: ExtractedRemoteVoting | null;
+  /** Special rights (különleges jogok) detected in the alapító okirat. */
+  specialRights?: ExtractedSpecialRight[];
   stored?: boolean;
   /** The stored document + version (for recording remote-voting authorisation). */
   documentId?: string | null;
@@ -60,6 +70,8 @@ export function LegalDocAiExtract({
   const [error, setError] = useState<string | null>(null);
   const [rvBusy, setRvBusy] = useState(false);
   const [rvDone, setRvDone] = useState(false);
+  const [srBusy, setSrBusy] = useState(false);
+  const [srDone, setSrDone] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function recordRemoteVoting() {
@@ -86,6 +98,33 @@ export function LegalDocAiExtract({
       setError(t("rvRecordFailed"));
     } finally {
       setRvBusy(false);
+    }
+  }
+
+  async function recordSpecialRights() {
+    if (!extraction?.documentId || !extraction?.versionId) return;
+    setSrBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/buildings/special-rights/from-document", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          documentId: extraction.documentId,
+          versionId: extraction.versionId,
+          rights: extraction.specialRights ?? [],
+        }),
+      });
+      if (!res.ok) {
+        const d = (await res.json().catch(() => null)) as { error?: string } | null;
+        setError(d?.error ?? t("srRecordFailed"));
+        return;
+      }
+      setSrDone(true);
+    } catch {
+      setError(t("srRecordFailed"));
+    } finally {
+      setSrBusy(false);
     }
   }
 
@@ -316,6 +355,70 @@ export function LegalDocAiExtract({
                 }}
               >
                 {rvBusy ? t("rvRecording") : t("rvRecordCta")}
+              </button>
+            )
+          )}
+        </div>
+      )}
+
+      {(extraction?.specialRights?.length ?? 0) > 0 && (
+        <div
+          className="rounded-lg"
+          style={{
+            marginTop: "12px",
+            padding: "12px 14px",
+            background: "color-mix(in srgb, var(--color-blue) 8%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--color-blue) 28%, transparent)",
+          }}
+        >
+          <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--color-blue)" }}>
+            {t("srDetectedTitle", { count: extraction!.specialRights!.length })}
+          </div>
+          <ul
+            style={{
+              fontSize: "12px",
+              color: "var(--color-ink-soft)",
+              margin: "6px 0 0",
+              paddingLeft: "16px",
+              listStyle: "disc",
+            }}
+          >
+            {extraction!.specialRights!.slice(0, 8).map((r, i) => (
+              <li key={i}>
+                <b>{t(`srKind.${r.kind}`)}</b>
+                {r.unitNumber ? ` · ${r.unitNumber}` : ""}
+                {r.location ? ` · ${r.location}` : ""}
+                {r.description ? ` — ${r.description}` : ""}
+              </li>
+            ))}
+          </ul>
+          <p style={{ fontSize: "12px", color: "var(--color-ink-soft)", margin: "6px 0 0", maxWidth: "56ch" }}>
+            {t("srDetectedBody")}
+          </p>
+          {srDone ? (
+            <p style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--color-moss)", margin: "8px 0 0" }}>
+              ✓ {t("srRecorded")}
+            </p>
+          ) : (
+            extraction!.documentId && extraction!.versionId && (
+              <button
+                type="button"
+                onClick={recordSpecialRights}
+                disabled={srBusy}
+                style={{
+                  marginTop: "10px",
+                  padding: "8px 14px",
+                  borderRadius: "8px",
+                  fontSize: "12.5px",
+                  fontWeight: 600,
+                  background: "var(--color-ink)",
+                  color: "var(--color-bg)",
+                  border: "none",
+                  cursor: srBusy ? "not-allowed" : "pointer",
+                  opacity: srBusy ? 0.6 : 1,
+                }}
+              >
+                {srBusy ? t("srRecording") : t("srRecordCta")}
               </button>
             )
           )}

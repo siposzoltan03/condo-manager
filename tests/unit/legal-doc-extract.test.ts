@@ -15,11 +15,11 @@ import {
  */
 describe("legal-doc-extract sections", () => {
   it("maps each document kind to the sections it carries", () => {
-    expect(sectionsFor("FOUNDING_DEED")).toEqual({ units: true, governance: false, remoteVoting: true });
-    expect(sectionsFor("SZMSZ")).toEqual({ units: false, governance: true, remoteVoting: true });
-    expect(sectionsFor("COMBINED")).toEqual({ units: true, governance: true, remoteVoting: true });
-    expect(sectionsFor("HOUSE_RULES")).toEqual({ units: false, governance: false, remoteVoting: false });
-    expect(sectionsFor("OTHER")).toEqual({ units: false, governance: false, remoteVoting: false });
+    expect(sectionsFor("FOUNDING_DEED")).toEqual({ units: true, governance: false, remoteVoting: true, specialRights: true });
+    expect(sectionsFor("SZMSZ")).toEqual({ units: false, governance: true, remoteVoting: true, specialRights: false });
+    expect(sectionsFor("COMBINED")).toEqual({ units: true, governance: true, remoteVoting: true, specialRights: true });
+    expect(sectionsFor("HOUSE_RULES")).toEqual({ units: false, governance: false, remoteVoting: false, specialRights: false });
+    expect(sectionsFor("OTHER")).toEqual({ units: false, governance: false, remoteVoting: false, specialRights: false });
   });
 });
 
@@ -46,6 +46,13 @@ describe("buildSchema", () => {
     }
     expect(buildSchema(sectionsFor("HOUSE_RULES")).properties).not.toHaveProperty("remoteVoting");
   });
+
+  it("includes special rights only for founding-deed / combined", () => {
+    expect(buildSchema(sectionsFor("FOUNDING_DEED")).properties).toHaveProperty("specialRights");
+    expect(buildSchema(sectionsFor("COMBINED")).properties).toHaveProperty("specialRights");
+    expect(buildSchema(sectionsFor("SZMSZ")).properties).not.toHaveProperty("specialRights");
+    expect(buildSchema(sectionsFor("HOUSE_RULES")).properties).not.toHaveProperty("specialRights");
+  });
 });
 
 describe("buildPrompt", () => {
@@ -67,6 +74,15 @@ describe("buildPrompt", () => {
     expect(prompt.toLowerCase()).toContain("távszavazás");
     expect(prompt.toLowerCase()).toContain("do not infer authorisation from silence");
   });
+
+  it("asks the founding-deed extraction for special rights", () => {
+    const prompt = buildPrompt(sectionsFor("FOUNDING_DEED"));
+    expect(prompt.toLowerCase()).toContain("különleges jog");
+    expect(prompt.toLowerCase()).toContain("kizárólagos használati jog");
+    expect(prompt.toLowerCase()).toContain("elővásárlási jog");
+    // SZMSZ-only extraction must not ask for special rights.
+    expect(buildPrompt(sectionsFor("SZMSZ")).toLowerCase()).not.toContain("különleges jog");
+  });
 });
 
 describe("extractLegalDoc no-op kinds", () => {
@@ -77,11 +93,13 @@ describe("extractLegalDoc no-op kinds", () => {
       units: [],
       governance: null,
       remoteVoting: null,
+      specialRights: [],
     });
     await expect(extractLegalDoc("", "x.pdf", "OTHER")).resolves.toEqual({
       units: [],
       governance: null,
       remoteVoting: null,
+      specialRights: [],
     });
   });
 });
