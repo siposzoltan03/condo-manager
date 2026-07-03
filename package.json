@@ -10,7 +10,7 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css}\"",
     "test": "vitest",
     "test:e2e": "node node_modules/@playwright/test/cli.js test",
-    "worker": "tsx watch worker/index.ts",
+    "worker": "tsx watch --env-file-if-exists=.env worker/index.ts",
     "seed:contractors": "tsx prisma/seed-contractors.ts",
     "seed:marketplace-mock": "tsx prisma/seed-marketplace-mock.ts",
     "seed:demo": "tsx prisma/seed-demo.ts",

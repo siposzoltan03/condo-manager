@@ -7,6 +7,10 @@ import { processNotificationJob } from "./jobs";
 import { processVotingJob } from "./processors/voting";
 import { processReportJob } from "./processors/reports";
 import { processSzmszJob } from "./processors/szmsz";
+import { processRetentionJob } from "./processors/retention";
+import { scheduledQueue } from "../src/lib/queue";
+
+const RETENTION_JOB = "retention-purge";
 
 const connection = new Redis(process.env.REDIS_URL ?? "redis://localhost:6379", {
   maxRetriesPerRequest: null,
@@ -55,8 +59,10 @@ votingWorker.on("failed", (job, err) => {
 const scheduledWorker = new Worker(
   "scheduled",
   async (job) => {
-    // TODO: implement scheduled job processors (e.g. reminders, reports)
     console.log(`Processing scheduled job ${job.id}: ${job.name}`);
+    if (job.name === RETENTION_JOB) {
+      await processRetentionJob(job);
+    }
   },
   {
     connection,
@@ -109,6 +115,13 @@ szmszWorker.on("completed", (job) => {
 szmszWorker.on("failed", (job, err) => {
   console.error(`SZMSZ job ${job?.id} failed:`, err.message);
 });
+
+// Register the daily retention purge (03:00). Idempotent — a fixed repeat
+// jobId means re-registering on each boot doesn't create duplicates.
+scheduledQueue
+  .add(RETENTION_JOB, {}, { repeat: { pattern: "0 3 * * *" }, jobId: RETENTION_JOB })
+  .then(() => console.log("Scheduled daily retention purge (03:00)."))
+  .catch((e) => console.error("Failed to schedule retention purge:", e));
 
 console.log(
   "Worker started, listening for jobs on 'notifications', 'voting', 'scheduled', 'reports', and 'szmsz' queues..."
