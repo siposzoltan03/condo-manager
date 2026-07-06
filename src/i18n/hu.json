@@ -4126,7 +4126,26 @@
       "aria": "Funkciókezelés",
       "features": "Funkciók",
       "plans": "Csomagok",
-      "buildings": "Épület-felülírások"
+      "buildings": "Épület-felülírások",
+      "history": "Előzmények"
+    },
+    "audit": {
+      "loading": "Betöltés…",
+      "empty": "Még nincs rögzített módosítás.",
+      "error": "Az előzmények betöltése nem sikerült.",
+      "col": {
+        "when": "Mikor",
+        "who": "Ki",
+        "what": "Művelet",
+        "target": "Cél"
+      },
+      "action": {
+        "feature_update": "Funkció módosítása",
+        "feature_flag_update": "Globális kapcsoló módosítása",
+        "plan_feature_toggle": "Csomag-funkció be/ki",
+        "plan_limits_update": "Csomag-limit / ár módosítása",
+        "building_feature_override": "Épület-felülírás"
+      }
     },
     "comingSoon": {
       "title": "Hamarosan",

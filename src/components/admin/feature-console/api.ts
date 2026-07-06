@@ -2,6 +2,7 @@ import type {
   CatalogFeature,
   PlanMatrix,
   BuildingOverrideView,
+  FeatureAuditRow,
 } from "@/lib/feature-access";
 import type { FeatureFlagState } from "@/lib/feature-resolver";
 
@@ -73,6 +74,12 @@ export async function patchPlan(
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error("Failed to update plan");
+}
+
+export async function fetchFeatureAudit(): Promise<FeatureAuditRow[]> {
+  const res = await fetch("/api/admin/features/audit", { headers: { accept: "application/json" } });
+  if (!res.ok) throw new Error("Failed to load audit log");
+  return (await asJson(res)).entries as FeatureAuditRow[];
 }
 
 export async function fetchOverrideView(

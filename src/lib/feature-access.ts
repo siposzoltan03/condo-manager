@@ -309,3 +309,62 @@ export async function getBuildingOverrideView(
     rows,
   };
 }
+
+/** The audit actions the feature console writes (via auditFeatureChange). */
+export const FEATURE_AUDIT_ACTIONS = [
+  "feature.update",
+  "feature.flag.update",
+  "plan.feature.toggle",
+  "plan.limits.update",
+  "building.feature.override",
+] as const;
+
+export type FeatureAuditRow = {
+  id: string;
+  action: string;
+  entityType: string;
+  entityId: string;
+  actorName: string | null;
+  buildingId: string | null;
+  oldValue: unknown;
+  newValue: unknown;
+  reason: string | null;
+  createdAt: string;
+};
+
+/**
+ * Recent feature-management audit trail. These rows are mostly platform-level
+ * (buildingId null) and so are invisible to the building-scoped audit viewer —
+ * this surfaces them for the superadmin console's history tab.
+ */
+export async function getFeatureAuditLog(limit = 50): Promise<FeatureAuditRow[]> {
+  const rows = await prisma.auditLog.findMany({
+    where: { action: { in: [...FEATURE_AUDIT_ACTIONS] } },
+    orderBy: { createdAt: "desc" },
+    take: Math.min(Math.max(limit, 1), 200),
+    select: {
+      id: true,
+      action: true,
+      entityType: true,
+      entityId: true,
+      buildingId: true,
+      oldValue: true,
+      newValue: true,
+      reason: true,
+      createdAt: true,
+      user: { select: { name: true } },
+    },
+  });
+  return rows.map((r) => ({
+    id: r.id,
+    action: r.action,
+    entityType: r.entityType,
+    entityId: r.entityId,
+    actorName: r.user?.name ?? null,
+    buildingId: r.buildingId,
+    oldValue: r.oldValue,
+    newValue: r.newValue,
+    reason: r.reason,
+    createdAt: r.createdAt.toISOString(),
+  }));
+}
