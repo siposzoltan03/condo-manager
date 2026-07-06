@@ -297,25 +297,24 @@ async function main(): Promise<void> {
 
   // ─── Plan + Subscription ──────────────────────────────────────────────────
 
-  // Use existing "pro" plan if present; otherwise upsert it.
-  let proPlan = await prisma.plan.findUnique({ where: { slug: "pro" } });
-  if (!proPlan) {
-    proPlan = await prisma.plan.create({
-      data: {
-        name: "Professional",
-        slug: "pro",
-        maxBuildings: 5,
-        maxUnitsPerBuilding: 100,
-        features: [
-          "complaints", "announcements", "messaging", "documents",
-          "finance", "voting", "maintenance", "forum",
-        ],
-        priceMonthly: 29.99,
-        priceYearly: 299.99,
-        trialDays: 14,
-      },
-    });
+  // Seed the full plan catalog (idempotent) — mirrors prisma/seed.ts — so the
+  // superadmin feature-management console shows the whole plan↔feature matrix,
+  // not just the one plan the demo building happens to use. The `features`
+  // JSON is legacy/display only; DB-driven gating uses the PlanFeature matrix
+  // (populated by `npm run seed:features`).
+  const BASE = ["complaints", "announcements", "messaging", "documents"];
+  const PRO = [...BASE, "finance", "voting", "maintenance", "forum"];
+  const ENTERPRISE = [...PRO, "api_access", "custom_branding", "audit_exports"];
+  const PLAN_CATALOG = [
+    { slug: "starter", name: "Starter", maxBuildings: 1, maxUnitsPerBuilding: 30, features: BASE, priceMonthly: 9.99, priceYearly: 99.99, trialDays: 14, isActive: true },
+    { slug: "pro", name: "Professional", maxBuildings: 5, maxUnitsPerBuilding: 100, features: PRO, priceMonthly: 29.99, priceYearly: 299.99, trialDays: 14, isActive: true },
+    { slug: "enterprise", name: "Enterprise", maxBuildings: -1, maxUnitsPerBuilding: -1, features: ENTERPRISE, priceMonthly: 99.99, priceYearly: 999.99, trialDays: 14, isActive: true },
+    { slug: "legacy", name: "Legacy", maxBuildings: -1, maxUnitsPerBuilding: -1, features: ENTERPRISE, priceMonthly: 0, priceYearly: 0, trialDays: 0, isActive: false },
+  ];
+  for (const p of PLAN_CATALOG) {
+    await prisma.plan.upsert({ where: { slug: p.slug }, update: {}, create: p });
   }
+  const proPlan = await prisma.plan.findUniqueOrThrow({ where: { slug: "pro" } });
 
   // ─── Building ─────────────────────────────────────────────────────────────
 
