@@ -29,6 +29,7 @@ import { AgendaEditor, AgendaItem } from "./agenda-editor";
 import { CreateVoteModal } from "./create-vote-modal";
 import { QuickVotePanel } from "./quick-vote-panel";
 import { MinutesSignaturesPanel } from "./minutes-signatures-panel";
+import { MinutesIntegrityPanel } from "./minutes-integrity-panel";
 import { MinutesSignatureBlock } from "./minutes-signature-block";
 import type { MeetingDetailData } from "@/lib/dal";
 
@@ -492,6 +493,13 @@ export function MeetingDetail({ meeting }: MeetingDetailProps) {
             signatures={meeting.signatures}
             canSign={meeting.canSignMinutes}
             currentUserId={meeting.currentUserId}
+          />
+          <MinutesIntegrityPanel
+            meetingId={meeting.id}
+            executed={meeting.signatures.length === 3}
+            canManage={meeting.canEditMinutes}
+            integrity={meeting.minutesIntegrity}
+            delivery={meeting.minutesDelivery}
           />
         </div>
       )}
