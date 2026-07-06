@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -42,6 +42,7 @@ const PILL_BASE =
 
 export function MeetingDetail({ meeting }: MeetingDetailProps) {
   const t = useTranslations("voting");
+  const locale = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<"overview" | "minutes">(
@@ -54,8 +55,12 @@ export function MeetingDetail({ meeting }: MeetingDetailProps) {
 
   const meetingDate = new Date(meeting.date);
   const day = meetingDate.getDate();
-  const month = meetingDate.toLocaleDateString(undefined, { month: "short" });
-  const fullDate = meetingDate.toLocaleDateString(undefined, {
+  // Pin the locale to the active UI locale — passing `undefined` lets the
+  // server (Node default) and client (browser) diverge, which triggered a
+  // hydration mismatch in the header.
+  const dateLocale = locale === "en" ? "en-US" : "hu-HU";
+  const month = meetingDate.toLocaleDateString(dateLocale, { month: "short" });
+  const fullDate = meetingDate.toLocaleDateString(dateLocale, {
     year: "numeric",
     month: "long",
     day: "numeric",
