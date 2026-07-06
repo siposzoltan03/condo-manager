@@ -1346,7 +1346,21 @@ async function createDocument(args: {
   });
 }
 
+// Full board-permission catalog (mirrors prisma/seed.ts). The sensitive
+// delegations (delete_resident, modify_bylaws) are catalogued so an ADMIN can
+// grant them, but they are NOT auto-granted to every board member — they are
+// opt-in (default:false in seed.ts). Only DEFAULT_GRANTED_KEYS are handed out.
 const BOARD_PERM_KEYS = [
+  "financial_full",
+  "invoice_signoff",
+  "board_post",
+  "vote_create",
+  "maintenance_orders",
+  "delete_resident",
+  "modify_bylaws",
+];
+
+const DEFAULT_GRANTED_KEYS = [
   "financial_full",
   "invoice_signoff",
   "board_post",
@@ -1383,7 +1397,7 @@ async function seedBoardPermissionsForBuilding(buildingId: string): Promise<void
     select: { id: true },
   });
   for (const ub of ubs) {
-    for (const key of BOARD_PERM_KEYS) {
+    for (const key of DEFAULT_GRANTED_KEYS) {
       await prisma.userBuildingPermission.upsert({
         where: {
           userBuildingId_permissionId: {
