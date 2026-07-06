@@ -7,7 +7,7 @@ This is a living document — update the status column when a plan moves.
 - **Module map:** [`docs/modules-overview.md`](modules-overview.md)
 - **Commercial plan:** [`docs/business-plan/business-plan-2026-04.md`](business-plan/business-plan-2026-04.md)
 
-_Last updated: 2026-06-23 — added superadmin feature-management console_
+_Last updated: 2026-07-06 — reconciled against the codebase (PRs #81–#138). Corrected the superadmin console (was mis-marked "not started" — it shipped), reclassified feature-gating enforcement (DB-driven enforcement shipped), and added the large legal/governance/compliance + live-assembly + platform-admin work that had not been recorded here._
 
 Status legend: ✅ Shipped · 🟡 In progress / partial · ⬜ Planned (not started)
 
@@ -43,19 +43,70 @@ Status legend: ✅ Shipped · 🟡 In progress / partial · ⬜ Planned (not sta
 
 | Status | Item | Plan |
 |--------|------|------|
-| ✅ | Real-time pub/sub + worker queue | [real-time-infrastructure](plans/2026-04-28-real-time-infrastructure.md) |
+| ✅ | Real-time pub/sub + worker queue (BullMQ + Redis) | [real-time-infrastructure](plans/2026-04-28-real-time-infrastructure.md) |
 | ✅ | Server-side PDF reporting (version hashing) | [pdf-reporting](plans/2026-04-28-pdf-reporting.md) |
 | ✅ | Audit log UI + export | [audit-ui-and-export](plans/2026-04-28-audit-ui-and-export.md) |
 | ✅ | Hungarian condo-law alignment (phases 1–5, cameras, GDPR) | [roles-legal-alignment](plans/2026-04-27-roles-legal-alignment.md) |
 | 🟡 | Mobile / responsive (baseline shipped; polish ongoing) | [mobile-responsive](plans/2026-05-18-mobile-responsive.md) |
 
-### Planned / in progress
+### Onboarding & governance (Tht. alignment)
+
+Shipped since the last roadmap update; no dedicated plan files — see the PRs.
+
+| Status | Item | Ref |
+|--------|------|-----|
+| ✅ | Multi-step building onboarding wizard + setup checklist | PRs #97–#101 |
+| ✅ | AI SZMSZ / alapító okirat PDF extraction (units + governance), async via worker | PRs #103, #115–#117 |
+| ✅ | Founding-deed ↔ SZMSZ separation: doc typing by legal role, role-scoped extraction | PRs #120–#122 |
+| ✅ | Ownership shares as legal-register data (gated) + attested amend flow | PRs #123–#124 |
+| ✅ | Document version compare (exact text diff) | PR #119 |
+| ✅ | Governance changes via assembly resolution + bylaws settings page | PRs #112, #114 |
+| ✅ | Per-member board-permission grants enforced in `can()` (GRANT_UNLOCKS) | PRs #107–#108 |
+| ✅ | Dual-control resident removal (two-person control) | PRs #109–#110 |
+| ✅ | Founding-deed special rights (exclusive-use / pre-emption / parking / storage) — extraction + register | PR #136 |
+
+### Live assembly mode (Közgyűlés Mód)
+
+| Status | Item | Ref |
+|--------|------|-----|
+| ✅ | Live presenter + SSE session (start/adjourn) | PRs #81–#82 |
+| ✅ | Attendee companion phone view | PR #83 |
+| ✅ | Live Q&A + raise-hand | PR #84 |
+| ✅ | Auto-minutes draft on adjournment | PR #85 |
+| ✅ | Presence gate, proxy (meghatalmazás) voting, multi-unit ballots, minutes signatures | PRs #87–#93 |
+
+### E-voting legal compliance
+
+Plan: [evoting-legal-compliance](plans/2026-07-02-evoting-legal-compliance.md). P0 enforcement is in code; live real voting is gated on external legal review of the P0.3 drafts.
+
+| Status | Item | Ref |
+|--------|------|-----|
+| ✅ | Secret-ballot process-audit secrecy + timestamp quantization | PRs #127, #131 |
+| ✅ | Eligible-electorate snapshot at vote open (turnout integrity) | PR #133 |
+| ✅ | Remote/electronic assembly gated on SZMSZ authorization (AI-detect on upload + assembly-vote amendment; no checkbox) | PRs #128–#130 |
+| ✅ | Jegyzőkönyv content-hash + versioning + Tht. § 43 delivery receipts + 8-day overdue job | PR #137 |
+| ✅ | GDPR data-subject rights: Art. 15 self-export + Art. 17 erasure/anonymize | PR #135 |
+| ✅ | Data-retention purge worker (stale sessions) | PR #134 |
+| 🟡 | DPIA / data-processing notice / retention-policy — **drafts** written, pending counsel | PR #132 |
+| ⬜ | In-app privacy notice wired to login + settings | **Blocked** on legal finalization of the drafts above |
+
+### Platform admin
+
+| Status | Item | Ref |
+|--------|------|-----|
+| ✅ | Superadmin feature-management console (DB-driven catalog / plan matrix / per-building overrides / kill-switches) + enforcement | commit 21663c4 · [superadmin-feature-management](plans/2026-06-23-superadmin-feature-management.md) |
+| ✅ | SUPER_ADMIN read-only impersonation (view-as-user, middleware-enforced read-only, audited) | commit 334b9d9 |
+
+### Planned / genuinely open
+
+The real remaining backlog (verified against code — nothing here has an implementation yet beyond what's noted).
 
 | Status | Item | Notes | Plan |
 |--------|------|-------|------|
-| 🟡 | **Feature-gating enforcement** | `feature-gate.ts` exists; remaining: typed feature taxonomy, lock tier names (Kezdő/Képviselő/Kezelő iroda), HUF pricing, hard plan-limit caps | [feature-gating-enforcement](plans/2026-04-28-feature-gating-enforcement.md) |
-| ⬜ | **Superadmin feature-management console** | DB-driven feature catalog (plan↔feature matrix), per-building overrides, global feature flags, plan limits/pricing editing. Supersedes the code-based feature map; lets superadmin change access with no deploy. | [superadmin-feature-management](plans/2026-06-23-superadmin-feature-management.md) |
-| ⬜ | **Banking integrations** | Biggest open item. 5 phases: CSV import → bank-specific parsers (OTP/K&H/Erste/Raiffeisen) → reconciliation engine → MT940/CAMT.053 → PSD2 aggregator. Required to make *"élő bankszinkron"* claim truthful; gates the premium tier. | [banking-integrations-research](plans/2026-04-28-banking-integrations-research.md) |
+| ⬜ | **Banking integrations** | Biggest open item. Only a generic ledger-CSV import exists (`src/lib/finance/csv-import.ts`); no bank-specific parsers, reconciliation, MT940/CAMT.053, or PSD2. `finance.bank-csv` / `finance.bank-sync-live` slugs exist in the taxonomy but aren't wired. Gates the premium tier + the *"élő bankszinkron"* claim. | [banking-integrations-research](plans/2026-04-28-banking-integrations-research.md) |
+| 🟡 | **Feature-gating: tier rename + pricing lock** | DB-driven enforcement, HUF pricing fields, and hard plan-limit caps (maxBuildings/maxUnits) all shipped. Remaining: rename plan slugs starter/pro/enterprise/legacy → **Kezdő / Képviselő / Kezelő iroda** and lock final HUF prices. | [feature-gating-enforcement](plans/2026-04-28-feature-gating-enforcement.md) |
+| 🟡 | **Feature-console polish** | Surface the audit rows it already writes; drop the now-dead `Plan.features` column; add resolver truth-table tests. | [superadmin-feature-management](plans/2026-06-23-superadmin-feature-management.md) |
+| 🟡 | **Mobile / responsive polish** | Baseline shipped; ongoing refinement. | [mobile-responsive](plans/2026-05-18-mobile-responsive.md) |
 
 ---
 
