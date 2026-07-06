@@ -4086,7 +4086,26 @@
       "aria": "Feature management",
       "features": "Features",
       "plans": "Plans",
-      "buildings": "Building overrides"
+      "buildings": "Building overrides",
+      "history": "History"
+    },
+    "audit": {
+      "loading": "Loading…",
+      "empty": "No changes recorded yet.",
+      "error": "Could not load the history.",
+      "col": {
+        "when": "When",
+        "who": "Who",
+        "what": "Action",
+        "target": "Target"
+      },
+      "action": {
+        "feature_update": "Feature updated",
+        "feature_flag_update": "Global flag updated",
+        "plan_feature_toggle": "Plan feature toggled",
+        "plan_limits_update": "Plan limits / price updated",
+        "building_feature_override": "Building override"
+      }
     },
     "comingSoon": {
       "title": "Coming soon",

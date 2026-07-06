@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { ListChecks, LayoutGrid, Building2 } from "lucide-react";
+import { ListChecks, LayoutGrid, Building2, History } from "lucide-react";
 import type {
   CatalogFeature,
   PlanMatrix,
@@ -13,15 +13,17 @@ import styles from "./feature-console.module.css";
 import { FeatureCatalog } from "./feature-catalog";
 import { PlanEditor } from "./plan-editor";
 import { BuildingOverrides } from "./building-overrides";
+import { AuditHistory } from "./audit-history";
 
 const cx = makeCx(styles);
 
-type View = "features" | "plans" | "buildings";
+type View = "features" | "plans" | "buildings" | "history";
 
 const TABS: { id: View; icon: typeof ListChecks }[] = [
   { id: "features", icon: ListChecks },
   { id: "plans", icon: LayoutGrid },
   { id: "buildings", icon: Building2 },
+  { id: "history", icon: History },
 ];
 
 export function FeatureConsole({
@@ -93,6 +95,11 @@ export function FeatureConsole({
             </div>
           </div>
         ))}
+      {view === "history" && (
+        <div className={styles.console}>
+          <AuditHistory />
+        </div>
+      )}
     </div>
   );
 }
