@@ -13,6 +13,8 @@ import { allows, requireCapability } from "@/lib/authz";
 import { requireFeature } from "@/lib/feature-gate";
 import { prisma } from "@/lib/prisma";
 import { calculateMeetingQuorum } from "@/lib/voting/quorum";
+import { verifyLatestMinutes } from "@/lib/voting/minutes-integrity";
+import { isMinutesDeliveryOverdue } from "@/lib/voting/minutes-delivery";
 
 // ─── Units ───────────────────────────────────────────────────────────────────
 
@@ -418,6 +420,21 @@ export interface MeetingDetailData {
   signatures: MeetingMinutesSignatureData[];
   /** True when the current user is a board member — gates the sign UI. */
   canSignMinutes: boolean;
+  /** Jegyzőkönyv content-hash / seal status (tamper-evidence). */
+  minutesIntegrity: {
+    sealed: boolean;
+    versionNumber: number | null;
+    contentHashShort: string | null;
+    /** False when the content changed after the latest seal. */
+    matches: boolean;
+    sealedAt: string | null;
+  };
+  /** Tht. § 43 delivery status of the jegyzőkönyv. */
+  minutesDelivery: {
+    distributed: boolean;
+    deliveredCount: number;
+    overdue: boolean;
+  };
   /** Pre-resolved current user id for "have I already signed?" check. */
   currentUserId: string;
   /** Live Q&A items (questions + raise-hand), oldest first. */
@@ -580,6 +597,13 @@ export const getMeetingDetail = cache(async (id: string): Promise<MeetingDetailD
 
   const quorum = await calculateMeetingQuorum(meeting.id);
 
+  // Jegyzőkönyv integrity (content-hash) + Tht. § 43 delivery status.
+  const [integrity, deliveredCount, deliveryOverdue] = await Promise.all([
+    verifyLatestMinutes(prisma, meeting.id),
+    prisma.minutesDelivery.count({ where: { meetingId: meeting.id, status: "DELIVERED" } }),
+    isMinutesDeliveryOverdue(prisma, meeting.id),
+  ]);
+
   return {
     id: meeting.id,
     buildingId,
@@ -616,6 +640,18 @@ export const getMeetingDetail = cache(async (id: string): Promise<MeetingDetailD
       signedAt: s.signedAt.toISOString(),
     })),
     canSignMinutes: canEditMinutes,
+    minutesIntegrity: {
+      sealed: integrity.sealed,
+      versionNumber: integrity.versionNumber,
+      contentHashShort: integrity.sealedHash ? integrity.sealedHash.slice(0, 12) : null,
+      matches: integrity.matches,
+      sealedAt: integrity.sealedAt?.toISOString() ?? null,
+    },
+    minutesDelivery: {
+      distributed: deliveredCount > 0,
+      deliveredCount,
+      overdue: deliveryOverdue,
+    },
     currentUserId: userId,
     questions: meeting.questions.map((q) => ({
       id: q.id,

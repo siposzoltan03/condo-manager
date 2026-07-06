@@ -8,9 +8,11 @@ import { processVotingJob } from "./processors/voting";
 import { processReportJob } from "./processors/reports";
 import { processSzmszJob } from "./processors/szmsz";
 import { processRetentionJob } from "./processors/retention";
+import { processMinutesOverdueJob } from "./processors/minutes-overdue";
 import { scheduledQueue } from "../src/lib/queue";
 
 const RETENTION_JOB = "retention-purge";
+const MINUTES_OVERDUE_JOB = "minutes-overdue";
 
 const connection = new Redis(process.env.REDIS_URL ?? "redis://localhost:6379", {
   maxRetriesPerRequest: null,
@@ -62,6 +64,8 @@ const scheduledWorker = new Worker(
     console.log(`Processing scheduled job ${job.id}: ${job.name}`);
     if (job.name === RETENTION_JOB) {
       await processRetentionJob(job);
+    } else if (job.name === MINUTES_OVERDUE_JOB) {
+      await processMinutesOverdueJob(job);
     }
   },
   {
@@ -122,6 +126,12 @@ scheduledQueue
   .add(RETENTION_JOB, {}, { repeat: { pattern: "0 3 * * *" }, jobId: RETENTION_JOB })
   .then(() => console.log("Scheduled daily retention purge (03:00)."))
   .catch((e) => console.error("Failed to schedule retention purge:", e));
+
+// Register the daily jegyzőkönyv-delivery overdue check (03:15). Idempotent.
+scheduledQueue
+  .add(MINUTES_OVERDUE_JOB, {}, { repeat: { pattern: "15 3 * * *" }, jobId: MINUTES_OVERDUE_JOB })
+  .then(() => console.log("Scheduled daily minutes-overdue check (03:15)."))
+  .catch((e) => console.error("Failed to schedule minutes-overdue check:", e));
 
 console.log(
   "Worker started, listening for jobs on 'notifications', 'voting', 'scheduled', 'reports', and 'szmsz' queues..."

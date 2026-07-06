@@ -862,6 +862,8 @@ model User {
   invitationsSent         Invitation[]             @relation("InvitationSender")
   generatedReports        GeneratedReport[]
   minutesSignatures       MeetingMinutesSignature[]
+  minutesSealed           MeetingMinutesVersion[]  @relation("MinutesSealer")
+  minutesReceived         MinutesDelivery[]        @relation("MinutesRecipient")
   marketplacePublications MarketplacePublication[] @relation("MarketplacePublisher")
 }
 
@@ -1880,6 +1882,10 @@ model Meeting {
   pendingAgenda      PendingAgendaItem[]
   /// Chair + two-authenticator signatures on the jegyzőkönyv.
   minutesSignatures  MeetingMinutesSignature[]
+  /// Sealed (content-hashed) versions of the executed jegyzőkönyv.
+  minutesVersions    MeetingMinutesVersion[]
+  /// Tht. § 43 delivery-proof rows for the jegyzőkönyv.
+  minutesDeliveries  MinutesDelivery[]
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
 
@@ -2229,6 +2235,47 @@ model MeetingMinutesSignature {
 
   @@unique([meetingId, role])
   @@index([signerId])
+}
+
+/// Tamper-evident snapshot of a sealed (executed) jegyzőkönyv. Sealing after
+/// the three signatures freezes a SHA-256 over the canonical minutes content
+/// (narrative + resolutions + attendance + signatures). Re-sealing after a
+/// correction produces a new versionNumber, so the history is auditable.
+model MeetingMinutesVersion {
+  id            String   @id @default(cuid())
+  meeting       Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  meetingId     String
+  versionNumber Int
+  /// SHA-256 over the canonical minutes content at seal time.
+  contentHash   String
+  sealedBy      User     @relation("MinutesSealer", fields: [sealedById], references: [id])
+  sealedById    String
+  sealedAt      DateTime @default(now())
+
+  @@unique([meetingId, versionNumber])
+  @@index([meetingId])
+}
+
+/// Tht. § 43 delivery-proof for the jegyzőkönyv — the manager must send the
+/// minutes/resolutions to every owner within 8 days. Mirrors
+/// AnnouncementDelivery: one PHYSICAL_BOARD row (§ 43/A) + per-owner EMAIL
+/// rows (§ 33/A legal equivalence). An overdue worker flags meetings with no
+/// DELIVERED row 8 days after the assembly.
+model MinutesDelivery {
+  id           String              @id @default(cuid())
+  meeting      Meeting             @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  meetingId    String
+  user         User?               @relation("MinutesRecipient", fields: [userId], references: [id])
+  userId       String?
+  channel      AnnouncementChannel
+  externalId   String?
+  status       DeliveryStatus      @default(QUEUED)
+  deliveredAt  DateTime?
+  errorMessage String?
+  createdAt    DateTime            @default(now())
+
+  @@index([meetingId, status])
+  @@index([userId])
 }
 
 /// Cached server-rendered PDF reports.

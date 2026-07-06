@@ -8,6 +8,11 @@ import { createAuditLog } from "@/lib/audit";
 import { notify, NotificationType } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { sealMinutes as sealMinutesContent } from "@/lib/voting/minutes-integrity";
+import {
+  recordMinutesBoardPosting,
+  queueMinutesEmailDeliveries,
+} from "@/lib/voting/minutes-delivery";
 
 interface ActionResult {
   success?: boolean;
@@ -214,5 +219,114 @@ export async function signMeetingMinutes(
       error:
         error instanceof Error ? error.message : "Internal server error",
     };
+  }
+}
+
+const REQUIRED_SIGNATURE_ROLES = ["CHAIR", "AUTHENTICATOR_1", "AUTHENTICATOR_2"] as const;
+
+/**
+ * Seal the executed jegyzőkönyv: freeze a content-hash into an immutable
+ * MeetingMinutesVersion (tamper-evidence). Requires the minutes narrative +
+ * all three Tht. § 39 signatures. Re-sealing after a correction bumps the
+ * version. vote.editMinutes-gated + audited.
+ */
+export async function sealMeetingMinutes(meetingId: string): Promise<ActionResult> {
+  try {
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
+    requireCapability(ctx, "vote.editMinutes");
+    await requireFeature(buildingId, "voting");
+
+    const meeting = await prisma.meeting.findUnique({
+      where: { id: meetingId },
+      select: { id: true, buildingId: true, minutes: true },
+    });
+    if (!meeting || meeting.buildingId !== buildingId) {
+      return { error: "Meeting not found" };
+    }
+    if (!meeting.minutes || meeting.minutes.trim().length === 0) {
+      return { error: "A jegyzőkönyv szövege üres — előbb töltsd ki." };
+    }
+
+    const signatures = await prisma.meetingMinutesSignature.findMany({
+      where: { meetingId },
+      select: { role: true },
+    });
+    const roles = new Set(signatures.map((s) => s.role));
+    const missing = REQUIRED_SIGNATURE_ROLES.filter((r) => !roles.has(r));
+    if (missing.length > 0) {
+      return { error: "A lezáráshoz mindhárom aláírás szükséges (elnök + két hitelesítő)." };
+    }
+
+    const sealed = await sealMinutesContent(prisma, { meetingId, sealedById: userId });
+    if (!sealed.alreadySealed) {
+      await createAuditLog({
+        entityType: "Meeting",
+        entityId: meetingId,
+        action: "UPDATE",
+        userId,
+        buildingId,
+        newValue: {
+          minutesSealed: true,
+          version: sealed.versionNumber,
+          contentHash: sealed.contentHash,
+        },
+      });
+    }
+
+    revalidatePath("/[locale]/voting/meetings/[id]", "page");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to seal minutes:", error);
+    return { error: error instanceof Error ? error.message : "Internal server error" };
+  }
+}
+
+/**
+ * Distribute the sealed jegyzőkönyv (Tht. § 43): record the § 43/A noticeboard
+ * posting + queue § 33/A per-owner emails. Requires the minutes to be sealed
+ * first. vote.editMinutes-gated + audited.
+ */
+export async function distributeMeetingMinutes(meetingId: string): Promise<ActionResult> {
+  try {
+    const ctx = await requireBuildingContext();
+    const { userId, buildingId } = ctx;
+    requireCapability(ctx, "vote.editMinutes");
+    await requireFeature(buildingId, "voting");
+
+    const meeting = await prisma.meeting.findUnique({
+      where: { id: meetingId },
+      select: { id: true, buildingId: true },
+    });
+    if (!meeting || meeting.buildingId !== buildingId) {
+      return { error: "Meeting not found" };
+    }
+
+    const sealed = await prisma.meetingMinutesVersion.findFirst({
+      where: { meetingId },
+      orderBy: { versionNumber: "desc" },
+      select: { versionNumber: true },
+    });
+    if (!sealed) {
+      return { error: "Előbb zárd le (pecsételd le) a jegyzőkönyvet." };
+    }
+
+    await recordMinutesBoardPosting(prisma, meetingId);
+    const queued = await queueMinutesEmailDeliveries(prisma, { meetingId, buildingId });
+
+    await createAuditLog({
+      entityType: "Meeting",
+      entityId: meetingId,
+      action: "UPDATE",
+      userId,
+      buildingId,
+      newValue: { minutesDistributed: true, version: sealed.versionNumber, emailsQueued: queued },
+    });
+
+    revalidatePath("/[locale]/voting/meetings/[id]", "page");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to distribute minutes:", error);
+    return { error: error instanceof Error ? error.message : "Internal server error" };
   }
 }
