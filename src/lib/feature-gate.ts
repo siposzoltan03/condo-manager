@@ -32,7 +32,7 @@ export function resolveLegacySlug(slug: string): Feature {
  */
 const planCache = new Map<
   string,
-  { features: string[]; maxBuildings: number; maxUnitsPerBuilding: number } | null
+  { maxBuildings: number; maxUnitsPerBuilding: number } | null
 >();
 
 /**
@@ -109,15 +109,7 @@ export async function getPlanForBuilding(buildingId: string) {
     return null;
   }
 
-  const featuresRaw = sub.plan.features;
-  const features: string[] = Array.isArray(featuresRaw)
-    ? (featuresRaw as string[])
-    : typeof featuresRaw === "string"
-      ? JSON.parse(featuresRaw)
-      : [];
-
   const data = {
-    features,
     maxBuildings: sub.plan.maxBuildings,
     maxUnitsPerBuilding: sub.plan.maxUnitsPerBuilding,
   };

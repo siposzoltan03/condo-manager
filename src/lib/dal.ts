@@ -1290,7 +1290,6 @@ export const getBuildingFinance = cache(async (): Promise<BuildingFinanceData> =
 export interface BillingSubscriptionData {
   planSlug: string;
   planName: string;
-  features: string[];
   maxBuildings: number;
   maxUnitsPerBuilding: number;
   subscriptionStatus: string;
@@ -1333,7 +1332,6 @@ export const getBillingData = cache(async (): Promise<BillingData> => {
       subscription: {
         planSlug: "legacy",
         planName: "Legacy",
-        features: [],
         maxBuildings: -1,
         maxUnitsPerBuilding: -1,
         subscriptionStatus: "ACTIVE",
@@ -1347,7 +1345,6 @@ export const getBillingData = cache(async (): Promise<BillingData> => {
 
   const sub = building.subscription;
   const plan = sub.plan;
-  const features = Array.isArray(plan.features) ? (plan.features as string[]) : [];
 
   // Calculate usage
   const [buildingCount, unitCount, frozenBuildings] = await Promise.all([
@@ -1365,7 +1362,6 @@ export const getBillingData = cache(async (): Promise<BillingData> => {
     subscription: {
       planSlug: plan.slug,
       planName: plan.name,
-      features,
       maxBuildings: plan.maxBuildings,
       maxUnitsPerBuilding: plan.maxUnitsPerBuilding,
       subscriptionStatus: sub.subscriptionStatus,
