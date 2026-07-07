@@ -299,17 +299,14 @@ async function main(): Promise<void> {
 
   // Seed the full plan catalog (idempotent) — mirrors prisma/seed.ts — so the
   // superadmin feature-management console shows the whole plan↔feature matrix,
-  // not just the one plan the demo building happens to use. The `features`
-  // JSON is legacy/display only; DB-driven gating uses the PlanFeature matrix
-  // (populated by `npm run seed:features`).
-  const BASE = ["complaints", "announcements", "messaging", "documents"];
-  const PRO = [...BASE, "finance", "voting", "maintenance", "forum"];
-  const ENTERPRISE = [...PRO, "api_access", "custom_branding", "audit_exports"];
+  // not just the one plan the demo building happens to use. Plan↔feature
+  // membership lives in the PlanFeature matrix (`npm run seed:features`), not
+  // on the Plan row.
   const PLAN_CATALOG = [
-    { slug: "starter", name: "Starter", maxBuildings: 1, maxUnitsPerBuilding: 30, features: BASE, priceMonthly: 9.99, priceYearly: 99.99, trialDays: 14, isActive: true },
-    { slug: "pro", name: "Professional", maxBuildings: 5, maxUnitsPerBuilding: 100, features: PRO, priceMonthly: 29.99, priceYearly: 299.99, trialDays: 14, isActive: true },
-    { slug: "enterprise", name: "Enterprise", maxBuildings: -1, maxUnitsPerBuilding: -1, features: ENTERPRISE, priceMonthly: 99.99, priceYearly: 999.99, trialDays: 14, isActive: true },
-    { slug: "legacy", name: "Legacy", maxBuildings: -1, maxUnitsPerBuilding: -1, features: ENTERPRISE, priceMonthly: 0, priceYearly: 0, trialDays: 0, isActive: false },
+    { slug: "starter", name: "Starter", maxBuildings: 1, maxUnitsPerBuilding: 30, priceMonthly: 9.99, priceYearly: 99.99, trialDays: 14, isActive: true },
+    { slug: "pro", name: "Professional", maxBuildings: 5, maxUnitsPerBuilding: 100, priceMonthly: 29.99, priceYearly: 299.99, trialDays: 14, isActive: true },
+    { slug: "enterprise", name: "Enterprise", maxBuildings: -1, maxUnitsPerBuilding: -1, priceMonthly: 99.99, priceYearly: 999.99, trialDays: 14, isActive: true },
+    { slug: "legacy", name: "Legacy", maxBuildings: -1, maxUnitsPerBuilding: -1, priceMonthly: 0, priceYearly: 0, trialDays: 0, isActive: false },
   ];
   for (const p of PLAN_CATALOG) {
     await prisma.plan.upsert({ where: { slug: p.slug }, update: {}, create: p });

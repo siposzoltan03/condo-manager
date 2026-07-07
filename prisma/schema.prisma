@@ -238,7 +238,6 @@ model Plan {
   stripePriceId       String?
   maxBuildings        Int
   maxUnitsPerBuilding Int
-  features            Json           @default("[]")
   priceMonthly        Decimal        @db.Decimal(10, 2)
   priceYearly         Decimal        @db.Decimal(10, 2)
   trialDays           Int            @default(14)
