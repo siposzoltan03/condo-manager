@@ -35,6 +35,10 @@
         src: templates/alertmanager.yml.j2
         dest: "{{ mon_dir }}/alertmanager/alertmanager.yml"
         mode: "0600"
+      # `docker compose up -d` won't recreate a container just because a
+      # bind-mounted file changed, and Alertmanager doesn't watch its config —
+      # so a config-only change needs an explicit reload to take effect.
+      notify: Reload Alertmanager config
 
     - name: Pull and start the monitoring stack
       ansible.builtin.command:
@@ -66,3 +70,12 @@
           {{ targets.json.data.activeTargets | length }} targets;
           up={{ targets.json.data.activeTargets | selectattr('health','equalto','up') | list | length }};
           jobs={{ targets.json.data.activeTargets | map(attribute='labels.job') | list }}
+
+  handlers:
+    # POST /-/reload makes Alertmanager re-read its config in place (no restart,
+    # no dropped alerts). Runs only when the template above actually changed.
+    - name: Reload Alertmanager config
+      ansible.builtin.uri:
+        url: http://127.0.0.1:9093/-/reload
+        method: POST
+        status_code: 200
